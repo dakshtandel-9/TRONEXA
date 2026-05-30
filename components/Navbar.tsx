@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import MenuOverlay from './MenuOverlay';
+import DecryptedText from './DecryptedText';
+import { useLoadingContext } from '@/contexts/LoadingContext';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { isLoaded } = useLoadingContext();
 
   return (
     <>
@@ -22,7 +25,6 @@ export default function Navbar() {
           padding: '16px 24px',
         }}
       >
-        {/* Logo — replace inner span with <Image src="/logo.png" height={32} width={140} alt="TRONEXA" /> once logo.png is added to public/ */}
         <Link href="/" style={{ textDecoration: 'none' }}>
           <span
             style={{
@@ -34,7 +36,15 @@ export default function Navbar() {
               textShadow: '0 2px 12px rgba(0,0,0,0.5)',
             }}
           >
-            TRONEXA
+            {isLoaded ? (
+              <DecryptedText
+                text="TRONEXA"
+                animateOn="inViewHover"
+                speed={40}
+                maxIterations={12}
+                sequential
+              />
+            ) : 'TRONEXA'}
           </span>
         </Link>
 
@@ -64,7 +74,16 @@ export default function Navbar() {
             e.currentTarget.style.background = 'rgba(210, 218, 240, 0.88)';
           }}
         >
-          <span style={{ fontSize: '13px' }}>⊞</span> MENU
+          <span style={{ fontSize: '13px' }}>⊞</span>
+          {isLoaded ? (
+            <DecryptedText
+              text="MENU"
+              animateOn="inViewHover"
+              speed={50}
+              maxIterations={10}
+              sequential
+            />
+          ) : 'MENU'}
         </button>
       </nav>
 

@@ -5,26 +5,37 @@ import BottomBar from '@/components/BottomBar';
 import ProgressBar from '@/components/ProgressBar';
 import ScrollSections from '@/components/ScrollSections';
 import BorderFrame from '@/components/BorderFrame';
+import CustomCursor from '@/components/CustomCursor';
+import ScrollController from '@/components/ScrollController';
+import { SoundProvider } from '@/contexts/SoundContext';
+import { LoadingProvider } from '@/contexts/LoadingContext';
 
 export default function Home() {
   return (
-    <main style={{ background: 'transparent' }}>
-      {/* Fixed canvas — z-index: -1 */}
-      <ScrollSequence />
+    <SoundProvider>
+      <LoadingProvider>
+        <main style={{ background: 'transparent' }}>
+          <CustomCursor />
+          <ScrollController />
 
-      {/* Viewport border frame — chamfered corners via SVG polygon */}
-      <BorderFrame />
+          {/* Fixed canvas — z-index: -1 */}
+          <ScrollSequence />
 
-      {/* Fixed UI chrome */}
-      <Navbar />
-      <Sidebar />
-      <ProgressBar />
-      <BottomBar />
+          {/* Viewport border frame — chamfered corners via SVG polygon */}
+          <BorderFrame />
 
-      {/* Scroll container — 2000vh drives the slow scroll animation with 5 breaks */}
-      <div style={{ height: '2600vh', position: 'relative', background: 'transparent' }}>
-        <ScrollSections />
-      </div>
-    </main>
+          {/* Fixed UI chrome */}
+          <Navbar />
+          <Sidebar />
+          <ProgressBar />
+          <BottomBar />
+
+          {/* Scroll container — 2000vh drives the slow scroll animation with 5 breaks */}
+          <div style={{ height: '4000vh', position: 'relative', background: 'transparent' }}>
+            <ScrollSections />
+          </div>
+        </main>
+      </LoadingProvider>
+    </SoundProvider>
   );
 }

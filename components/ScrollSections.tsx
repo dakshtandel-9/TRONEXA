@@ -55,16 +55,14 @@ const SECTIONS: SectionData[] = [
 function sectionOpacity(progress: number, index: number): number {
   const zoneSize = 1 / 6;
   const zoneStart = index * zoneSize;
-  const local = (progress - zoneStart) / zoneSize; // 0–1 within zone
+  const local = (progress - zoneStart) / zoneSize;
 
-  // Zone 0 (hero) — visible from very start, only fades out
   if (index === 0) {
     if (local < 0.8) return 1;
     if (local < 1.0) return (1 - local) / 0.2;
     return 0;
   }
 
-  // All other zones — fade in, hold, fade out
   if (local <= 0) return 0;
   if (local < 0.15) return local / 0.15;
   if (local < 0.82) return 1;
@@ -87,13 +85,12 @@ export default function ScrollSections() {
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll(); // set initial state
+    onScroll();
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
     <>
-      {/* Zone 0 — Hero: fixed at bottom of viewport */}
       <div
         ref={el => { sectionRefs.current[0] = el; }}
         style={{
@@ -110,7 +107,6 @@ export default function ScrollSections() {
         <HeroContent />
       </div>
 
-      {/* Zones 1–5 — anchored to bottom of viewport, matching hero layout */}
       {SECTIONS.slice(1).map((section, i) => {
         const idx = i + 1;
         if (section.isHero) return null;

@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import DecryptedText from './DecryptedText';
+import { useLoadingContext } from '@/contexts/LoadingContext';
 
 const LABELS = ['FUTURE', 'INNOVATION', 'COLLABORATION', 'EXCELLENCE', 'PURPOSE', 'LEGACY'];
 
 export default function Sidebar() {
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
   const markerRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const { isLoaded } = useLoadingContext();
 
   useEffect(() => {
     function onScroll() {
@@ -78,7 +81,15 @@ export default function Sidebar() {
             >
               ■
             </span>
-            {label}
+            {isLoaded ? (
+              <DecryptedText
+                text={label}
+                animateOn="hover"
+                speed={40}
+                maxIterations={8}
+                sequential
+              />
+            ) : label}
           </li>
         ))}
       </ul>
