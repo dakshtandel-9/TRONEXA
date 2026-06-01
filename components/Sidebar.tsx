@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import DecryptedText from './DecryptedText';
 import { useLoadingContext } from '@/contexts/LoadingContext';
+import { useTypingSound } from '@/hooks/useTypingSound';
 
 const LABELS = ['FUTURE', 'INNOVATION', 'COLLABORATION', 'EXCELLENCE', 'PURPOSE', 'LEGACY'];
 
@@ -10,28 +11,33 @@ export default function Sidebar() {
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
   const markerRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const { isLoaded } = useLoadingContext();
+  const playTyping = useTypingSound();
 
   useEffect(() => {
-    function onScroll() {
-      const maxScroll = document.body.scrollHeight - window.innerHeight;
-      const progress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
-      const active = Math.min(5, Math.floor(progress * 6));
-
+    function setActive(index: number) {
       itemRefs.current.forEach((item, i) => {
         if (!item) return;
-        item.style.color = i === active ? 'white' : 'rgba(255,255,255,0.3)';
+        item.style.color = i === index ? 'white' : 'rgba(255,255,255,0.3)';
       });
       markerRefs.current.forEach((marker, i) => {
         if (!marker) return;
-        marker.style.opacity = i === active ? '1' : '0';
-        marker.style.transform = i === active ? 'scale(1)' : 'scale(0.5)';
+        marker.style.opacity = i === index ? '1' : '0';
+        marker.style.transform = i === index ? 'scale(1)' : 'scale(0.5)';
       });
     }
 
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
+    function onSectionChange(e: Event) {
+      setActive((e as CustomEvent<{ index: number }>).detail.index);
+    }
+
+    window.addEventListener('sectionchange', onSectionChange);
+    setActive(0);
+    return () => window.removeEventListener('sectionchange', onSectionChange);
   }, []);
+
+  function navigateTo(index: number) {
+    window.dispatchEvent(new CustomEvent('navigatesection', { detail: { index } }));
+  }
 
   return (
     <nav
@@ -57,6 +63,8 @@ export default function Sidebar() {
           <li
             key={label}
             ref={el => { itemRefs.current[i] = el; }}
+            onClick={() => navigateTo(i)}
+            onMouseEnter={playTyping}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -66,7 +74,7 @@ export default function Sidebar() {
               letterSpacing: '0.18em',
               textTransform: 'uppercase',
               transition: 'color 0.35s ease',
-              cursor: 'default',
+              cursor: 'pointer',
               userSelect: 'none',
             }}
           >

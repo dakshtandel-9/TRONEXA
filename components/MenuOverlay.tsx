@@ -1,201 +1,260 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import DecryptedText from './DecryptedText';
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const SECTIONS = [
-  {
-    num: '01',
-    title: 'Future',
-    active: true,
-    desc: 'We build the future of digital innovation',
-    btn: { label: 'Explore our Projects', href: '/projects' },
-  },
-  {
-    num: '02',
-    title: 'Innovation',
-    active: false,
-    desc: 'We lead the way in technology transformation',
-    btn: { label: 'Work with us', href: '/careers' },
-  },
-  {
-    num: '03',
-    title: 'Collaboration',
-    active: false,
-    desc: 'We work with a team of digital specialists',
-    btn: null,
-  },
-  {
-    num: '04',
-    title: 'Excellence',
-    active: false,
-    desc: 'To create what businesses aspire to become',
-    btn: { label: 'Discover our vision', href: '/about' },
-  },
-  {
-    num: '05',
-    title: 'Purpose',
-    active: false,
-    desc: 'Build the future with purpose',
-    btn: null,
-  },
-  {
-    num: '06',
-    title: 'Legacy',
-    active: false,
-    desc: "Define tomorrow's digital landscape",
-    btn: { label: 'Explore our Services', href: '/services' },
-  },
+const NAV_ITEMS = ['SERVICES', 'ABOUT', 'PROJECTS', 'CAREERS', 'CONTACT'];
+
+const LINKS = [
+  { label: 'PRIVACY POLICY', num: '01', href: '/privacy-policy' },
+  { label: 'TERMS & CONDITIONS', num: '02', href: '/terms' },
+  { label: 'ABOUT TRONEXA', num: '03', href: '/about' },
+  { label: 'SERVICES', num: '04', href: '/services' },
+  { label: 'CAREERS', num: '05', href: '/careers' },
 ];
 
 export default function MenuOverlay({ isOpen, onClose }: Props) {
+  const [openKey, setOpenKey] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) setOpenKey(k => k + 1);
+  }, [isOpen]);
+
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 200,
-        background: 'rgba(0,0,0,0.97)',
-        opacity: isOpen ? 1 : 0,
-        transform: isOpen ? 'translateY(0)' : 'translateY(24px)',
-        transition: 'opacity 0.4s ease, transform 0.4s ease',
         pointerEvents: isOpen ? 'auto' : 'none',
-        overflowY: 'auto',
       }}
     >
-      {/* Close */}
-      <button
+      {/* Backdrop */}
+      <div
         onClick={onClose}
         style={{
-          position: 'fixed',
-          top: '28px',
-          right: '40px',
-          zIndex: 10,
-          color: 'white',
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          fontSize: '20px',
-          letterSpacing: '0.05em',
-          padding: '4px 8px',
-          transition: 'opacity 0.2s',
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(0,0,0,0.3)',
+          opacity: isOpen ? 1 : 0,
+          transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
-        onMouseEnter={e => { e.currentTarget.style.opacity = '0.6'; }}
-        onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
-        aria-label="Close menu"
-      >
-        ✕
-      </button>
+      />
 
-      {/* 2-col, 3-row grid */}
+      {/* Slide panel */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          minHeight: '100vh',
-          paddingTop: '80px',
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          maxWidth: '520px',
+          background: '#cdd4eb',
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
       >
-        {SECTIONS.map((s, i) => (
-          <div
-            key={s.num}
-            style={{
-              padding: '52px 56px',
-              borderBottom: '1px solid rgba(255,255,255,0.07)',
-              borderRight: i % 2 === 0 ? '1px solid rgba(255,255,255,0.07)' : 'none',
-            }}
-          >
-            {/* Label row */}
-            <div
+        {/* Top bar */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '28px 32px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '10px', color: '#0d0f1a' }}>■</span>
+            <span
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                marginBottom: '18px',
+                fontSize: '10px',
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: '#0d0f1a',
+                fontWeight: 600,
               }}
             >
-              {s.active && (
-                <span style={{ color: 'white', fontSize: '10px', lineHeight: 1 }}>■</span>
-              )}
-              <span
-                style={{
-                  color: s.active ? 'white' : 'rgba(255,255,255,0.35)',
-                  fontSize: '11px',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {s.num}
-              </span>
-            </div>
+              EXPLORE
+            </span>
+          </div>
 
-            {/* Title */}
-            <h2
+          <button
+            onClick={onClose}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: '#0d0f1a',
+              border: 'none',
+              color: 'white',
+              padding: '10px 20px',
+              cursor: 'pointer',
+              fontSize: '10px',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
+              clipPath: 'polygon(0% 0%, calc(100% - 12px) 0%, 100% 12px, 100% 100%, 0% 100%)',
+              transition: 'opacity 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = '0.8'; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+            aria-label="Close menu"
+          >
+            <span style={{ fontSize: '12px' }}>✕</span>
+            CLOSE
+          </button>
+        </div>
+
+        {/* Nav items */}
+        <nav style={{ flex: 1, padding: '16px 32px 0' }}>
+          {NAV_ITEMS.map((item, i) => (
+            <a
+              key={item}
+              href={`/${item.toLowerCase()}`}
+              onClick={onClose}
               style={{
-                color: 'white',
-                fontSize: 'clamp(2rem, 3vw, 3rem)',
-                fontWeight: 700,
+                display: 'block',
+                fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.05,
-                margin: '0 0 18px',
+                color: '#0d0f1a',
+                textDecoration: 'none',
+                opacity: isOpen ? 1 : 0,
+                transform: isOpen ? 'translateY(0)' : 'translateY(12px)',
+                transition: 'opacity 0.3s ease, transform 0.3s ease, color 0.2s',
+                transitionDelay: isOpen ? `${0.15 + i * 0.06}s` : '0s',
               }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'rgba(13,15,26,0.4)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = '#0d0f1a'; }}
             >
-              {s.title}
-            </h2>
+              <DecryptedText
+                key={`${item}-${openKey}`}
+                text={item}
+                animateOn="inViewHover"
+                speed={40}
+                maxIterations={14}
+                sequential
+                style={{ fontSize: 'clamp(1.96rem, 6.3vw, 3.15rem)' }}
+              />
+            </a>
+          ))}
+        </nav>
 
-            {/* Description */}
-            <p
+        {/* Links section */}
+        <div style={{ padding: '32px 32px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <span style={{ fontSize: '10px', color: '#0d0f1a' }}>■</span>
+            <span
               style={{
-                color: 'rgba(255,255,255,0.45)',
-                fontSize: '14px',
-                lineHeight: 1.65,
-                margin: '0 0 28px',
-                maxWidth: '340px',
+                fontSize: '10px',
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: '#0d0f1a',
+                fontWeight: 600,
               }}
             >
-              {s.desc}
-            </p>
+              LINKS
+            </span>
+          </div>
 
-            {/* CTA */}
-            {s.btn && (
+          {LINKS.map(link => (
+            <div
+              key={link.num}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '10px 0',
+                borderTop: '1px solid rgba(13,15,26,0.12)',
+              }}
+            >
               <a
-                href={s.btn.href}
+                href={link.href}
                 onClick={onClose}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  border: '1px solid rgba(255,255,255,0.35)',
-                  color: 'white',
-                  padding: '10px 24px',
-                  fontSize: '11px',
-                  letterSpacing: '0.13em',
+                  fontSize: '10px',
+                  letterSpacing: '0.14em',
                   textTransform: 'uppercase',
+                  color: 'rgba(13,15,26,0.5)',
                   textDecoration: 'none',
-                  borderRadius: '100px',
-                  transition: 'background 0.2s, color 0.2s, border-color 0.2s',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#0d0f1a'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(13,15,26,0.5)'; }}
+              >
+                {link.label}
+              </a>
+              <span style={{ fontSize: '10px', color: 'rgba(13,15,26,0.4)', letterSpacing: '0.1em' }}>
+                {link.num}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '20px 32px 28px',
+            marginTop: '8px',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              color: '#0d0f1a',
+              textTransform: 'uppercase',
+            }}
+          >
+            WWW.TRONEXA.COM
+          </span>
+
+          <div style={{ display: 'flex', gap: '16px' }}>
+            {['▶', '◯', 'f', 'in'].map(icon => (
+              <a
+                key={icon}
+                href="#"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  border: '1px solid rgba(13,15,26,0.3)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  color: '#0d0f1a',
+                  textDecoration: 'none',
+                  transition: 'background 0.2s, color 0.2s',
                 }}
                 onMouseEnter={e => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background = 'white';
-                  el.style.color = 'black';
-                  el.style.borderColor = 'white';
+                  e.currentTarget.style.background = '#0d0f1a';
+                  e.currentTarget.style.color = '#cdd4eb';
                 }}
                 onMouseLeave={e => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background = 'transparent';
-                  el.style.color = 'white';
-                  el.style.borderColor = 'rgba(255,255,255,0.35)';
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#0d0f1a';
                 }}
               >
-                {s.btn.label} →
+                {icon}
               </a>
-            )}
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );

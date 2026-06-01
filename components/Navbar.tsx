@@ -5,10 +5,12 @@ import Link from 'next/link';
 import MenuOverlay from './MenuOverlay';
 import DecryptedText from './DecryptedText';
 import { useLoadingContext } from '@/contexts/LoadingContext';
+import { useTypingSound } from '@/hooks/useTypingSound';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { isLoaded } = useLoadingContext();
+  const playTyping = useTypingSound();
 
   return (
     <>
@@ -50,6 +52,8 @@ export default function Navbar() {
 
         <button
           onClick={() => setMenuOpen(true)}
+          onMouseEnter={e => { playTyping(); e.currentTarget.style.background = 'rgba(235, 240, 255, 0.98)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(210, 218, 240, 0.88)'; }}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -66,12 +70,6 @@ export default function Navbar() {
             backdropFilter: 'blur(8px)',
             clipPath: 'polygon(0% 0%, calc(100% - 14px) 0%, 100% 14px, 100% 100%, 0% 100%)',
             transition: 'background 0.2s',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(235, 240, 255, 0.98)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'rgba(210, 218, 240, 0.88)';
           }}
         >
           <span style={{ fontSize: '13px' }}>⊞</span>

@@ -2,13 +2,12 @@ import ScrollSequence from '@/components/ScrollSequence';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import BottomBar from '@/components/BottomBar';
-import ProgressBar from '@/components/ProgressBar';
 import ScrollSections from '@/components/ScrollSections';
 import BorderFrame from '@/components/BorderFrame';
 import CustomCursor from '@/components/CustomCursor';
-import ScrollController from '@/components/ScrollController';
 import { SoundProvider } from '@/contexts/SoundContext';
 import { LoadingProvider } from '@/contexts/LoadingContext';
+import ClickSound from '@/components/ClickSound';
 
 export default function Home() {
   return (
@@ -16,24 +15,21 @@ export default function Home() {
       <LoadingProvider>
         <main style={{ background: 'transparent' }}>
           <CustomCursor />
-          <ScrollController />
+          <ClickSound />
 
-          {/* Fixed canvas — z-index: -1 */}
+          {/* Fixed canvas background — z-index: -1 */}
           <ScrollSequence />
 
-          {/* Viewport border frame — chamfered corners via SVG polygon */}
+          {/* Viewport border frame */}
           <BorderFrame />
 
           {/* Fixed UI chrome */}
           <Navbar />
           <Sidebar />
-          <ProgressBar />
           <BottomBar />
 
-          {/* Scroll container — 2000vh drives the slow scroll animation with 5 breaks */}
-          <div style={{ height: '4000vh', position: 'relative', background: 'transparent' }}>
-            <ScrollSections />
-          </div>
+          {/* Section text overlays — all position:fixed, driven by sectionchange events */}
+          <ScrollSections />
         </main>
       </LoadingProvider>
     </SoundProvider>

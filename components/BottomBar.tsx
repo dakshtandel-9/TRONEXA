@@ -3,10 +3,12 @@
 import { useSoundContext } from '@/contexts/SoundContext';
 import { useLoadingContext } from '@/contexts/LoadingContext';
 import DecryptedText from './DecryptedText';
+import { useTypingSound } from '@/hooks/useTypingSound';
 
 export default function BottomBar() {
   const { soundOn, toggleSound } = useSoundContext();
   const { isLoaded } = useLoadingContext();
+  const playTyping = useTypingSound();
 
   return (
     <div
@@ -41,7 +43,7 @@ export default function BottomBar() {
           pointerEvents: 'auto',
           transition: 'color 0.2s',
         }}
-        onMouseEnter={e => { e.currentTarget.style.color = 'white'; }}
+        onMouseEnter={e => { playTyping(); e.currentTarget.style.color = 'white'; }}
         onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.80)'; }}
       >
         {soundOn ? (
@@ -80,7 +82,7 @@ export default function BottomBar() {
           pointerEvents: 'auto',
           transition: 'color 0.2s',
         }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'white'; }}
+        onMouseEnter={e => { playTyping(); (e.currentTarget as HTMLElement).style.color = 'white'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.80)'; }}
       >
         {isLoaded ? (
