@@ -107,8 +107,26 @@ export default function PrivacyPolicyContent() {
         display: 'flex',
         alignItems: 'flex-end',
         padding: '140px 60px 80px',
+        position: 'relative',
+        overflow: 'hidden',
       }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+          }}
+        >
+          <source src="/allPagebg.mp4" type="video/mp4" />
+        </video>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
           <div className="page-legal-hero" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.4fr',

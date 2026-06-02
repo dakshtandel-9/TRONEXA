@@ -67,8 +67,26 @@ export default function ServicePageContent({ data }: { data: ServicePageData }) 
         alignItems: 'center',
         justifyContent: 'center',
         padding: '140px 60px 100px',
+        position: 'relative',
+        overflow: 'hidden',
       }}>
-        <div style={{ maxWidth: '900px', textAlign: 'center' }}>
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+          }}
+        >
+          <source src="/allPagebg.mp4" type="video/mp4" />
+        </video>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: '900px', textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'center', marginBottom: '32px' }}>
             <a
               href="/services"
@@ -167,69 +185,6 @@ export default function ServicePageContent({ data }: { data: ServicePageData }) 
             }}>
               {data.overview}
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── WHAT WE DELIVER ──────────────────────────────── */}
-      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ marginBottom: '64px' }}>
-            <SectionLabel text="What We Deliver" />
-            <h2 style={{
-              fontSize: 'clamp(1.6rem, 2.4vw, 2.5rem)',
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
-              lineHeight: 1.12,
-              textTransform: 'uppercase',
-              color: 'white',
-              margin: 0,
-              maxWidth: '560px',
-            }}>
-              Services included in<br />this solution
-            </h2>
-          </div>
-
-          <div className="page-grid-3col page-service-items-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            borderTop: '1px solid rgba(255,255,255,0.1)',
-          }}>
-            {data.deliverables.map((item, j) => (
-              <div key={j} className="page-service-item-cell" style={{
-                padding: '28px 28px 28px 0',
-                paddingLeft: j % 3 > 0 ? '28px' : '0',
-                borderBottom: '1px solid rgba(255,255,255,0.07)',
-                borderLeft: j % 3 > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none',
-                display: 'flex',
-                gap: '16px',
-                alignItems: 'flex-start',
-              }}>
-                <span style={{
-                  fontSize: '10px',
-                  color: 'rgba(255,255,255,0.2)',
-                  letterSpacing: '0.16em',
-                  fontFamily: 'var(--font-geist-mono)',
-                  flexShrink: 0,
-                  paddingTop: '2px',
-                }}>{item.num}</span>
-                <div>
-                  <div style={{
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    color: 'white',
-                    marginBottom: '8px',
-                  }}>{item.title}</div>
-                  <div style={{
-                    fontSize: '12px',
-                    color: 'rgba(255,255,255,0.42)',
-                    lineHeight: 1.7,
-                  }}>{item.desc}</div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>

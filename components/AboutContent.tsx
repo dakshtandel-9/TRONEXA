@@ -36,8 +36,26 @@ export default function AboutContent() {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '140px 60px 100px',
+        position: 'relative',
+        overflow: 'hidden',
       }}>
-        <div style={{ maxWidth: '900px', textAlign: 'center' }}>
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+          }}
+        >
+          <source src="/allPagebg.mp4" type="video/mp4" />
+        </video>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: '900px', textAlign: 'center' }}>
           <SectionLabel text="About TRONEXA" />
 
           <h1 style={{
