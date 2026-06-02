@@ -43,6 +43,7 @@ export default function ScrollSequence() {
   const targetMXRef = useRef(0), targetMYRef = useRef(0);
 
   const easeOutRafsRef = useRef<Map<number, number>>(new Map());
+  const switchToSectionRef = useRef<(targetSection: number) => void>(() => {});
 
   const startEaseOut = useCallback((video: HTMLVideoElement, idx: number) => {
     const EASE_WINDOW = 0.5; // seconds before end to start easing
@@ -60,6 +61,10 @@ export default function ScrollSequence() {
           video.pause();
           video.playbackRate = 1;
           easeOutRafsRef.current.delete(idx);
+          // only auto-advance on the last video (5th → 6th section)
+          if (idx === VIDEO_SRCS.length - 1) {
+            switchToSectionRef.current(MAX_SECTION);
+          }
           return;
         }
       } else {
@@ -105,6 +110,8 @@ export default function ScrollSequence() {
     dispatchSectionSettled(targetSection);
     updateProgressBar(targetSection);
   }, [startEaseOut]);
+
+  switchToSectionRef.current = switchToSection;
 
   const goNext = useCallback(() => {
     const next = currentSectionRef.current + 1;

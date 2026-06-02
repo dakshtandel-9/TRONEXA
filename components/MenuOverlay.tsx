@@ -30,7 +30,7 @@ export default function MenuOverlay({ isOpen, onClose }: Props) {
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 200,
+        zIndex: 9999,
         pointerEvents: isOpen ? 'auto' : 'none',
       }}
     >

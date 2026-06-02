@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import MenuOverlay from './MenuOverlay';
 import DecryptedText from './DecryptedText';
 import { useLoadingContext } from '@/contexts/LoadingContext';
@@ -38,27 +39,14 @@ export default function Navbar() {
         }}
       >
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <span
-            className="navbar-logo"
-            style={{
-              color: 'white',
-              fontSize: '20px',
-              fontWeight: 800,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              textShadow: '0 2px 12px rgba(0,0,0,0.5)',
-            }}
-          >
-            {isLoaded ? (
-              <DecryptedText
-                text="TRONEXA"
-                animateOn="inViewHover"
-                speed={40}
-                maxIterations={12}
-                sequential
-              />
-            ) : 'TRONEXA'}
-          </span>
+          <Image
+            src="/tronexa-logo.png"
+            alt="Tronexa"
+            width={140}
+            height={40}
+            style={{ objectFit: 'contain', filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.5))' }}
+            priority
+          />
         </Link>
 
         <button
