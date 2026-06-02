@@ -196,8 +196,6 @@ export default function ContactContent() {
           <source src="/allPagebg.mp4" type="video/mp4" />
         </video>
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '860px' }}>
-          <SectionLabel text="Get In Touch" />
-
           <h1 style={{
             fontSize: 'clamp(2.4rem, 5vw, 5rem)',
             fontWeight: 800,
