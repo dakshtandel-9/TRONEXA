@@ -10,6 +10,12 @@ export default function HeroContent() {
         margin: '0 auto',
       }}
     >
+      {/* Mobile-only label */}
+      <div className="mobile-label" style={{ display: 'none' }}>
+        <span style={{ fontSize: '7px' }}>■</span>
+        FUTURE
+      </div>
+
       <h1
         style={{
           color: 'white',
@@ -40,6 +46,7 @@ export default function HeroContent() {
 
       <a
         href="/projects"
+        className="mobile-cta"
         style={{
           display: 'inline-flex',
           alignItems: 'center',

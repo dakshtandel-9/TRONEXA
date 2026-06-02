@@ -43,11 +43,13 @@ export default function Sidebar() {
     <nav
       style={{
         position: 'fixed',
-        left: '50px',
+        left: 'clamp(16px, 3vw, 50px)',
         top: '50%',
         transform: 'translateY(-50%)',
         zIndex: 10,
+        display: 'var(--sidebar-display, flex)',
       }}
+      className="hide-on-mobile"
     >
       <ul
         style={{

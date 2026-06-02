@@ -6,7 +6,7 @@ import { useLoadingContext } from '@/contexts/LoadingContext';
 const TOTAL_SECTIONS = 6;
 const AUTO_FRACTION = 0.50; // 50% of each section auto-scrolled
 const DURATION = 1400; // ms for the auto-scroll animation
-const SCROLL_MULTIPLIER = 1.0; // natural scroll speed — animation advances slowly
+const SCROLL_MULTIPLIER = 0.7; // natural scroll speed — animation advances slowly
 const SNAP_DELAY = 350; // ms of scroll inactivity before snapping to next section
 
 function easeInOut(t: number): number {
@@ -55,6 +55,11 @@ export default function ScrollController() {
       snapTimerRef.current = setTimeout(() => {
         if (isScrollingRef.current) return;
         const section = getCurrentSection();
+
+        // Section 0 (hero): allow free manual + reverse scroll — no forced snapping.
+        // onScroll handles auto-scrolling when the user crosses into section 1.
+        if (section === 0) return;
+
         const sectionStart = getSectionStart(section);
         const sectionEnd = getSectionStart(section + 1);
         const midpoint = (sectionStart + sectionEnd) / 2;
@@ -70,7 +75,7 @@ export default function ScrollController() {
 
         if (lastWheelDirRef.current > 0 && section < TOTAL_SECTIONS - 1) {
           // Scrolled down: snap to next section (uses existing auto-scroll which goes to 50%)
-          triggerAutoScroll(section + 1);
+          animateToSection(section + 1);
         } else if (lastWheelDirRef.current < 0 && window.scrollY > sectionStart) {
           // Scrolled up: snap back to start of current section
           snapTo(sectionStart);
@@ -117,25 +122,23 @@ export default function ScrollController() {
       requestAnimationFrame(tick);
     }
 
-    function triggerAutoScroll(sectionIndex: number) {
+    function animateToSection(sectionIndex: number) {
       if (isScrollingRef.current) return;
-      if (completedRef.current.has(sectionIndex)) return;
-
       const target = getTarget(sectionIndex);
-      if (window.scrollY >= target) {
-        completedRef.current.add(sectionIndex);
-        return;
-      }
-
+      if (window.scrollY >= target) return;
       isScrollingRef.current = true;
       completedRef.current.add(sectionIndex);
       lockExtras();
-
       animateTo(target, () => {
         unlockExtras();
         isScrollingRef.current = false;
         prevSectionRef.current = sectionIndex;
       });
+    }
+
+    function triggerAutoScroll(sectionIndex: number) {
+      if (completedRef.current.has(sectionIndex)) return;
+      animateToSection(sectionIndex);
     }
 
     function onScroll() {

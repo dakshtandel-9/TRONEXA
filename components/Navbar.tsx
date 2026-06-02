@@ -14,21 +14,32 @@ export default function Navbar() {
 
   return (
     <>
+      <style>{`
+        @media (max-width: 640px) {
+          .navbar-logo { font-size: 16px !important; }
+          .navbar-menu-btn {
+            padding: 10px 18px !important;
+            font-size: 10px !important;
+            clip-path: polygon(0% 0%, calc(100% - 12px) 0%, 100% 12px, 100% 100%, 0% 100%) !important;
+          }
+        }
+      `}</style>
       <nav
         style={{
           position: 'fixed',
-          top: '30px',
-          left: '30px',
-          right: '30px',
+          top: 'clamp(12px, 2vw, 30px)',
+          left: 'clamp(12px, 2vw, 30px)',
+          right: 'clamp(12px, 2vw, 30px)',
           zIndex: 50,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 24px',
+          padding: 'clamp(10px, 1.5vw, 16px) clamp(12px, 2vw, 24px)',
         }}
       >
         <Link href="/" style={{ textDecoration: 'none' }}>
           <span
+            className="navbar-logo"
             style={{
               color: 'white',
               fontSize: '20px',
@@ -51,6 +62,7 @@ export default function Navbar() {
         </Link>
 
         <button
+          className="navbar-menu-btn"
           onClick={() => setMenuOpen(true)}
           onMouseEnter={e => { playTyping(); e.currentTarget.style.background = 'rgba(235, 240, 255, 0.98)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'rgba(210, 218, 240, 0.88)'; }}
