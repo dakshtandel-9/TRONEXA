@@ -51,6 +51,7 @@ function PolicySection({ section }: { section: typeof SECTIONS[0] }) {
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      className="page-policy-section"
       style={{
         padding: '52px 44px',
         borderTop: '1px solid rgba(255,255,255,0.08)',
@@ -100,7 +101,7 @@ export default function PrivacyPolicyContent() {
     <div style={{ fontFamily: 'var(--font-geist-sans), Arial, sans-serif' }}>
 
       {/* HERO */}
-      <section style={{
+      <section className="page-hero" style={{
         minHeight: '60vh',
         background: '#0d0f1a',
         display: 'flex',
@@ -108,7 +109,7 @@ export default function PrivacyPolicyContent() {
         padding: '140px 60px 80px',
       }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
-          <div style={{
+          <div className="page-legal-hero" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.4fr',
             gap: '80px',
@@ -143,9 +144,9 @@ export default function PrivacyPolicyContent() {
       </section>
 
       {/* POLICY HEADER */}
-      <section style={{ background: '#080b14', padding: '100px 60px 0' }}>
+      <section className="page-section" style={{ background: '#080b14', padding: '100px 60px 0' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-legal-hero" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.4fr',
             gap: '80px',
@@ -165,7 +166,7 @@ export default function PrivacyPolicyContent() {
                 Your privacy is our commitment
               </h2>
             </div>
-            <p style={{
+            <p className="page-asym-right" style={{
               color: 'rgba(255,255,255,0.55)',
               fontSize: '14px',
               lineHeight: 1.85,
@@ -180,7 +181,7 @@ export default function PrivacyPolicyContent() {
       </section>
 
       {/* POLICY SECTIONS */}
-      <section style={{ background: '#080b14', padding: '60px 60px 120px' }}>
+      <section className="page-section" style={{ background: '#080b14', padding: '60px 60px 120px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{
             marginTop: '60px',
@@ -195,8 +196,8 @@ export default function PrivacyPolicyContent() {
       </section>
 
       {/* COMMITMENTS BAR */}
-      <section style={{ background: '#cdd4eb', padding: '0 60px' }}>
-        <div style={{
+      <section className="page-strip" style={{ background: '#cdd4eb', padding: '0 60px' }}>
+        <div className="page-commit-grid" style={{
           maxWidth: '1100px',
           margin: '0 auto',
           display: 'grid',
@@ -207,7 +208,7 @@ export default function PrivacyPolicyContent() {
             { num: 'Transparent', label: 'Our Commitment' },
             { num: 'Confidential', label: 'Your Information' },
           ].map((item, i) => (
-            <div key={i} style={{
+            <div key={i} className="page-commit-cell" style={{
               padding: '56px 36px',
               borderLeft: i > 0 ? '1px solid rgba(13,15,26,0.12)' : 'none',
             }}>
@@ -232,7 +233,7 @@ export default function PrivacyPolicyContent() {
       </section>
 
       {/* CTA BANNER */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
             fontSize: 'clamp(2rem, 3.5vw, 3.5rem)',

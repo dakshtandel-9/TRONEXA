@@ -29,7 +29,7 @@ export default function AboutContent() {
     <div style={{ fontFamily: 'var(--font-geist-sans), Arial, sans-serif' }}>
 
       {/* ── SECTION 1: HERO ─────────────────────────────── */}
-      <section style={{
+      <section className="page-hero" style={{
         minHeight: '100vh',
         background: '#0d0f1a',
         display: 'flex',
@@ -90,13 +90,13 @@ export default function AboutContent() {
       </section>
 
       {/* ── SECTION 2: STATS BAR ────────────────────────── */}
-      <section style={{
+      <section className="page-strip" style={{
         background: '#0d0f1a',
         borderTop: '1px solid rgba(255,255,255,0.1)',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
         padding: '0 60px',
       }}>
-        <div style={{
+        <div className="page-stats-grid" style={{
           maxWidth: '1100px',
           margin: '0 auto',
           display: 'grid',
@@ -108,7 +108,7 @@ export default function AboutContent() {
             { num: '150+', label: 'Completed Projects' },
             { num: '20+', label: 'Countries Served' },
           ].map((stat, i) => (
-            <div key={i} style={{
+            <div key={i} className="page-stats-cell" style={{
               padding: '52px 40px',
               borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
               textAlign: i === 0 ? 'left' : 'center',
@@ -134,8 +134,8 @@ export default function AboutContent() {
       </section>
 
       {/* ── SECTION 3: WHO WE ARE ───────────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
-        <div style={{
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+        <div className="page-grid-asym" style={{
           maxWidth: '1100px',
           margin: '0 auto',
           display: 'grid',
@@ -157,7 +157,7 @@ export default function AboutContent() {
               More than a technology company —<br />a digital transformation partner
             </h2>
           </div>
-          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', lineHeight: 1.85 }}>
+          <div className="page-asym-right" style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', lineHeight: 1.85 }}>
             <p style={{ margin: '0 0 20px' }}>
               We are more than just a technology company. We are a strategic digital transformation partner
               committed to helping businesses innovate, scale, and thrive in an ever-evolving digital landscape.
@@ -180,10 +180,10 @@ export default function AboutContent() {
       </section>
 
       {/* ── SECTION 4: VISION & MISSION ─────────────────── */}
-      <section style={{ background: '#cdd4eb', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#cdd4eb', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <SectionLabel text="Our Purpose" dark />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px', marginTop: '40px' }}>
+          <div className="page-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px', marginTop: '40px' }}>
             {[
               {
                 label: 'Vision',
@@ -234,9 +234,9 @@ export default function AboutContent() {
       </section>
 
       {/* ── SECTION 5: WHAT WE DO ───────────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -255,7 +255,7 @@ export default function AboutContent() {
                 margin: 0,
               }}>End-to-end digital solutions<br />for modern businesses</h2>
             </div>
-            <p style={{
+            <p className="page-asym-right" style={{
               color: 'rgba(255,255,255,0.6)',
               fontSize: '14px',
               lineHeight: 1.85,
@@ -268,7 +268,7 @@ export default function AboutContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="page-whatwedo-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
             {[
               { num: '01', title: 'Web Development', desc: 'High-performance, responsive, and scalable websites and web applications built for growth.' },
               { num: '02', title: 'Mobile App Development', desc: 'Native and cross-platform mobile applications for Android and iOS with seamless user experiences.' },
@@ -279,7 +279,7 @@ export default function AboutContent() {
               { num: '07', title: 'IoT Solutions', desc: 'Connected device ecosystems, industrial automation, and smart monitoring systems.' },
               { num: '08', title: 'Digital Marketing & Staffing', desc: 'Data-driven marketing strategies and reliable IT and non-IT staffing solutions.' },
             ].map((s, i) => (
-              <div key={i} style={{
+              <div key={i} className="page-whatwedo-cell" style={{
                 padding: '36px 28px',
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 borderLeft: i % 4 > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
@@ -334,9 +334,9 @@ export default function AboutContent() {
       </section>
 
       {/* ── SECTION 6: OUR APPROACH ─────────────────────── */}
-      <section style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start' }}>
+          <div className="page-grid-asym" style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start' }}>
             <div>
               <SectionLabel text="How We Work" />
               <h2 style={{
@@ -354,7 +354,7 @@ export default function AboutContent() {
               </p>
             </div>
 
-            <div>
+            <div className="page-asym-right">
               {[
                 { num: '01', title: 'Innovation-Driven Thinking', desc: 'We approach every challenge with creative problem-solving and emerging technology.' },
                 { num: '02', title: 'Client-Centric Development', desc: 'Every solution is built around your specific goals, audience, and business context.' },
@@ -390,9 +390,9 @@ export default function AboutContent() {
       </section>
 
       {/* ── SECTION 7: OUR VALUES ───────────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -411,7 +411,7 @@ export default function AboutContent() {
                 margin: 0,
               }}>The principles that guide everything we build</h2>
             </div>
-            <p style={{
+            <p className="page-asym-right" style={{
               color: 'rgba(255,255,255,0.55)',
               fontSize: '14px',
               lineHeight: 1.85,
@@ -423,14 +423,14 @@ export default function AboutContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="page-values-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
             {[
               { num: '001', title: 'Purpose', desc: 'At TRONEXA, every solution begins with a purpose. We transform bold ideas into intelligent technology that solves real-world challenges and drives meaningful business impact.' },
               { num: '002', title: 'Growth', desc: 'We are invested in continuous growth — for our clients, our team, and our technology. Through learning, mentorship, and meaningful challenges, we evolve alongside the industry.' },
               { num: '003', title: 'Teamwork', desc: 'We are a close-knit team of developers, designers, strategists, engineers, and innovators. Collaboration, integrity, and mutual respect shape everything we build.' },
               { num: '004', title: 'Unity', desc: 'From software engineers to product strategists, every perspective matters here. Diverse thinking creates stronger solutions, better experiences, and lasting innovation.' },
             ].map((v, i) => (
-              <div key={i} style={{
+              <div key={i} className="page-values-cell" style={{
                 padding: '44px 32px',
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
@@ -462,9 +462,9 @@ export default function AboutContent() {
       </section>
 
       {/* ── SECTION 8: WHY CHOOSE US ────────────────────── */}
-      <section style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.6fr',
             gap: '80px',
@@ -483,7 +483,7 @@ export default function AboutContent() {
                 margin: 0,
               }}>Technology that creates opportunity, not just solutions</h2>
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', lineHeight: 1.85, paddingTop: '66px' }}>
+            <div className="page-asym-right" style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', lineHeight: 1.85, paddingTop: '66px' }}>
               <p style={{ margin: '0 0 20px' }}>
                 We believe technology should not only solve problems but also create new opportunities. Our experienced
                 team of developers, designers, and technology experts work closely with clients to build customized
@@ -496,7 +496,7 @@ export default function AboutContent() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.08)' }}>
+          <div className="page-why-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.08)' }}>
             {[
               { title: 'Global Reach', desc: 'Operating across USA, UAE, and India with 20+ countries served and a team of 150+ professionals.' },
               { title: 'Full-Service Capability', desc: 'From web and mobile to AI, cloud, IoT, and staffing — one partner for your entire technology journey.' },
@@ -524,7 +524,7 @@ export default function AboutContent() {
       </section>
 
       {/* ── SECTION 9: OUR COMMITMENT ───────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '760px', margin: '0 auto', textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
             <span style={{ fontSize: '10px', color: '#cdd4eb' }}>■</span>
@@ -551,7 +551,7 @@ export default function AboutContent() {
       </section>
 
       {/* ── SECTION 10: GLOBAL PRESENCE ─────────────────── */}
-      <section style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <SectionLabel text="Where We Are" />
           <h2 style={{
@@ -564,7 +564,7 @@ export default function AboutContent() {
             margin: '0 0 64px',
           }}>Serving businesses<br />across the globe</h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+          <div className="page-locations-3col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
             {[
               {
                 country: 'USA',
@@ -605,7 +605,7 @@ export default function AboutContent() {
       </section>
 
       {/* ── SECTION 11: CTA BANNER ──────────────────────── */}
-      <section style={{ background: '#cdd4eb', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#cdd4eb', padding: '120px 60px' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
             fontSize: 'clamp(2rem, 3.5vw, 3.5rem)',

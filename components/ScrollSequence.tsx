@@ -134,7 +134,7 @@ export default function ScrollSequence() {
       if (!isLoadedRef.current) return;
       if (wheelFiredRef.current) return;
       const now = Date.now();
-      if (now - lastNavClickRef.current < 5000) return;
+      if (now - lastNavClickRef.current < 2000) return;
       wheelFiredRef.current = true;
       lastNavClickRef.current = now;
 
@@ -310,7 +310,7 @@ export default function ScrollSequence() {
           <button
             onClick={() => {
               const now = Date.now();
-              if (now - lastNavClickRef.current < 5000) return;
+              if (now - lastNavClickRef.current < 2000) return;
               lastNavClickRef.current = now;
               goBack();
             }}
@@ -329,7 +329,7 @@ export default function ScrollSequence() {
           <button
             onClick={() => {
               const now = Date.now();
-              if (now - lastNavClickRef.current < 5000) return;
+              if (now - lastNavClickRef.current < 2000) return;
               lastNavClickRef.current = now;
               goNext();
             }}

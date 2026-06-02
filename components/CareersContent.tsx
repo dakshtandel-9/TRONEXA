@@ -154,7 +154,7 @@ function PositionCard({ pos }: { pos: typeof OPEN_POSITIONS[0] }) {
         gap: '0',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+      <div className="page-pos-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em', fontFamily: 'var(--font-geist-mono)' }}>{pos.num}</span>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <span style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cdd4eb', border: '1px solid rgba(205,212,235,0.35)', padding: '4px 10px', fontWeight: 600 }}>{pos.dept}</span>
@@ -207,7 +207,7 @@ export default function CareersContent() {
     <div style={{ fontFamily: 'var(--font-geist-sans), Arial, sans-serif' }}>
 
       {/* ── SECTION 1: HERO ─────────────────────────────── */}
-      <section style={{
+      <section className="page-hero" style={{
         minHeight: '100vh',
         background: '#0d0f1a',
         display: 'flex',
@@ -268,8 +268,8 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 2: STATS BAR ────────────────────────── */}
-      <section style={{ background: '#cdd4eb', padding: '0 60px' }}>
-        <div style={{
+      <section className="page-strip" style={{ background: '#cdd4eb', padding: '0 60px' }}>
+        <div className="page-stats-grid" style={{
           maxWidth: '1100px',
           margin: '0 auto',
           display: 'grid',
@@ -281,7 +281,7 @@ export default function CareersContent() {
             { num: '11', label: 'Service Domains' },
             { num: '20+', label: 'Countries Reached' },
           ].map((stat, i) => (
-            <div key={i} style={{
+            <div key={i} className="page-stats-cell-light" style={{
               padding: '56px 36px',
               borderLeft: i > 0 ? '1px solid rgba(13,15,26,0.12)' : 'none',
             }}>
@@ -306,9 +306,9 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 3: WHY WORK WITH US ─────────────────── */}
-      <section style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -343,7 +343,7 @@ export default function CareersContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.07)' }}>
+          <div className="page-grid-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.07)' }}>
             {BENEFIT_CARDS.map((card, i) => (
               <div key={i} style={{
                 padding: '52px 44px',
@@ -378,9 +378,9 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 4: OUR VALUES ───────────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -413,9 +413,9 @@ export default function CareersContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="page-values-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
             {VALUES.map((v, i) => (
-              <div key={i} style={{
+              <div key={i} className="page-values-cell" style={{
                 padding: '44px 32px',
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
@@ -450,7 +450,7 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 5: VISION & IMPACT ──────────────────── */}
-      <section style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ marginBottom: '72px' }}>
             <SectionLabel text="Our Vision" />
@@ -467,7 +467,7 @@ export default function CareersContent() {
             </h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'rgba(255,255,255,0.07)' }}>
+          <div className="page-vision-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'rgba(255,255,255,0.07)' }}>
             <div style={{ padding: '52px 44px', background: '#080b14', clipPath: CLIP_LG }}>
               <div style={{
                 fontSize: '10px',
@@ -514,9 +514,9 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 6: WHAT WE DELIVER ──────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -552,7 +552,7 @@ export default function CareersContent() {
                   desc: 'From the client experience to the user experience to the employee experience — everything we create is shaped by a deep commitment to making interactions seamless, meaningful, and valuable.',
                 },
               ].map((pillar, i) => (
-                <div key={i} style={{
+                <div key={i} className="page-pillar-row" style={{
                   padding: '36px 0',
                   borderTop: '1px solid rgba(255,255,255,0.08)',
                   display: 'grid',
@@ -576,7 +576,7 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 7: TESTIMONIALS ─────────────────────── */}
-      <section style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '72px' }}>
             <SectionLabel text="Life at TRONEXA" />
@@ -603,7 +603,7 @@ export default function CareersContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.07)' }}>
+          <div className="page-testimonials-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.07)' }}>
             {TESTIMONIALS.map((t, i) => (
               <div key={i} style={{
                 padding: '52px 44px',
@@ -646,9 +646,9 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 8: WHO WE HIRE ──────────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -682,9 +682,9 @@ export default function CareersContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="page-industries-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
             {ROLE_CATEGORIES.map((role, i) => (
-              <div key={i} style={{
+              <div key={i} className="page-industry-cell" style={{
                 padding: '36px 28px',
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 borderLeft: i % 4 > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
@@ -710,9 +710,9 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 9: OPEN POSITIONS ───────────────────── */}
-      <section id="open-positions" style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section id="open-positions" className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-positions-header" style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-end',
@@ -747,7 +747,7 @@ export default function CareersContent() {
             </p>
           </div>
 
-          <div style={{
+          <div className="page-testimonials-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '1px',
@@ -759,7 +759,7 @@ export default function CareersContent() {
           </div>
 
           {/* General application */}
-          <div style={{
+          <div className="page-general-app" style={{
             marginTop: '1px',
             padding: '52px 44px',
             background: 'rgba(205,212,235,0.04)',
@@ -807,9 +807,9 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 10: APPLICATION PROCESS ─────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -842,9 +842,9 @@ export default function CareersContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)' }}>
+          <div className="page-hiring-steps" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)' }}>
             {HIRING_STEPS.map((step, i) => (
-              <div key={i} style={{
+              <div key={i} className="page-hiring-step" style={{
                 padding: '44px 28px',
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
@@ -881,9 +881,9 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 11: ABOUT TRONEXA ───────────────────── */}
-      <section style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '100px', alignItems: 'start' }}>
+          <div className="page-grid-asym" style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '100px', alignItems: 'start' }}>
             <div>
               <SectionLabel text="About TRONEXA" />
               <h2 style={{
@@ -950,7 +950,7 @@ export default function CareersContent() {
               </a>
             </div>
 
-            <div style={{ paddingTop: '66px' }}>
+            <div className="page-asym-right" style={{ paddingTop: '66px' }}>
               <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.9, margin: '0 0 24px' }}>
                 For years, TRONEXA has been delivering innovative digital solutions that help businesses evolve,
                 scale, and succeed in a rapidly changing technology landscape. From strategy and design to
@@ -968,7 +968,7 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 12: CTA BANNER ──────────────────────── */}
-      <section style={{ background: '#cdd4eb', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#cdd4eb', padding: '120px 60px' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
             fontSize: 'clamp(2rem, 3.5vw, 3.5rem)',

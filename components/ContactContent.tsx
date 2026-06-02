@@ -168,7 +168,7 @@ export default function ContactContent() {
     <div style={{ fontFamily: 'var(--font-geist-sans), Arial, sans-serif' }}>
 
       {/* ── SECTION 1: HERO ─────────────────────────────────────── */}
-      <section style={{
+      <section className="page-hero" style={{
         minHeight: '100vh',
         background: '#0d0f1a',
         display: 'flex',
@@ -247,13 +247,13 @@ export default function ContactContent() {
       </section>
 
       {/* ── SECTION 2: CONTACT OPTIONS STRIP ───────────────────── */}
-      <section style={{
+      <section className="page-strip" style={{
         background: '#0d0f1a',
         borderTop: '1px solid rgba(255,255,255,0.08)',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
         padding: '0 60px',
       }}>
-        <div style={{
+        <div className="page-contact-strip" style={{
           maxWidth: '1100px',
           margin: '0 auto',
           display: 'grid',
@@ -279,7 +279,7 @@ export default function ContactContent() {
               cta: 'Start Chat →', href: 'https://wa.me/17137326262',
             },
           ].map((card, i) => (
-            <div key={i} style={{
+            <div key={i} className="page-contact-strip-cell" style={{
               padding: '52px 40px',
               borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none',
             }}>
@@ -338,8 +338,8 @@ export default function ContactContent() {
       </section>
 
       {/* ── SECTION 3: CONTACT FORM ─────────────────────────────── */}
-      <section id="contact-form" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start' }}>
+      <section id="contact-form" className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+        <div className="page-grid-asym" style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start' }}>
 
           {/* Left */}
           <div>
@@ -404,7 +404,7 @@ export default function ContactContent() {
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
                 {/* Row 1 */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="page-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
                     <label style={labelStyle}>First Name *</label>
                     <input
@@ -424,7 +424,7 @@ export default function ContactContent() {
                 </div>
 
                 {/* Row 2 */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="page-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
                     <label style={labelStyle}>Email Address *</label>
                     <input
@@ -452,7 +452,7 @@ export default function ContactContent() {
                 </div>
 
                 {/* Row 3 */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="page-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
                     <label style={labelStyle}>Phone Number *</label>
                     <input
@@ -574,9 +574,9 @@ export default function ContactContent() {
       </section>
 
       {/* ── SECTION 4: OFFICE LOCATIONS ─────────────────────────── */}
-      <section style={{ background: '#cdd4eb', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#cdd4eb', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start', marginBottom: '60px' }}>
+          <div className="page-grid-asym" style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start', marginBottom: '60px' }}>
             <div>
               <SectionLabel text="Where We Are" dark />
               <h2 style={{
@@ -594,7 +594,7 @@ export default function ContactContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+          <div className="page-locations-3col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
             {LOCATIONS.map((loc, i) => (
               <div
                 key={i}
@@ -662,7 +662,7 @@ export default function ContactContent() {
       </section>
 
       {/* ── SECTION 5: MAP ──────────────────────────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <SectionLabel text="Find Us" />
           <h2 style={{
@@ -696,7 +696,7 @@ export default function ContactContent() {
             ))}
           </div>
 
-          <div style={{
+          <div className="page-map-frame" style={{
             width: '100%', height: '480px',
             border: '1px solid rgba(255,255,255,0.08)',
             overflow: 'hidden',
@@ -719,9 +719,9 @@ export default function ContactContent() {
       </section>
 
       {/* ── SECTION 6: WHAT HAPPENS NEXT ────────────────────────── */}
-      <section style={{ background: '#0d0f1a', borderTop: '1px solid rgba(255,255,255,0.08)', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', borderTop: '1px solid rgba(255,255,255,0.08)', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start', marginBottom: '72px' }}>
+          <div className="page-grid-asym" style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start', marginBottom: '72px' }}>
             <div>
               <SectionLabel text="What to Expect" />
               <h2 style={{
@@ -733,12 +733,12 @@ export default function ContactContent() {
                 We make every conversation<br />count from the very first message
               </h2>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', lineHeight: 1.8, margin: 'auto 0 0', paddingTop: '40px' }}>
+            <p className="page-asym-right" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', lineHeight: 1.8, margin: 'auto 0 0', paddingTop: '40px' }}>
               We know your time is valuable. Here is exactly what happens after you reach out to TRONEXA — so you always know where things stand.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.08)' }}>
+          <div className="page-next-steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.08)' }}>
             {PROCESS_STEPS.map((step, i) => (
               <div key={i} style={{
                 background: '#0d0f1a',
@@ -769,9 +769,9 @@ export default function ContactContent() {
       </section>
 
       {/* ── SECTION 7: HOW WE CAN HELP ──────────────────────────── */}
-      <section style={{ background: '#cdd4eb', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#cdd4eb', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start', marginBottom: '60px' }}>
+          <div className="page-grid-asym" style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start', marginBottom: '60px' }}>
             <div>
               <SectionLabel text="How We Can Help" dark />
               <h2 style={{
@@ -783,13 +783,13 @@ export default function ContactContent() {
                 Whatever your technology<br />challenge — we are ready
               </h2>
             </div>
-            <p style={{ color: 'rgba(13,15,26,0.6)', fontSize: '14px', lineHeight: 1.8, margin: 'auto 0 0', paddingTop: '40px' }}>
+            <p className="page-asym-right" style={{ color: 'rgba(13,15,26,0.6)', fontSize: '14px', lineHeight: 1.8, margin: 'auto 0 0', paddingTop: '40px' }}>
               From a single service to a full digital transformation journey, TRONEXA is equipped to support
               businesses of every size and stage. Here are some of the most common reasons businesses reach out to us.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+          <div className="page-help-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
             {HELP_CARDS.map((card, i) => (
               <div key={i} style={{
                 padding: '36px 28px',
@@ -834,9 +834,9 @@ export default function ContactContent() {
       </section>
 
       {/* ── SECTION 8: FAQ ──────────────────────────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start', marginBottom: '60px' }}>
+          <div className="page-grid-asym" style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: '80px', alignItems: 'start', marginBottom: '60px' }}>
             <div>
               <SectionLabel text="FAQs" />
               <h2 style={{
@@ -848,7 +848,7 @@ export default function ContactContent() {
                 Common questions<br />before getting in touch
               </h2>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', lineHeight: 1.8, margin: 'auto 0 0', paddingTop: '40px' }}>
+            <p className="page-asym-right" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', lineHeight: 1.8, margin: 'auto 0 0', paddingTop: '40px' }}>
               Here are some questions we frequently receive from businesses exploring a partnership with TRONEXA.
             </p>
           </div>
@@ -858,6 +858,7 @@ export default function ContactContent() {
               <div key={i} style={{ background: '#0d0f1a' }}>
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="page-faq-btn"
                   style={{
                     width: '100%', textAlign: 'left',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -877,7 +878,7 @@ export default function ContactContent() {
                   }}>+</span>
                 </button>
                 {openFaq === i && (
-                  <div style={{ padding: '0 36px 28px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="page-faq-answer" style={{ padding: '0 36px 28px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                     <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, margin: '20px 0 0' }}>
                       {faq.a}
                     </p>
@@ -890,10 +891,10 @@ export default function ContactContent() {
       </section>
 
       {/* ── SECTION 9: SOCIAL MEDIA ─────────────────────────────── */}
-      <section style={{ background: '#cdd4eb', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#cdd4eb', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <SectionLabel text="Follow TRONEXA" dark />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '80px', alignItems: 'start', marginBottom: '60px' }}>
+          <div className="page-grid-asym" style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '80px', alignItems: 'start', marginBottom: '60px' }}>
             <h2 style={{
               fontSize: 'clamp(1.6rem, 2.4vw, 2.5rem)',
               fontWeight: 800, letterSpacing: '-0.02em',
@@ -907,7 +908,7 @@ export default function ContactContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+          <div className="page-socials-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
             {SOCIALS.map((s, i) => (
               <a
                 key={i}
@@ -966,7 +967,7 @@ export default function ContactContent() {
       </section>
 
       {/* ── SECTION 10: CTA BANNER ──────────────────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '140px 60px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '140px 60px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ maxWidth: '720px', margin: '0 auto' }}>
           <h2 style={{
             fontSize: 'clamp(2rem, 4vw, 4rem)',

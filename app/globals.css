@@ -43,6 +43,383 @@ main {
   position: relative;
 }
 
+/* ── PAGE RESPONSIVE STYLES ── */
+@media (max-width: 768px) {
+  /* Shared section padding */
+  .page-section {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+  .page-section-sm-pad {
+    padding: 80px 20px !important;
+  }
+  .page-hero {
+    padding: 120px 20px 80px !important;
+  }
+  /* Strip sections */
+  .page-strip {
+    padding: 0 20px !important;
+  }
+
+  /* Grid overrides — stack everything */
+  .page-grid-2col,
+  .page-grid-3col,
+  .page-grid-4col,
+  .page-grid-5col,
+  .page-grid-2col-asym,
+  .page-grid-asym {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+
+  /* Stats bar grids — 2 columns on mobile */
+  .page-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .page-stats-cell {
+    padding: 36px 20px !important;
+    border-left: none !important;
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+    text-align: left !important;
+  }
+  .page-stats-cell:nth-child(odd) {
+    border-left: none !important;
+  }
+  .page-stats-cell:nth-child(even) {
+    border-left: 1px solid rgba(255,255,255,0.1) !important;
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+  }
+  .page-stats-cell-light {
+    border-top: 1px solid rgba(13,15,26,0.12) !important;
+    border-left: none !important;
+    padding: 36px 20px !important;
+  }
+  .page-stats-cell-light:nth-child(even) {
+    border-left: 1px solid rgba(13,15,26,0.12) !important;
+  }
+
+  /* Service cards — 1 col on mobile */
+  .page-service-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .page-service-card {
+    border-left: none !important;
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+  }
+
+  /* Services page: service overview cards grid — 1 col */
+  .page-service-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .page-service-card-item {
+    border-left: none !important;
+  }
+
+  /* Services page: service detail items grid — 1 col */
+  .page-service-items-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .page-service-item-cell {
+    border-left: none !important;
+    padding-left: 0 !important;
+  }
+
+  /* Why/benefit cards — 1 col */
+  .page-why-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Industries grid — 2 col */
+  .page-industries-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .page-industry-cell {
+    border-left: none !important;
+  }
+  .page-industry-cell:nth-child(even) {
+    border-left: 1px solid rgba(255,255,255,0.08) !important;
+  }
+  /* Override the inline 4-col position classes on mobile */
+  .page-industry-cell-1,
+  .page-industry-cell-2,
+  .page-industry-cell-3,
+  .page-industry-cell-4 {
+    border-left: none !important;
+  }
+  .page-industries-grid .page-industry-cell:nth-child(even) {
+    border-left: 1px solid rgba(255,255,255,0.08) !important;
+  }
+
+  /* Process steps — 1 col */
+  .page-process-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1px !important;
+  }
+
+  /* Hiring steps — 1 col */
+  .page-hiring-steps {
+    grid-template-columns: 1fr !important;
+  }
+  .page-hiring-step {
+    border-left: none !important;
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+  }
+
+  /* Position header flex -> column */
+  .page-positions-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+  .page-positions-header p {
+    text-align: left !important;
+    max-width: 100% !important;
+  }
+
+  /* Position card header */
+  .page-pos-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  /* General application banner */
+  .page-general-app {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  /* Testimonials — 1 col */
+  .page-testimonials-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Deliver pillars */
+  .page-pillar-row {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Values grid — 2 col */
+  .page-values-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .page-values-cell {
+    border-left: none !important;
+  }
+  .page-values-cell:nth-child(even) {
+    border-left: 1px solid rgba(255,255,255,0.1) !important;
+  }
+
+  /* Contact form grid — 1 col */
+  .page-form-row {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Office locations grid — 1 col */
+  .page-locations-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* FAQ accordion — tighter side padding */
+  .page-faq-btn {
+    padding: 24px 20px !important;
+  }
+  .page-faq-answer {
+    padding: 0 20px 24px !important;
+  }
+
+  /* Social media grid — 1 col on mobile */
+  .page-socials-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Contact strip — 1 col */
+  .page-contact-strip {
+    grid-template-columns: 1fr !important;
+  }
+  .page-contact-strip-cell {
+    border-left: none !important;
+    border-top: 1px solid rgba(255,255,255,0.08) !important;
+    padding: 40px 20px !important;
+  }
+
+  /* What happens next — 1 col on mobile */
+  .page-next-steps-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Help cards — 1 col on mobile */
+  .page-help-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Policy sections grid */
+  .page-policy-section {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 36px 20px !important;
+  }
+
+  /* Privacy/Terms hero grid */
+  .page-legal-hero {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+
+  /* Commitment bar */
+  .page-commit-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .page-commit-cell {
+    border-left: none !important;
+    border-top: 1px solid rgba(13,15,26,0.12) !important;
+    padding: 36px 20px !important;
+  }
+
+  /* Vision/Impact 2-col */
+  .page-vision-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* paddingTop overrides inside grid cells */
+  .page-asym-right {
+    padding-top: 0 !important;
+  }
+
+  /* About locations */
+  .page-locations-3col {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* About what-we-do 4-col */
+  .page-whatwedo-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .page-whatwedo-cell {
+    border-left: none !important;
+  }
+  .page-whatwedo-cell:nth-child(even) {
+    border-left: 1px solid rgba(255,255,255,0.1) !important;
+  }
+
+  /* Map height on mobile */
+  .page-map-frame {
+    height: 300px !important;
+  }
+
+  /* ── PROJECTS PAGE ── */
+  .proj-hero {
+    padding: 120px 20px 80px !important;
+  }
+  .proj-section-pad {
+    padding: 80px 20px !important;
+  }
+  .proj-strip {
+    padding: 0 20px !important;
+  }
+  .proj-featured-section {
+    padding: 0 20px 80px !important;
+  }
+
+  /* Hero inline stats — stack to column */
+  .proj-hero-stats {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0 !important;
+    width: 100% !important;
+  }
+  .proj-hero-stat-cell {
+    padding: 20px 24px !important;
+    border-left: none !important;
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+    width: 100% !important;
+    text-align: left !important;
+  }
+  .proj-hero-stat-cell:first-child {
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+  }
+
+  /* Asymmetric grids — stack to 1 col */
+  .proj-asym-grid {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+  .proj-asym-right {
+    padding-top: 0 !important;
+  }
+
+  /* Featured header — stack */
+  .proj-featured-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 20px !important;
+  }
+  .proj-featured-sub {
+    text-align: left !important;
+    max-width: 100% !important;
+  }
+
+  /* Project cards grid — 1 col */
+  .proj-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stats strip — 2 col */
+  .proj-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .proj-stats-cell {
+    padding: 36px 20px !important;
+    border-left: none !important;
+    border-top: 1px solid rgba(13,15,26,0.12) !important;
+  }
+  .proj-stats-cell:nth-child(even) {
+    border-left: 1px solid rgba(13,15,26,0.12) !important;
+  }
+
+  /* Delivery steps — 1 col */
+  .proj-3col-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .proj-delivery-cell {
+    border-left: none !important;
+  }
+
+  /* Tech stack rows — stack label above items */
+  .proj-tech-row {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* Industries grid — 2 col */
+  .proj-industries-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .proj-industry-cell {
+    border-left: none !important;
+  }
+  .proj-industries-grid .proj-industry-cell:nth-child(even) {
+    border-left: 1px solid rgba(255,255,255,0.1) !important;
+  }
+
+  /* Testimonials — 1 col */
+  .proj-testimonials-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Locations grid — 1 col */
+  .proj-locations-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
+
 @media (max-width: 640px) {
   .hide-on-mobile {
     display: none !important;

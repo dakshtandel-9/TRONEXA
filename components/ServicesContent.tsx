@@ -368,7 +368,7 @@ export default function ServicesContent() {
     <div style={{ fontFamily: 'var(--font-geist-sans), Arial, sans-serif' }}>
 
       {/* ── SECTION 1: HERO ─────────────────────────────── */}
-      <section style={{
+      <section className="page-hero" style={{
         minHeight: '100vh',
         background: '#0d0f1a',
         display: 'flex',
@@ -424,20 +424,20 @@ export default function ServicesContent() {
       </section>
 
       {/* ── SECTION 2: STATS BAR ────────────────────────── */}
-      <section style={{
+      <section className="page-strip" style={{
         background: '#0d0f1a',
         borderTop: '1px solid rgba(255,255,255,0.1)',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
         padding: '0 60px',
       }}>
-        <div style={{
+        <div className="page-stats-grid" style={{
           maxWidth: '1100px',
           margin: '0 auto',
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
         }}>
           {STATS.map((stat, i) => (
-            <div key={i} style={{
+            <div key={i} className="page-stats-cell" style={{
               padding: '52px 40px',
               borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
               textAlign: i === 0 ? 'left' : 'center',
@@ -463,9 +463,9 @@ export default function ServicesContent() {
       </section>
 
       {/* ── SECTION 3: SERVICES GRID ────────────────────── */}
-      <section style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -486,7 +486,7 @@ export default function ServicesContent() {
                 Everything your business needs<br />to grow and transform digitally
               </h2>
             </div>
-            <p style={{
+            <p className="page-asym-right" style={{
               color: 'rgba(255,255,255,0.55)',
               fontSize: '14px',
               lineHeight: 1.85,
@@ -497,10 +497,11 @@ export default function ServicesContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className="page-grid-3col page-service-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {SERVICE_CARDS.map((card, i) => (
               <div
                 key={i}
+                className="page-service-card-item"
                 style={{
                   padding: '36px 32px',
                   borderTop: '1px solid rgba(255,255,255,0.1)',
@@ -565,12 +566,13 @@ export default function ServicesContent() {
           <section
             key={service.num}
             id={`service-${service.num}`}
+            className="page-section-sm-pad"
             style={{ background: bg, padding: '120px 60px', scrollMarginTop: '100px' }}
           >
             <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
               {/* Header row */}
-              <div style={{
+              <div className="page-grid-asym" style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1.8fr',
                 gap: '80px',
@@ -619,7 +621,7 @@ export default function ServicesContent() {
                     ⊞ {service.cta} →
                   </a>
                 </div>
-                <p style={{
+                <p className="page-asym-right" style={{
                   color: 'rgba(255,255,255,0.6)',
                   fontSize: '14px',
                   lineHeight: 1.85,
@@ -630,13 +632,13 @@ export default function ServicesContent() {
               </div>
 
               {/* Services list grid */}
-              <div style={{
+              <div className="page-grid-3col page-service-items-grid" style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 borderTop: '1px solid rgba(255,255,255,0.1)',
               }}>
                 {service.items.map((item, j) => (
-                  <div key={j} style={{
+                  <div key={j} className="page-service-item-cell" style={{
                     padding: '28px 28px 28px 0',
                     paddingLeft: j % 3 > 0 ? '28px' : '0',
                     borderBottom: '1px solid rgba(255,255,255,0.07)',
@@ -678,10 +680,10 @@ export default function ServicesContent() {
       })}
 
       {/* ── SECTION 5: OUR PROCESS ──────────────────────── */}
-      <section style={{ background: '#cdd4eb', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#cdd4eb', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <SectionLabel text="How We Deliver" dark />
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -710,7 +712,7 @@ export default function ServicesContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'rgba(13,15,26,0.12)' }}>
+          <div className="page-process-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'rgba(13,15,26,0.12)' }}>
             {PROCESS_STEPS.map((step, i) => (
               <div key={i} style={{
                 padding: '44px 36px',
@@ -744,9 +746,9 @@ export default function ServicesContent() {
       </section>
 
       {/* ── SECTION 6: WHY CHOOSE TRONEXA ───────────────── */}
-      <section style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.6fr',
             gap: '80px',
@@ -778,7 +780,7 @@ export default function ServicesContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.08)' }}>
+          <div className="page-why-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.08)' }}>
             {WHY_CARDS.map((card, i) => (
               <div key={i} style={{
                 padding: '44px 32px',
@@ -805,9 +807,9 @@ export default function ServicesContent() {
       </section>
 
       {/* ── SECTION 7: INDUSTRIES WE SERVE ─────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="page-grid-asym" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -839,9 +841,9 @@ export default function ServicesContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="page-industries-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
             {INDUSTRIES.map((industry, i) => (
-              <div key={i} style={{
+              <div key={i} className={`page-industry-cell page-industry-cell-${(i % 4) + 1}`} style={{
                 padding: '24px 28px',
                 borderTop: '1px solid rgba(255,255,255,0.08)',
                 borderLeft: i % 4 > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none',
@@ -867,7 +869,7 @@ export default function ServicesContent() {
       </section>
 
       {/* ── SECTION 8: CTA BANNER ───────────────────────── */}
-      <section style={{ background: '#cdd4eb', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#cdd4eb', padding: '120px 60px' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
             fontSize: 'clamp(2rem, 3.5vw, 3.5rem)',

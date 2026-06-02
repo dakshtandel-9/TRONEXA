@@ -7,7 +7,7 @@ import DecryptedText from './DecryptedText';
 import { useTypingSound } from '@/hooks/useTypingSound';
 
 const MAX_SECTION = 5;
-const COOLDOWN_MS = 5000;
+const COOLDOWN_MS = 2000;
 
 export default function BottomBar() {
   const { soundOn, toggleSound } = useSoundContext();

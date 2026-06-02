@@ -288,7 +288,7 @@ export default function ProjectsContent() {
     <div style={{ fontFamily: 'var(--font-geist-sans), Arial, sans-serif' }}>
 
       {/* ── SECTION 1: HERO ─────────────────────────────── */}
-      <section style={{
+      <section className="proj-hero" style={{
         minHeight: '100vh',
         background: '#0d0f1a',
         display: 'flex',
@@ -323,7 +323,7 @@ export default function ProjectsContent() {
             reflection of our commitment to quality, innovation, and measurable results.
           </p>
 
-          <div style={{
+          <div className="proj-hero-stats" style={{
             display: 'flex',
             justifyContent: 'center',
             gap: '0',
@@ -335,7 +335,7 @@ export default function ProjectsContent() {
               { num: '50+', label: 'Active Engagements' },
               { num: '20+', label: 'Countries Served' },
             ].map((stat, i) => (
-              <div key={i} style={{
+              <div key={i} className="proj-hero-stat-cell" style={{
                 padding: '28px 48px',
                 borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.12)' : 'none',
                 textAlign: 'center',
@@ -385,9 +385,9 @@ export default function ProjectsContent() {
       </section>
 
       {/* ── SECTION 2: FILTER BAR ───────────────────────── */}
-      <section style={{ background: '#080b14', padding: '100px 60px' }}>
+      <section className="proj-section-pad" style={{ background: '#080b14', padding: '100px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="proj-asym-grid" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -408,7 +408,7 @@ export default function ProjectsContent() {
                 Explore projects across<br />every technology domain
               </h2>
             </div>
-            <p style={{
+            <p className="proj-asym-right" style={{
               color: 'rgba(255,255,255,0.55)',
               fontSize: '14px',
               lineHeight: 1.85,
@@ -499,9 +499,9 @@ export default function ProjectsContent() {
       </section>
 
       {/* ── SECTION 3: FEATURED PROJECTS ────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '0 60px 120px' }}>
+      <section className="proj-featured-section" style={{ background: '#0d0f1a', padding: '0 60px 120px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="proj-featured-header" style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -523,7 +523,7 @@ export default function ProjectsContent() {
                 Projects we are<br />most proud of
               </h2>
             </div>
-            <p style={{
+            <p className="proj-featured-sub" style={{
               color: 'rgba(255,255,255,0.5)',
               fontSize: '13px',
               lineHeight: 1.8,
@@ -548,7 +548,7 @@ export default function ProjectsContent() {
               No projects match the selected filters
             </div>
           ) : (
-            <div style={{
+            <div className="proj-cards-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: '1px',
@@ -563,11 +563,11 @@ export default function ProjectsContent() {
       </section>
 
       {/* ── SECTION 4: STATS STRIP ──────────────────────── */}
-      <section style={{
+      <section className="proj-strip" style={{
         background: '#cdd4eb',
         padding: '0 60px',
       }}>
-        <div style={{
+        <div className="proj-stats-grid" style={{
           maxWidth: '1100px',
           margin: '0 auto',
           display: 'grid',
@@ -579,7 +579,7 @@ export default function ProjectsContent() {
             { num: '11', label: 'Service Domains', sub: 'End-to-end expertise across every major technology vertical' },
             { num: '20+', label: 'Countries Reached', sub: 'Serving startups, enterprises, and growing organizations worldwide' },
           ].map((stat, i) => (
-            <div key={i} style={{
+            <div key={i} className="proj-stats-cell" style={{
               padding: '56px 36px',
               borderLeft: i > 0 ? '1px solid rgba(13,15,26,0.12)' : 'none',
             }}>
@@ -610,9 +610,9 @@ export default function ProjectsContent() {
       </section>
 
       {/* ── SECTION 5: HOW WE DELIVER ───────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="proj-section-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="proj-asym-grid" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -633,7 +633,7 @@ export default function ProjectsContent() {
                 From the first conversation<br />to the final launch
               </h2>
             </div>
-            <p style={{
+            <p className="proj-asym-right" style={{
               color: 'rgba(255,255,255,0.55)',
               fontSize: '14px',
               lineHeight: 1.85,
@@ -645,9 +645,9 @@ export default function ProjectsContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className="proj-3col-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {DELIVERY_STEPS.map((step, i) => (
-              <div key={i} style={{
+              <div key={i} className="proj-delivery-cell" style={{
                 padding: '44px 36px',
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 borderLeft: i % 3 > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
@@ -683,9 +683,9 @@ export default function ProjectsContent() {
       </section>
 
       {/* ── SECTION 6: TECH STACK ───────────────────────── */}
-      <section style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="proj-section-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="proj-asym-grid" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -706,7 +706,7 @@ export default function ProjectsContent() {
                 Built with the best<br />technologies in the industry
               </h2>
             </div>
-            <p style={{
+            <p className="proj-asym-right" style={{
               color: 'rgba(255,255,255,0.55)',
               fontSize: '14px',
               lineHeight: 1.85,
@@ -720,7 +720,7 @@ export default function ProjectsContent() {
 
           <div>
             {TECH_STACK.map((row, i) => (
-              <div key={i} style={{
+              <div key={i} className="proj-tech-row" style={{
                 display: 'grid',
                 gridTemplateColumns: '200px 1fr',
                 gap: '40px',
@@ -747,9 +747,9 @@ export default function ProjectsContent() {
       </section>
 
       {/* ── SECTION 7: INDUSTRIES ───────────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="proj-section-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="proj-asym-grid" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -770,7 +770,7 @@ export default function ProjectsContent() {
                 Delivering technology<br />across every major sector
               </h2>
             </div>
-            <p style={{
+            <p className="proj-asym-right" style={{
               color: 'rgba(255,255,255,0.55)',
               fontSize: '14px',
               lineHeight: 1.85,
@@ -782,9 +782,9 @@ export default function ProjectsContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="proj-industries-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
             {INDUSTRIES.map((industry, i) => (
-              <div key={i} style={{
+              <div key={i} className="proj-industry-cell" style={{
                 padding: '36px 28px',
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 borderLeft: i % 4 > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
@@ -816,7 +816,7 @@ export default function ProjectsContent() {
       </section>
 
       {/* ── SECTION 8: TESTIMONIALS ─────────────────────── */}
-      <section style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="proj-section-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '72px' }}>
             <SectionLabel text="What Clients Say" dark={false} />
@@ -842,7 +842,7 @@ export default function ProjectsContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.07)' }}>
+          <div className="proj-testimonials-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.07)' }}>
             {TESTIMONIALS.map((t, i) => (
               <div key={i} style={{
                 padding: '52px 44px',
@@ -885,9 +885,9 @@ export default function ProjectsContent() {
       </section>
 
       {/* ── SECTION 9: GLOBAL PRESENCE ──────────────────── */}
-      <section style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+      <section className="proj-section-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{
+          <div className="proj-asym-grid" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1.8fr',
             gap: '80px',
@@ -908,7 +908,7 @@ export default function ProjectsContent() {
                 Delivering projects<br />from three global locations
               </h2>
             </div>
-            <p style={{
+            <p className="proj-asym-right" style={{
               color: 'rgba(255,255,255,0.55)',
               fontSize: '14px',
               lineHeight: 1.85,
@@ -920,7 +920,7 @@ export default function ProjectsContent() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+          <div className="proj-locations-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
             {[
               { country: 'USA', address: '8 The Green, Suite A\nDover, DE 19901, USA' },
               { country: 'UAE', address: 'Business Centre, 3rd Floor, Building A3\nBusiness Park, Dubai South\nDubai, United Arab Emirates' },
@@ -952,7 +952,7 @@ export default function ProjectsContent() {
       </section>
 
       {/* ── SECTION 10: CTA BANNER ──────────────────────── */}
-      <section style={{ background: '#cdd4eb', padding: '120px 60px' }}>
+      <section className="proj-section-pad" style={{ background: '#cdd4eb', padding: '120px 60px' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
             fontSize: 'clamp(2rem, 3.5vw, 3.5rem)',
