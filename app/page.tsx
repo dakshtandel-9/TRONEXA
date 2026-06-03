@@ -14,7 +14,7 @@ export default function Home() {
     <SoundProvider>
       <LoadingProvider>
         <main style={{ background: 'transparent' }}>
-          <CustomCursor />
+          <CustomCursor showSoundToggle />
           <ClickSound />
 
           {/* Fixed canvas background — z-index: -1 */}

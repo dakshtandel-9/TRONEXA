@@ -3,20 +3,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSoundContext } from '@/contexts/SoundContext';
 
-const INTERACTIVE_SELECTOR = 'a, button, [role="button"], li[style*="cursor"]';
-
 function isOverInteractive(el: HTMLElement): boolean {
   return !!(
     el.closest('a') ||
     el.closest('button') ||
     el.closest('[role="button"]') ||
+    el.closest('nav') ||
     // sidebar li items have onClick and cursor:pointer via inline style
     el.closest('nav li') ||
     el.closest('nav ul li')
   );
 }
 
-export default function CustomCursor() {
+export default function CustomCursor({ showSoundToggle = false }: { showSoundToggle?: boolean }) {
   const { soundOn, toggleSound } = useSoundContext();
   const [pos, setPos] = useState({ x: -200, y: -200 });
   const [visible, setVisible] = useState(false);
@@ -35,6 +34,7 @@ export default function CustomCursor() {
     const onEnter = () => setVisible(true);
 
     const onClick = (e: MouseEvent) => {
+      if (!showSoundToggle) return;
       const target = e.target as HTMLElement;
       if (!isOverInteractive(target)) {
         toggleSound();
@@ -53,7 +53,7 @@ export default function CustomCursor() {
       document.removeEventListener('mouseenter', onEnter);
       document.removeEventListener('click', onClick);
     };
-  }, [toggleSound]);
+  }, [toggleSound, showSoundToggle]);
 
   return (
     <div
@@ -85,13 +85,13 @@ export default function CustomCursor() {
             width: '8px',
             height: '8px',
             border: '1px solid rgba(255,255,255,0.7)',
-            background: soundOn ? 'rgba(255,255,255,0.85)' : 'transparent',
+            background: showSoundToggle && soundOn ? 'rgba(255,255,255,0.85)' : 'transparent',
             flexShrink: 0,
             marginTop: '2px',
             transition: 'background 0.2s',
           }}
         />
-        {!overInteractive && (
+        {showSoundToggle && !overInteractive && (
           <div
             style={{
               color: 'rgba(255,255,255,0.85)',

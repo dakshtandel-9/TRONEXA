@@ -104,7 +104,12 @@ export default function ServicePageContent({ data }: { data: ServicePageData }) 
               ← All Services
             </a>
             <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.15)' }}>|</span>
-            <SectionLabel text={`${data.num} — ${data.label}`} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '10px', color: '#cdd4eb' }}>■</span>
+              <span style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#cdd4eb', fontWeight: 600 }}>
+                {data.num} — {data.label}
+              </span>
+            </div>
           </div>
           <h1 style={{
             fontSize: 'clamp(2.2rem, 5vw, 4.8rem)',

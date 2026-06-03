@@ -669,8 +669,7 @@ export default function ProjectsContent() {
                 padding: '44px 36px',
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 borderLeft: i % 3 > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                clipPath: i === 0 ? CLIP_LG : 'none',
-                background: i === 0 ? 'rgba(205,212,235,0.04)' : 'transparent',
+                background: 'transparent',
               }}>
                 <div style={{
                   fontSize: 'clamp(1.6rem, 2.5vw, 2.4rem)',
@@ -865,7 +864,8 @@ export default function ProjectsContent() {
               <div key={i} style={{
                 padding: '52px 44px',
                 background: '#080b14',
-                clipPath: i === 0 ? CLIP_LG : 'none',
+                display: 'flex',
+                flexDirection: 'column',
               }}>
                 <div style={{
                   fontSize: '28px',
@@ -880,6 +880,7 @@ export default function ProjectsContent() {
                   lineHeight: 1.85,
                   margin: '0 0 32px',
                   fontStyle: 'italic',
+                  flex: 1,
                 }}>{t.quote.replace(/^"|"$/g, '')}</p>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '24px' }}>
                   <div style={{

@@ -21,25 +21,23 @@ function SectionLabel({ text, dark = false }: { text: string; dark?: boolean }) 
 const STATS = [
   { num: '150+', label: 'Completed Projects' },
   { num: '50+', label: 'Active Engagements' },
-  { num: '14', label: 'Service Domains' },
+  { num: '12', label: 'Service Domains' },
   { num: '20+', label: 'Countries Served' },
 ];
 
 const SERVICE_CARDS = [
-  { num: '01', title: 'Web Development', desc: 'Build powerful, responsive, and high-performing websites tailored to your business goals.', href: '/services/web-development' },
-  { num: '02', title: 'App Development', desc: 'Develop innovative mobile and desktop applications that enhance customer engagement.', href: '/services/app-development' },
-  { num: '03', title: 'Game Development', desc: 'Transform creative ideas into immersive gaming experiences across all platforms.', href: '/services/game-development' },
-  { num: '04', title: 'Generative AI', desc: 'Create intelligent content, automate workflows, and build next-gen AI experiences with generative models.', href: '/services/generative-ai' },
-  { num: '05', title: 'Computer Vision', desc: 'Enable machines to see and interpret the world through image recognition, detection, and video analytics.', href: '/services/computer-vision' },
-  { num: '06', title: 'NLP Solutions', desc: 'Unlock the power of human language with advanced text analysis, sentiment detection, and language models.', href: '/services/nlp-solutions' },
-  { num: '07', title: 'AI Solutions', desc: 'Leverage Artificial Intelligence to automate processes and unlock business intelligence.', href: '/services/ai-solutions' },
-  { num: '08', title: 'IoT Solutions', desc: 'Connect devices and systems seamlessly with intelligent, scalable IoT ecosystems.', href: '/services/iot-solutions' },
-  { num: '09', title: 'Cloud Solutions', desc: 'Empower your business with secure, scalable, and cost-efficient cloud infrastructure.', href: '/services/cloud-solutions' },
-  { num: '10', title: 'CRM Solutions', desc: 'Enhance customer relationships and productivity with intelligent CRM systems.', href: '/services/crm-solutions' },
-  { num: '11', title: 'ServiceNow', desc: 'Streamline enterprise workflows and IT operations with ServiceNow solutions.', href: '/services/servicenow' },
-  { num: '12', title: 'Quality Assurance', desc: 'Ensure flawless performance, reliability, and security through comprehensive testing.', href: '/services/quality-assurance' },
-  { num: '13', title: 'Digital Marketing', desc: 'Drive visibility, traffic, and growth with data-driven marketing strategies.', href: '/services/digital-marketing' },
-  { num: '14', title: 'Staffing (IT & Non-IT)', desc: 'Find the right talent to accelerate your business growth — IT and non-IT roles.', href: '/services/staffing' },
+  { num: '01', title: 'Development', desc: 'End-to-end web, mobile, and game development — from responsive websites and scalable apps to immersive gaming experiences.', href: '/services/development' },
+  { num: '02', title: 'Generative AI', desc: 'Create intelligent content, automate workflows, and build next-gen AI experiences with generative models.', href: '/services/generative-ai' },
+  { num: '03', title: 'Computer Vision', desc: 'Enable machines to see and interpret the world through image recognition, detection, and video analytics.', href: '/services/computer-vision' },
+  { num: '04', title: 'NLP Solutions', desc: 'Unlock the power of human language with advanced text analysis, sentiment detection, and language models.', href: '/services/nlp-solutions' },
+  { num: '05', title: 'AI Solutions', desc: 'Leverage Artificial Intelligence to automate processes and unlock business intelligence.', href: '/services/ai-solutions' },
+  { num: '06', title: 'IoT Solutions', desc: 'Connect devices and systems seamlessly with intelligent, scalable IoT ecosystems.', href: '/services/iot-solutions' },
+  { num: '07', title: 'Cloud Solutions', desc: 'Empower your business with secure, scalable, and cost-efficient cloud infrastructure.', href: '/services/cloud-solutions' },
+  { num: '08', title: 'CRM Solutions', desc: 'Enhance customer relationships and productivity with intelligent CRM systems.', href: '/services/crm-solutions' },
+  { num: '09', title: 'ServiceNow', desc: 'Streamline enterprise workflows and IT operations with ServiceNow solutions.', href: '/services/servicenow' },
+  { num: '10', title: 'Quality Assurance', desc: 'Ensure flawless performance, reliability, and security through comprehensive testing.', href: '/services/quality-assurance' },
+  { num: '11', title: 'Digital Marketing', desc: 'Drive visibility, traffic, and growth with data-driven marketing strategies.', href: '/services/digital-marketing' },
+  { num: '12', title: 'Staffing (IT & Non-IT)', desc: 'Find the right talent to accelerate your business growth — IT and non-IT roles.', href: '/services/staffing' },
 ];
 
 
@@ -54,7 +52,7 @@ const PROCESS_STEPS = [
 
 const WHY_CARDS = [
   { title: 'Full-Service Capability', desc: 'From web, mobile, and AI to cloud, IoT, CRM, and staffing — one partner for your entire technology journey, without managing multiple vendors.' },
-  { title: 'Experienced Team', desc: 'A team of 150+ developers, designers, engineers, strategists, and specialists with deep expertise across 14 service domains and multiple industries.' },
+  { title: 'Experienced Team', desc: 'A team of 150+ developers, designers, engineers, strategists, and specialists with deep expertise across 12 service domains and multiple industries.' },
   { title: 'Proven Delivery', desc: '150+ completed projects and 50+ active client engagements across startups, growing businesses, and enterprises in 20+ countries.' },
   { title: 'Innovation-First Approach', desc: 'We stay ahead of emerging technologies — from Generative AI and computer vision to IoT and cloud automation — so your solutions are always future-ready.' },
 ];
@@ -228,7 +226,7 @@ export default function ServicesContent() {
               margin: 0,
               paddingTop: '66px',
             }}>
-              We specialize in delivering end-to-end digital solutions across 14 service domains. Whether you are building from scratch, scaling an existing system, or transforming your enterprise operations — TRONEXA has the expertise to make it happen.
+              We specialize in delivering end-to-end digital solutions across 12 service domains. Whether you are building from scratch, scaling an existing system, or transforming your enterprise operations — TRONEXA has the expertise to make it happen.
             </p>
           </div>
 

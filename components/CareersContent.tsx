@@ -594,10 +594,12 @@ export default function CareersContent() {
       </section>
 
       {/* ── SECTION 7: TESTIMONIALS ─────────────────────── */}
-      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
+      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px', overflow: 'hidden' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '72px' }}>
-            <SectionLabel text="Life at TRONEXA" />
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <SectionLabel text="Life at TRONEXA" />
+            </div>
             <h2 style={{
               fontSize: 'clamp(1.8rem, 3vw, 3rem)',
               fontWeight: 800,
@@ -626,7 +628,8 @@ export default function CareersContent() {
               <div key={i} style={{
                 padding: '52px 44px',
                 background: '#080b14',
-                clipPath: i === 0 ? CLIP_LG : 'none',
+                display: 'flex',
+                flexDirection: 'column',
               }}>
                 <div style={{
                   fontSize: '28px',
@@ -641,6 +644,7 @@ export default function CareersContent() {
                   lineHeight: 1.85,
                   margin: '0 0 32px',
                   fontStyle: 'italic',
+                  flex: 1,
                 }}>{t.quote}</p>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '24px' }}>
                   <div style={{
@@ -866,8 +870,7 @@ export default function CareersContent() {
                 padding: '44px 28px',
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                clipPath: i === 0 ? CLIP_LG : 'none',
-                background: i === 0 ? 'rgba(205,212,235,0.04)' : 'transparent',
+                background: 'transparent',
               }}>
                 <div style={{
                   fontSize: 'clamp(1.6rem, 2.5vw, 2.4rem)',

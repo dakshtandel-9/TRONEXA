@@ -224,10 +224,16 @@ export default function MenuOverlay({ isOpen, onClose }: Props) {
           </span>
 
           <div style={{ display: 'flex', gap: '16px' }}>
-            {['▶', '◯', 'f', 'in'].map(icon => (
+            {[
+              { icon: 'WA', href: 'https://wa.me/919589432030' },
+              { icon: 'IG', href: 'https://www.instagram.com/tronexatechnologies?utm_source=qr' },
+              { icon: 'IN', href: 'https://www.linkedin.com/company/tronexa/' },
+            ].map(({ icon, href }) => (
               <a
                 key={icon}
-                href="#"
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
                   width: '32px',
                   height: '32px',
@@ -236,7 +242,8 @@ export default function MenuOverlay({ isOpen, onClose }: Props) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '11px',
+                  fontSize: '9px',
+                  fontWeight: 700,
                   color: '#0d0f1a',
                   textDecoration: 'none',
                   transition: 'background 0.2s, color 0.2s',

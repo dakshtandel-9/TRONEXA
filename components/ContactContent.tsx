@@ -41,10 +41,10 @@ const LOCATIONS = [
     flag: '🇮🇳',
     country: 'India',
     label: 'India Development Centre',
-    address: '808, 8th Floor, Skye Corporate Park\nAB Road, Indore 452010\nIndia',
+    address: 'SP 365 Building, Janjeerwala Square\nopposite Hotel Apna Avenue\nIndore, 452001, MP',
     phone: '+1 713-732-6262',
     email: 'info@tronexa.com',
-    mapQ: 'Skye+Corporate+Park+AB+Road+Indore+452010+India',
+    mapQ: 'SP+365+Building+Janjeerwala+Square+Indore+452001+MP',
   },
 ];
 
@@ -98,11 +98,9 @@ const FAQS = [
 ];
 
 const SOCIALS = [
-  { label: 'LinkedIn', handle: 'linkedin.com/company/tronexa', href: 'https://linkedin.com/company/tronexa', icon: 'in' },
-  { label: 'Instagram', handle: '@tronexa', href: 'https://instagram.com/tronexa', icon: 'ig' },
-  { label: 'Twitter / X', handle: '@tronexa', href: 'https://twitter.com/tronexa', icon: 'x' },
-  { label: 'Facebook', handle: 'facebook.com/tronexa', href: 'https://facebook.com/tronexa', icon: 'fb' },
-  { label: 'YouTube', handle: 'youtube.com/tronexa', href: 'https://youtube.com/tronexa', icon: 'yt' },
+  { label: 'WhatsApp', handle: '+91 95894 32030', href: 'https://wa.me/919589432030', icon: 'WA' },
+  { label: 'Instagram', handle: '@tronexatechnologies', href: 'https://www.instagram.com/tronexatechnologies?utm_source=qr', icon: 'IG' },
+  { label: 'LinkedIn', handle: 'linkedin.com/company/tronexa', href: 'https://www.linkedin.com/company/tronexa/', icon: 'IN' },
 ];
 
 export default function ContactContent() {
@@ -724,7 +722,7 @@ export default function ContactContent() {
               src={`https://maps.google.com/maps?q=${LOCATIONS[activeLocation].mapQ}&output=embed`}
               width="100%"
               height="100%"
-              style={{ border: 0, filter: 'grayscale(30%) invert(5%)' }}
+              style={{ border: 0, filter: 'grayscale(100%) invert(1) sepia(30%) hue-rotate(180deg) brightness(0.75) contrast(1.1)', opacity: 0.9 }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -924,7 +922,7 @@ export default function ContactContent() {
             </p>
           </div>
 
-          <div className="page-socials-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+          <div className="page-socials-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {SOCIALS.map((s, i) => (
               <a
                 key={i}
