@@ -110,9 +110,8 @@ export default function ContactContent() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', email: '', dialCode: '', phone: '',
-    company: '', service: '', message: '', consent: false,
+    company: '', address: '', service: '', message: '',
   });
-  const [fileName, setFileName] = useState('No file chosen');
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -127,13 +126,28 @@ export default function ContactContent() {
     }));
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    setFileName(file ? file.name : 'No file chosen');
-  }
-
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    const phoneWithCode = formData.dialCode && formData.dialCode !== 'other'
+      ? `${formData.dialCode.replace('-CA', '')} ${formData.phone}`
+      : formData.phone;
+
+    await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        address: formData.address,
+        phone: phoneWithCode,
+        company: formData.company,
+        service: formData.service,
+        message: formData.message,
+      }),
+    });
+
     setSubmitted(true);
   }
 
@@ -164,7 +178,6 @@ export default function ContactContent() {
 
   return (
     <div style={{ fontFamily: 'var(--font-geist-sans), Arial, sans-serif' }}>
-
       {/* ── SECTION 1: HERO ─────────────────────────────────────── */}
       <section className="page-hero" style={{
         minHeight: '100vh',
@@ -485,6 +498,23 @@ export default function ContactContent() {
                   </div>
                 </div>
 
+                {/* Row 3b — Address */}
+                <div>
+                  <label style={labelStyle}>Address</label>
+                  <textarea
+                    name="address" value={formData.address}
+                    onChange={handleFormChange}
+                    placeholder="Enter your address"
+                    rows={2}
+                    style={{
+                      ...inputStyle,
+                      resize: 'vertical',
+                      minHeight: '70px',
+                      clipPath: 'polygon(0% 0%, calc(100% - 14px) 0%, 100% 14px, 100% 100%, 0% 100%)',
+                    }}
+                  />
+                </div>
+
                 {/* Row 4 */}
                 <div>
                   <label style={labelStyle}>Service You Are Interested In</label>
@@ -518,45 +548,6 @@ export default function ContactContent() {
                       clipPath: 'polygon(0% 0%, calc(100% - 14px) 0%, 100% 14px, 100% 100%, 0% 100%)',
                     }}
                   />
-                </div>
-
-                {/* Row 6 — File */}
-                <div>
-                  <label style={labelStyle}>Attach a File (Optional)</label>
-                  <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', margin: '0 0 10px' }}>
-                    PDF, DOC, PNG — max 10MB
-                  </p>
-                  <label style={{
-                    display: 'flex', alignItems: 'center', gap: '14px',
-                    border: '1px dashed rgba(255,255,255,0.15)',
-                    padding: '14px 18px', cursor: 'pointer',
-                    transition: 'border-color 0.2s',
-                  }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(205,212,235,0.4)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.15)'; }}
-                  >
-                    <span style={{ fontSize: '13px', color: '#cdd4eb' }}>⊞</span>
-                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', flex: 1 }}>{fileName}</span>
-                    <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>Browse</span>
-                    <input type="file" accept=".pdf,.doc,.docx,.png,.jpg" onChange={handleFileChange} style={{ display: 'none' }} />
-                  </label>
-                </div>
-
-                {/* Row 7 — Consent */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                  <input
-                    type="checkbox" name="consent" required
-                    checked={formData.consent}
-                    onChange={handleFormChange}
-                    style={{ marginTop: '2px', accentColor: '#cdd4eb', cursor: 'pointer' }}
-                  />
-                  <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, cursor: 'pointer' }}>
-                    By sending this form you agree to the{' '}
-                    <a href="#" style={{ color: '#cdd4eb', textDecoration: 'underline' }}>Terms &amp; Conditions</a>
-                    {' '}and{' '}
-                    <a href="#" style={{ color: '#cdd4eb', textDecoration: 'underline' }}>Privacy Policy</a>
-                    {' '}of TRONEXA.
-                  </label>
                 </div>
 
                 <button

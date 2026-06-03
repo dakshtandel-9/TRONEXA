@@ -196,6 +196,7 @@ function PositionCard({ pos }: { pos: typeof OPEN_POSITIONS[0] }) {
   );
 }
 
+
 export default function CareersContent() {
   const { setIsLoaded } = useLoadingContext();
 
@@ -802,7 +803,7 @@ export default function CareersContent() {
               </p>
             </div>
             <a
-              href="mailto:info@tronexa.com?subject=General Application — TRONEXA"
+              href="#apply-now"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -822,7 +823,7 @@ export default function CareersContent() {
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'white'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#cdd4eb'; }}
             >
-              Send a General Application →
+              Apply Now →
             </a>
           </div>
         </div>
@@ -897,6 +898,70 @@ export default function CareersContent() {
                 }}>{step.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 10B: APPLY NOW CTA ──────────────────── */}
+      <section id="apply-now" className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div className="page-grid-asym" style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1.8fr',
+            gap: '80px',
+            alignItems: 'center',
+          }}>
+            <div>
+              <SectionLabel text="Apply Now" />
+              <h2 style={{
+                fontSize: 'clamp(1.6rem, 2.4vw, 2.5rem)',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.12,
+                textTransform: 'uppercase',
+                color: 'white',
+                margin: 0,
+              }}>
+                Start your journey<br />with TRONEXA today
+              </h2>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+              <p style={{
+                color: 'rgba(255,255,255,0.55)',
+                fontSize: '14px',
+                lineHeight: 1.85,
+                margin: 0,
+              }}>
+                Ready to join us? Click below to fill out our job application form. Our HR team will review
+                your profile and reach out within 5–7 business days if your profile is a match.
+              </p>
+              <div>
+                <a
+                  href="https://forms.gle/Ycd5iUPwXPzJaVCX8"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    background: '#cdd4eb',
+                    color: '#0d0f1a',
+                    padding: '16px 40px',
+                    fontSize: '11px',
+                    letterSpacing: '0.16em',
+                    textTransform: 'uppercase',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    clipPath: CLIP,
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'white'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#cdd4eb'; }}
+                >
+                  Apply Now →
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>
