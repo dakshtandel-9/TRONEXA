@@ -213,7 +213,7 @@ export default function ServicePageContent({ data }: { data: ServicePageData }) 
             </h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'rgba(13,15,26,0.12)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'transparent' }}>
             {data.whyPoints.map((point, i) => (
               <div key={i} style={{
                 padding: '44px 36px',

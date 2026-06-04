@@ -1,7 +1,29 @@
 'use client';
 
 import { useEffect } from 'react';
+import Image from 'next/image';
 import { useLoadingContext } from '@/contexts/LoadingContext';
+
+const CLIENT_LOGOS = [
+  { name: 'AT&T', file: 'AT&T.png' },
+  { name: 'Brightspeed', file: 'BRIGHTSPEED.png' },
+  { name: 'Centene', file: 'CENTENE.png' },
+  { name: 'CGI', file: 'CGI.png' },
+  { name: 'Denbury', file: 'DENBURY.png' },
+  { name: 'DXC', file: 'DXC.png' },
+  { name: 'EPAM', file: 'EPAM.png' },
+  { name: 'EPIQ', file: 'EPIQ.png' },
+  { name: 'EY', file: 'EY.png' },
+  { name: 'Floor & Decor', file: 'FLOOR&DECOR.png' },
+  { name: 'Freddie Mac', file: 'FREDDIEMAC.png' },
+  { name: 'Fujitsu', file: 'FUJITSU.png' },
+  { name: 'Intact', file: 'INTACT.png' },
+  { name: 'Optum', file: 'OPTUM.png' },
+  { name: 'Scension', file: 'SCENSION.png' },
+  { name: 'Sysco', file: 'SYSCO.png' },
+  { name: 'TCS', file: 'TCS.png' },
+  { name: 'US Bank', file: 'USBANK.png' },
+];
 
 const CLIP = 'polygon(0% 0%, calc(100% - 14px) 0%, 100% 14px, 100% 100%, 0% 100%)';
 const CLIP_LG = 'polygon(0% 0%, calc(100% - 20px) 0%, 100% 20px, 100% 100%, 0% 100%)';
@@ -38,6 +60,7 @@ const SERVICE_CARDS = [
   { num: '10', title: 'Quality Assurance', desc: 'Ensure flawless performance, reliability, and security through comprehensive testing.', href: '/services/quality-assurance' },
   { num: '11', title: 'Digital Marketing', desc: 'Drive visibility, traffic, and growth with data-driven marketing strategies.', href: '/services/digital-marketing' },
   { num: '12', title: 'Staffing (IT & Non-IT)', desc: 'Find the right talent to accelerate your business growth — IT and non-IT roles.', href: '/services/staffing' },
+  { num: '13', title: 'ERP Solutions', desc: 'Unify your operations with a fully managed ERP service — from implementation and integration to ongoing support and optimization.', href: '/services/erp-solutions' },
 ];
 
 
@@ -480,7 +503,57 @@ export default function ServicesContent() {
         </div>
       </section>
 
-      {/* ── SECTION 8: CTA BANNER ───────────────────────── */}
+      {/* ── SECTION 8: OUR CLIENTS ──────────────────────── */}
+      <section className="page-section-sm-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '72px' }}>
+            <SectionLabel text="Our Clients" />
+            <h2 style={{
+              fontSize: 'clamp(1.6rem, 2.4vw, 2.5rem)',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.12,
+              textTransform: 'uppercase',
+              color: 'white',
+              margin: '0 0 20px',
+            }}>Trusted by industry leaders<br />across the globe</h2>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', lineHeight: 1.8, margin: 0 }}>
+              We are proud to have partnered with some of the world's most recognized brands and enterprises.
+            </p>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(6, 1fr)',
+            gap: '1px',
+            background: 'rgba(255,255,255,0.07)',
+          }}>
+            {CLIENT_LOGOS.map((client, i) => (
+              <div key={i} style={{
+                background: '#080b14',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '32px 24px',
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(205,212,235,0.05)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#080b14'; }}
+              >
+                <Image
+                  src={`/ClientsLogo/${client.file}`}
+                  alt={client.name}
+                  width={120}
+                  height={48}
+                  style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.6, maxWidth: '100%', height: '40px', width: 'auto' }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 9: CTA BANNER ───────────────────────── */}
       <section className="page-section-sm-pad" style={{ background: '#cdd4eb', padding: '120px 60px' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{

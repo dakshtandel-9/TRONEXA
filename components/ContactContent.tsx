@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLoadingContext } from '@/contexts/LoadingContext';
+import GoogleMap3D from '@/components/GoogleMap3D';
 
 const CLIP = 'polygon(0% 0%, calc(100% - 14px) 0%, 100% 14px, 100% 100%, 0% 100%)';
 const CLIP_LG = 'polygon(0% 0%, calc(100% - 20px) 0%, 100% 20px, 100% 100%, 0% 100%)';
@@ -702,23 +703,13 @@ export default function ContactContent() {
           </div>
 
           <div className="page-map-frame" style={{
-            width: '100%', height: '480px',
+            width: '100%', height: '520px',
             border: '1px solid rgba(255,255,255,0.08)',
             overflow: 'hidden',
             clipPath: CLIP_LG,
             background: 'rgba(255,255,255,0.03)',
           }}>
-            <iframe
-              key={activeLocation}
-              src={`https://maps.google.com/maps?q=${LOCATIONS[activeLocation].mapQ}&output=embed`}
-              width="100%"
-              height="100%"
-              style={{ border: 0, filter: 'grayscale(100%) invert(1) sepia(30%) hue-rotate(180deg) brightness(0.75) contrast(1.1)', opacity: 0.9 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title={`Map — ${LOCATIONS[activeLocation].country}`}
-            />
+            <GoogleMap3D activeLocation={activeLocation} />
           </div>
         </div>
       </section>
