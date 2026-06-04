@@ -127,6 +127,7 @@ export default function MenuOverlay({ isOpen, onClose }: Props) {
                 textTransform: 'uppercase',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.05,
+                marginBottom: '18px',
                 color: '#0d0f1a',
                 textDecoration: 'none',
                 opacity: isOpen ? 1 : 0,
@@ -144,7 +145,7 @@ export default function MenuOverlay({ isOpen, onClose }: Props) {
                 speed={40}
                 maxIterations={14}
                 sequential
-                style={{ fontSize: 'clamp(1.96rem, 6.3vw, 3.15rem)' }}
+                style={{ fontSize: 'clamp(1.4rem, 4.5vw, 2.2rem)' }}
               />
             </a>
           ))}
