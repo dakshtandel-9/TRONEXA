@@ -194,6 +194,69 @@ export default function ServicePageContent({ data }: { data: ServicePageData }) 
         </div>
       </section>
 
+      {/* ── ERP SYSTEMS / DELIVERABLES ────────────────────── */}
+      {data.deliverables && data.deliverables.length > 0 && (
+        <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{ marginBottom: '64px' }}>
+              <SectionLabel text="ERP Platforms We Manage" />
+              <h2 style={{
+                fontSize: 'clamp(1.6rem, 2.4vw, 2.5rem)',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.12,
+                textTransform: 'uppercase',
+                color: 'white',
+                margin: 0,
+                maxWidth: '600px',
+              }}>
+                10 leading ERP systems,<br />fully managed by Tronexa
+              </h2>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'rgba(255,255,255,0.06)' }}>
+              {data.deliverables.map((item, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: '#0d0f1a',
+                    padding: '44px 48px',
+                    display: 'grid',
+                    gridTemplateColumns: '80px 200px 1fr',
+                    gap: '40px',
+                    alignItems: 'start',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#12152a'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d0f1a'; }}
+                >
+                  <div style={{
+                    fontSize: '11px',
+                    color: 'rgba(255,255,255,0.15)',
+                    letterSpacing: '0.2em',
+                    fontFamily: 'var(--font-geist-mono)',
+                    paddingTop: '3px',
+                  }}>{item.num}</div>
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '-0.01em',
+                    color: '#cdd4eb',
+                    lineHeight: 1.3,
+                  }}>{item.title}</div>
+                  <div style={{
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.5)',
+                    lineHeight: 1.85,
+                  }}>{item.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── WHY CHOOSE TRONEXA ───────────────────────────── */}
       <section className="page-section-sm-pad" style={{ background: '#cdd4eb', padding: '120px 60px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
@@ -213,9 +276,9 @@ export default function ServicePageContent({ data }: { data: ServicePageData }) 
             </h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'transparent' }}>
+          <div className="page-why-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'transparent' }}>
             {data.whyPoints.map((point, i) => (
-              <div key={i} style={{
+              <div key={i} className="page-why-card" style={{
                 padding: '44px 36px',
                 background: '#cdd4eb',
                 clipPath: i === 0 ? CLIP_LG : 'none',
