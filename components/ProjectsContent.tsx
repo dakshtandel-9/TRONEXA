@@ -269,6 +269,132 @@ function ProjectCard({ project }: { project: typeof PROJECTS[0] }) {
   );
 }
 
+type CaseStudy = {
+  num: string;
+  client: string;
+  tag: string;
+  region: string;
+  desc: string;
+  outcomes: string[];
+  href: string;
+};
+
+function CaseStudyCard({ study }: { study: CaseStudy }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <a
+      href={study.href}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '44px 38px',
+        background: hovered ? 'rgba(205,212,235,0.05)' : '#080b14',
+        transition: 'background 0.3s',
+        textDecoration: 'none',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Hover accent line */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '2px',
+        background: '#cdd4eb',
+        opacity: hovered ? 1 : 0,
+        transition: 'opacity 0.3s',
+      }} />
+
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+        <span style={{
+          fontSize: '10px',
+          color: 'rgba(255,255,255,0.18)',
+          letterSpacing: '0.2em',
+          fontFamily: 'var(--font-geist-mono)',
+        }}>{study.num}</span>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <span style={{
+            fontSize: '9px',
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: '#cdd4eb',
+            border: '1px solid rgba(205,212,235,0.35)',
+            padding: '4px 10px',
+            fontWeight: 600,
+          }}>{study.tag}</span>
+          <span style={{
+            fontSize: '9px',
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.38)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            padding: '4px 10px',
+          }}>{study.region}</span>
+        </div>
+      </div>
+
+      {/* Client name */}
+      <div style={{
+        fontSize: '18px',
+        fontWeight: 800,
+        textTransform: 'uppercase',
+        letterSpacing: '-0.01em',
+        color: 'white',
+        marginBottom: '16px',
+        lineHeight: 1.1,
+      }}>{study.client}</div>
+
+      {/* Description */}
+      <p style={{
+        fontSize: '12px',
+        color: 'rgba(255,255,255,0.48)',
+        lineHeight: 1.85,
+        margin: '0 0 24px',
+        flex: 1,
+      }}>{study.desc}</p>
+
+      {/* Outcomes */}
+      <div style={{ marginBottom: '28px' }}>
+        {study.outcomes.map((o, i) => (
+          <div key={i} style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '8px 0',
+            borderTop: i === 0 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+          }}>
+            <span style={{ fontSize: '8px', color: '#cdd4eb' }}>▸</span>
+            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.42)', letterSpacing: '0.02em' }}>{o}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* CTA */}
+      <span style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        fontSize: '10px',
+        letterSpacing: '0.16em',
+        textTransform: 'uppercase',
+        color: '#cdd4eb',
+        fontWeight: 700,
+        opacity: hovered ? 1 : 0.55,
+        transition: 'opacity 0.2s',
+      }}>
+        View Case Study →
+      </span>
+    </a>
+  );
+}
+
 export default function ProjectsContent() {
   const { setIsLoaded } = useLoadingContext();
   const [activeCategory, setActiveCategory] = useState('All Projects');
@@ -577,6 +703,83 @@ export default function ProjectsContent() {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ── SECTION 3B: CASE STUDIES ────────────────────── */}
+      <section className="proj-section-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div className="proj-asym-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1.8fr',
+            gap: '80px',
+            alignItems: 'start',
+            marginBottom: '72px',
+          }}>
+            <div>
+              <SectionLabel text="Featured Case Studies" />
+              <h2 style={{
+                fontSize: 'clamp(1.6rem, 2.4vw, 2.5rem)',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.12,
+                textTransform: 'uppercase',
+                color: 'white',
+                margin: 0,
+              }}>
+                Real projects,<br />real results
+              </h2>
+            </div>
+            <p className="proj-asym-right" style={{
+              color: 'rgba(255,255,255,0.55)',
+              fontSize: '14px',
+              lineHeight: 1.85,
+              margin: 0,
+              paddingTop: '66px',
+            }}>
+              Explore how Tronexa has built high-converting digital platforms for global brands — delivering
+              seamless e-commerce experiences that blend beautiful design with powerful functionality.
+            </p>
+          </div>
+
+          <div className="proj-case-studies-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '1px',
+            background: 'rgba(255,255,255,0.07)',
+          }}>
+            {[
+              {
+                num: '01',
+                client: 'Tiny Tags®',
+                tag: 'Personalized Jewelry',
+                region: 'USA',
+                desc: 'A high-converting Shopify e-commerce platform for a premium U.S.-based personalized jewelry brand — featuring advanced personalization flows, influencer collaboration pages, and mobile-first design.',
+                outcomes: ['Custom engraving & charm builder', 'Mobile-first, conversion-optimized UI', 'Influencer collaboration pages'],
+                href: '/projects/tiny-tags',
+              },
+              {
+                num: '02',
+                client: 'Small Packages',
+                tag: 'Gift Curation Platform',
+                region: 'USA',
+                desc: 'A Shopify storefront unifying retail and corporate gifting with an interactive Build-a-Box tool, occasion-based navigation, and a dedicated corporate inquiry workflow.',
+                outcomes: ['Interactive Build-a-Box tool', 'Corporate gifting workflow', 'Occasion-based navigation'],
+                href: '/projects/small-packages',
+              },
+              {
+                num: '03',
+                client: 'Little Butterfly London',
+                tag: 'Organic Baby Skincare',
+                region: 'UK & Global',
+                desc: 'A premium organic baby skincare platform built on Shopify with age-segmented collections, trust-first content pages, and a smart cart with product recommendations.',
+                outcomes: ['Age-segmented collections', 'Certifications & ingredients pages', 'Smart cart with recommendations'],
+                href: '/projects/little-butterfly-london',
+              },
+            ].map((cs, i) => (
+              <CaseStudyCard key={i} study={cs} />
+            ))}
+          </div>
         </div>
       </section>
 
