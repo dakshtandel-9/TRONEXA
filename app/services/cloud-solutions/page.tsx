@@ -7,37 +7,39 @@ import { SoundProvider } from '@/contexts/SoundContext';
 import { LoadingProvider } from '@/contexts/LoadingContext';
 
 export const metadata: Metadata = {
-  title: 'Cloud Solutions — TRONEXA | Build Secure And Scalable Cloud Infrastructure',
+  title: 'Cloud Solutions — TRONEXA | Scalable, Secure & Future-Ready Cloud Infrastructure',
   description:
-    'TRONEXA delivers cloud migration, infrastructure setup, DevOps, security, hybrid cloud, disaster recovery, and managed cloud services for modern businesses.',
+    'TRONEXA accelerates digital transformation with customized cloud solutions — cloud migration, multi-cloud deployments, disaster recovery, auto-scaling, and 24/7 infrastructure management.',
 };
 
 const data: ServicePageData = {
-  num: '09',
+  num: '07',
   label: 'Cloud Solutions',
-  heroHeading: 'Build Secure And Scalable\nCloud Infrastructure',
+  heroHeading: 'Accelerating Digital Transformation\nWith Cloud Infrastructure',
   heroDesc:
-    'Accelerate business growth with cloud technologies designed to improve flexibility, performance, security, and operational efficiency.',
+    'As businesses continue to embrace digital transformation, cloud technology has become the foundation for scalability, agility, and operational efficiency. Organizations require flexible infrastructure that can support rapid growth, secure critical data, and enable seamless collaboration across teams and locations.',
   overview:
-    'TRONEXA delivers cloud solutions that help businesses modernize infrastructure, optimize resources, and improve scalability. Whether you\'re migrating existing systems, implementing hybrid environments, or building cloud-native applications, we create reliable cloud ecosystems that support long-term business growth.',
+    'Tronexa helps businesses modernize their IT environments through customized cloud solutions designed to improve performance, reduce infrastructure costs, and enhance business continuity. From cloud migration and infrastructure management to hybrid and multi-cloud deployments, our expertise enables organizations to unlock the full potential of cloud computing.',
   deliverables: [
-    { num: '01', title: 'Cloud Migration', desc: 'Moving applications, databases, and workloads to the cloud securely with minimal disruption to operations.' },
-    { num: '02', title: 'Cloud Infrastructure Setup', desc: 'Designing and deploying cloud environments on AWS, Azure, or GCP optimized for performance and cost.' },
-    { num: '03', title: 'Cloud Security', desc: 'Protecting cloud environments with IAM, encryption, compliance frameworks, and continuous threat monitoring.' },
-    { num: '04', title: 'DevOps & Automation', desc: 'Automating deployment pipelines, infrastructure provisioning, and operations for faster and more reliable delivery.' },
-    { num: '05', title: 'Hybrid Cloud Solutions', desc: 'Integrating on-premise infrastructure with cloud environments to balance control, security, and scalability.' },
-    { num: '06', title: 'Multi-Cloud Architecture', desc: 'Designing and managing workloads across multiple cloud providers to avoid lock-in and maximize resilience.' },
-    { num: '07', title: 'Disaster Recovery', desc: 'Ensuring business continuity through automated backup strategies, failover systems, and recovery planning.' },
-    { num: '08', title: 'Cloud Monitoring', desc: 'Providing real-time visibility into cloud health, performance metrics, costs, and anomaly alerts.' },
-    { num: '09', title: 'Cloud Optimization', desc: 'Analyzing and rightsizing cloud resources to eliminate waste, reduce spend, and maximize efficiency.' },
-    { num: '10', title: 'Managed Cloud Services', desc: 'Handling day-to-day cloud operations, patching, scaling, and support so your team can focus on the business.' },
+    { num: '01', title: 'Cloud Infrastructure Deployment', desc: 'End-to-end setup of public, private, and hybrid cloud environments — architected for performance, security, and cost-efficiency using AWS, Microsoft Azure, and Google Cloud Platform.' },
+    { num: '02', title: 'Cloud Migration Services', desc: 'Seamless migration of applications, databases, and workloads — with minimal disruption to business operations and a structured approach that ensures data integrity throughout the process.' },
+    { num: '03', title: 'Auto-Scaling Architecture', desc: 'Dynamic resource allocation based on usage demands — ensuring your infrastructure expands during peak loads and contracts during quiet periods, optimizing both performance and cost.' },
+    { num: '04', title: 'High Availability Configuration', desc: 'Redundant systems to ensure maximum uptime — architected with failover capabilities, load balancing, and multi-region redundancy to support business-critical application requirements.' },
+    { num: '05', title: 'Disaster Recovery Planning', desc: 'Automated backup and rapid recovery capabilities — ensuring your business can recover quickly from any infrastructure failure with clearly defined recovery time and point objectives.' },
+    { num: '06', title: 'Identity & Access Management (IAM)', desc: 'Secure user authentication and permissions control — implementing least-privilege access principles, multi-factor authentication, and role-based controls across your entire cloud estate.' },
+    { num: '07', title: 'Data Encryption & Security', desc: 'Protection of data in transit and at rest — with SSL/TLS encryption, VPN configuration, and compliance with industry security standards to safeguard your most critical business information.' },
+    { num: '08', title: 'Multi-Cloud Support', desc: 'Integration across AWS, Azure, and Google Cloud environments — providing flexibility, avoiding vendor lock-in, and enabling workloads to run on the most appropriate platform for each use case.' },
+    { num: '09', title: 'Containerization & Orchestration', desc: 'Deployment using Docker and Kubernetes — enabling consistent, portable application environments that simplify scaling, updates, and infrastructure management across cloud platforms.' },
+    { num: '10', title: 'Real-Time Monitoring & Alerts', desc: 'Infrastructure performance tracking and issue detection — with Grafana, Prometheus, CloudWatch, and Azure Monitor providing continuous visibility into system health and resource utilization.' },
+    { num: '11', title: 'Cloud Storage Management', desc: 'Secure and scalable file and data storage solutions — using Amazon S3, Azure Blob Storage, and Google Cloud Storage, configured for performance, redundancy, and cost optimization.' },
+    { num: '12', title: 'Cost Optimization Tools', desc: 'Resource usage analysis and cloud expenditure management — identifying waste, right-sizing instances, and implementing reserved capacity strategies to maximize your cloud investment return.' },
   ],
   whyPoints: [
-    { title: 'Enterprise Security', desc: 'We implement defense-in-depth security strategies — identity management, network controls, encryption, and compliance audits across your entire cloud estate.' },
-    { title: 'High Availability', desc: 'Our architectures are designed for 99.9%+ uptime with multi-region redundancy, auto-scaling, and automated failover built in from day one.' },
-    { title: 'Cost Optimization', desc: 'We continuously right-size resources, eliminate idle infrastructure, and implement reserved capacity strategies to reduce your cloud spend significantly.' },
-    { title: 'Cloud Expertise', desc: 'Our certified engineers have deep hands-on experience across AWS, Azure, and GCP — bringing multi-cloud knowledge to every engagement.' },
-    { title: 'Future-Ready Infrastructure', desc: 'We build cloud environments that can adopt new services, absorb new workloads, and scale without architectural rewrites as your business evolves.' },
+    { title: 'Multi-Cloud Architecture Expertise', desc: 'We design and manage infrastructure across AWS, Azure, and GCP — giving you the flexibility to leverage the best services from each platform without being locked into a single vendor ecosystem.' },
+    { title: 'Zero-Downtime Migration', desc: 'Our migration methodology is designed to move your applications, data, and workloads to the cloud with zero business disruption — using phased approaches, testing environments, and rollback plans.' },
+    { title: 'Security & Compliance First', desc: 'Every cloud deployment is built with enterprise security standards — IAM, encryption, VPN, MFA, and continuous compliance monitoring ensure your cloud environment meets regulatory requirements.' },
+    { title: 'Infrastructure as Code', desc: 'We use Terraform and AWS CloudFormation to manage your cloud infrastructure programmatically — ensuring reproducibility, version control, and rapid provisioning of environments.' },
+    { title: '24/7 Monitoring & Support', desc: 'Our cloud operations team monitors your infrastructure around the clock — providing proactive alerts, rapid incident response, and continuous optimization to maximize availability and performance.' },
   ],
   cta: 'Modernize Your Infrastructure',
 };

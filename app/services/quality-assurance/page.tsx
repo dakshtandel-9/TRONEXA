@@ -7,39 +7,41 @@ import { SoundProvider } from '@/contexts/SoundContext';
 import { LoadingProvider } from '@/contexts/LoadingContext';
 
 export const metadata: Metadata = {
-  title: 'Quality Assurance — TRONEXA | Deliver Software With Confidence',
+  title: 'Quality Assurance — TRONEXA | End-to-End QA Services for Software Excellence',
   description:
-    'TRONEXA provides manual testing, automation testing, functional, performance, regression, security, API, mobile, and web application testing services.',
+    'TRONEXA delivers comprehensive Quality Assurance services — functional testing, test automation, performance, security, mobile, and cross-browser testing integrated into your CI/CD pipeline.',
 };
 
 const data: ServicePageData = {
-  num: '12',
+  num: '09',
   label: 'Quality Assurance',
-  heroHeading: 'Deliver Software\nWith Confidence',
+  heroHeading: 'Ensuring Software Excellence\nThrough Quality Assurance',
   heroDesc:
-    'Ensure exceptional quality, reliability, and performance through comprehensive testing and quality assurance services.',
+    'In today\'s fast-paced digital landscape, software quality plays a critical role in customer satisfaction, business reputation, and operational success. Even minor defects can lead to security vulnerabilities, performance issues, revenue loss, and poor user experiences. Tronexa provides comprehensive QA services designed to ensure software products meet the highest standards.',
   overview:
-    'TRONEXA helps organizations launch stable, secure, and high-performing digital products through rigorous testing methodologies. Our QA specialists identify issues early, reduce risks, and ensure applications perform flawlessly across platforms and environments.',
+    'Our QA experts work closely with development teams to identify issues early, reduce risks, and deliver flawless digital experiences. By implementing structured testing processes, advanced automation frameworks, and continuous quality monitoring, Tronexa helps organizations launch software products with confidence and maintain long-term operational excellence.',
   deliverables: [
-    { num: '01', title: 'Manual Testing', desc: 'Performing detailed exploratory and scripted testing to identify bugs, usability issues, and edge-case failures.' },
-    { num: '02', title: 'Automation Testing', desc: 'Building automated test suites that accelerate regression cycles and provide continuous quality validation.' },
-    { num: '03', title: 'Functional Testing', desc: 'Verifying that every feature, workflow, and business rule works exactly as specified and expected.' },
-    { num: '04', title: 'Performance Testing', desc: 'Stress-testing systems under load to identify bottlenecks, optimize response times, and ensure scalability.' },
-    { num: '05', title: 'Regression Testing', desc: 'Ensuring that new releases and updates do not break existing functionality across the application.' },
-    { num: '06', title: 'Security Testing', desc: 'Identifying vulnerabilities, misconfigurations, and attack vectors before they reach production environments.' },
-    { num: '07', title: 'API Testing', desc: 'Validating API endpoints for correctness, performance, security, and contract compliance.' },
-    { num: '08', title: 'Mobile Application Testing', desc: 'Testing mobile apps across devices, OS versions, and network conditions for consistent performance.' },
-    { num: '09', title: 'Web Application Testing', desc: 'Ensuring web applications function correctly across browsers, screen sizes, and user environments.' },
-    { num: '10', title: 'QA Consulting', desc: 'Helping organizations build effective QA strategies, test plans, tooling, and quality culture from the ground up.' },
+    { num: '01', title: 'Functional Testing', desc: 'Validation of application features, workflows, and business requirements — ensuring every user story and acceptance criterion is met before release through rigorous manual and scripted testing.' },
+    { num: '02', title: 'Automated Testing Framework', desc: 'Reusable automated test cases for faster and more reliable testing — built with Selenium, Cypress, and Playwright and integrated directly into your CI/CD pipeline for continuous validation.' },
+    { num: '03', title: 'Regression Testing', desc: 'Verification that new changes do not impact existing functionality — with comprehensive regression suites that run automatically on every code change to catch unintended breakage early.' },
+    { num: '04', title: 'Performance Testing', desc: 'Evaluation of system speed, responsiveness, and scalability under load — using Apache JMeter and Gatling to identify bottlenecks before they impact real users in production.' },
+    { num: '05', title: 'Load & Stress Testing', desc: 'Analysis of application behavior during peak traffic conditions — simulating thousands of concurrent users to validate that your system maintains performance under extreme demand.' },
+    { num: '06', title: 'Security Testing', desc: 'Identification of vulnerabilities, threats, and compliance issues — using OWASP ZAP, Burp Suite, and SonarQube to assess and remediate security risks before they can be exploited.' },
+    { num: '07', title: 'API Testing', desc: 'Validation of backend services, integrations, and data exchange processes — using Postman and REST Assured to ensure APIs behave correctly, securely, and at expected performance levels.' },
+    { num: '08', title: 'Cross-Browser Testing', desc: 'Consistent performance across major browsers and versions — using BrowserStack and Sauce Labs to validate your application on Chrome, Firefox, Safari, and Edge across desktop and mobile.' },
+    { num: '09', title: 'Mobile Application Testing', desc: 'Verification across Android and iOS devices — using Appium and Firebase Test Lab to test on real devices and emulators, covering gestures, orientation, connectivity, and platform-specific behaviors.' },
+    { num: '10', title: 'User Acceptance Testing (UAT)', desc: 'Validation against business requirements and user expectations — structured UAT sessions with real stakeholders to confirm the software delivers the outcomes the business needs.' },
+    { num: '11', title: 'Defect Tracking & Reporting', desc: 'Comprehensive bug management and resolution workflows — using Jira, Azure DevOps, and TestRail to log, prioritize, track, and resolve defects with full traceability to requirements.' },
+    { num: '12', title: 'Quality Metrics Dashboard', desc: 'Real-time reporting of test coverage, defects, and release readiness — giving project managers and stakeholders accurate, up-to-date quality data to make confident release decisions.' },
   ],
   whyPoints: [
-    { title: 'Reduced Production Risks', desc: 'Our comprehensive test coverage catches critical defects before go-live — dramatically reducing the cost and impact of post-release issues.' },
-    { title: 'Faster Releases', desc: 'Our automation frameworks and shift-left QA practices accelerate release cycles without sacrificing quality or coverage.' },
-    { title: 'Better User Experience', desc: 'We test through the lens of the end user — identifying friction points, accessibility issues, and failure scenarios that automated tools miss.' },
-    { title: 'Comprehensive Test Coverage', desc: 'From unit and integration tests to end-to-end, performance, and security testing, we ensure every layer of your application is validated.' },
-    { title: 'Enterprise Quality Standards', desc: 'Our QA processes align with industry standards — ISO 25010, ISTQB methodologies, and sector-specific compliance requirements where applicable.' },
+    { title: 'Shift-Left Testing Philosophy', desc: 'We integrate quality from the very beginning of development — catching defects early when they\'re cheapest to fix, rather than discovering them in production where the cost is exponentially higher.' },
+    { title: 'Automation-First Approach', desc: 'Our automation frameworks are built for long-term value — reusable, maintainable test suites that provide fast feedback on every commit and dramatically reduce the effort required for each release cycle.' },
+    { title: 'Full-Stack Testing Coverage', desc: 'From API layers and database queries to UI interactions and third-party integrations, we test the entire application stack — ensuring quality is validated at every level of your system architecture.' },
+    { title: 'CI/CD Pipeline Integration', desc: 'All automated tests are integrated directly into your deployment pipeline — blocking releases that fail quality gates and providing developers with immediate, actionable feedback on every code change.' },
+    { title: 'Security & Compliance Expertise', desc: 'Our security testing goes beyond basic vulnerability scanning — we perform penetration testing, compliance assessments, and threat modeling to ensure your application meets enterprise and regulatory standards.' },
   ],
-  cta: 'Ensure Product Quality',
+  cta: 'Elevate Your Software Quality',
 };
 
 export default function QualityAssurancePage() {

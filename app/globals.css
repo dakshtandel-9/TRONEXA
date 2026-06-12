@@ -124,6 +124,13 @@ main {
     padding-left: 0 !important;
   }
 
+  /* Deliverable list rows — stack to 1 col on mobile */
+  .page-deliverable-row {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 28px 20px !important;
+  }
+
   /* Why/benefit cards — 1 col */
   .page-why-grid {
     grid-template-columns: 1fr !important;
@@ -426,6 +433,63 @@ main {
   .proj-locations-grid {
     grid-template-columns: 1fr !important;
     gap: 16px !important;
+  }
+
+  /* ── PROJECTS PAGE: Case Studies grid — 1 col */
+  .proj-case-studies-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1px !important;
+  }
+
+  /* ── TINY TAGS PAGE ── */
+  /* Hero tag cells — stack to column */
+  .tt-hero-tags {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0 !important;
+  }
+  .tt-hero-tag-cell {
+    border-left: none !important;
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+    width: 100% !important;
+    padding: 16px 20px !important;
+  }
+  .tt-hero-tag-cell:first-child {
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+  }
+
+  /* Problems grid — 1 col */
+  .tt-problems-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1px !important;
+  }
+
+  /* Features grid — 1 col */
+  .tt-features-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1px !important;
+  }
+
+  /* Hosting grid — 2 col */
+  .tt-hosting-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .tt-hosting-cell {
+    border-left: none !important;
+    border-top: 1px solid rgba(13,15,26,0.12) !important;
+    padding: 28px 20px !important;
+  }
+  .tt-hosting-cell:nth-child(even) {
+    border-left: 1px solid rgba(13,15,26,0.12) !important;
+  }
+
+  /* Team grid — 1 col */
+  .tt-team-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .tt-team-cell {
+    border-left: none !important;
+    padding: 28px 20px !important;
   }
 }
 

@@ -18,100 +18,7 @@ function SectionLabel({ text, dark = false }: { text: string; dark?: boolean }) 
   );
 }
 
-const CATEGORIES = [
-  'All Projects', 'Web Development', 'App Development', 'Game Development',
-  'AI Solutions', 'IoT Solutions', 'Cloud Solutions', 'CRM Solutions',
-  'ServiceNow', 'Quality Assurance', 'Digital Marketing', 'Staffing',
-];
 
-const REGIONS = ['All Regions', 'USA', 'Dubai / UAE', 'India'];
-
-const PROJECTS = [
-  {
-    num: '01',
-    category: 'Web Development',
-    region: 'USA',
-    description: 'A scalable, high-performance web platform built for a US-based business to improve their digital presence, streamline operations, and drive customer engagement.',
-    outcomes: ['Increased online traffic by 3×', 'Improved user experience scores', 'Faster load performance'],
-  },
-  {
-    num: '02',
-    category: 'App Development',
-    region: 'USA',
-    description: 'A cross-platform mobile application designed to connect users with services in real time, with a clean interface, secure backend, and seamless performance.',
-    outcomes: ['Improved customer retention', 'Higher app store ratings', 'Increased daily active users'],
-  },
-  {
-    num: '03',
-    category: 'AI Solutions',
-    region: 'USA',
-    description: 'An AI-powered automation system built to reduce manual effort, improve decision-making accuracy, and streamline business operations for a growing enterprise.',
-    outcomes: ['Reduced operational costs', 'Faster processing time', 'Improved data accuracy'],
-  },
-  {
-    num: '04',
-    category: 'Digital Marketing',
-    region: 'USA',
-    description: 'A data-driven digital marketing campaign including SEO, paid advertising, and content strategy designed to grow brand visibility and generate qualified leads.',
-    outcomes: ['Increased organic traffic', 'Higher conversion rates', 'Improved ROI on ad spend'],
-  },
-  {
-    num: '05',
-    category: 'Web Development',
-    region: 'Dubai / UAE',
-    description: 'A modern, responsive corporate website built for a Dubai-based organization, focused on brand authority, digital presence, and lead generation.',
-    outcomes: ['Stronger brand identity online', 'Increased inquiries', 'Improved search visibility'],
-  },
-  {
-    num: '06',
-    category: 'Cloud Solutions',
-    region: 'Dubai / UAE',
-    description: 'A cloud migration and infrastructure management project that moved a UAE enterprise from legacy systems to a secure, scalable cloud environment.',
-    outcomes: ['Reduced infrastructure costs', 'Improved system reliability', 'Better data accessibility'],
-  },
-  {
-    num: '07',
-    category: 'CRM Solutions',
-    region: 'Dubai / UAE',
-    description: 'A customized CRM platform built for a growing UAE business to centralize customer data, automate sales workflows, and improve team productivity.',
-    outcomes: ['Improved sales pipeline visibility', 'Faster lead response times', 'Increased customer satisfaction'],
-  },
-  {
-    num: '08',
-    category: 'ServiceNow',
-    region: 'Dubai / UAE',
-    description: 'A ServiceNow implementation project that streamlined IT service management and automated enterprise workflows for a large UAE-based organization.',
-    outcomes: ['Reduced IT ticket resolution time', 'Improved workflow efficiency', 'Stronger operational visibility'],
-  },
-  {
-    num: '09',
-    category: 'App Development',
-    region: 'India',
-    description: 'A feature-rich mobile application developed for an Indian startup, designed to deliver seamless on-demand services with real-time tracking and secure payments.',
-    outcomes: ['Successful product launch', 'Strong user adoption', 'High app store ratings'],
-  },
-  {
-    num: '10',
-    category: 'Game Development',
-    region: 'India',
-    description: 'An immersive mobile game developed for an Indian gaming studio, combining engaging gameplay mechanics, 2D visuals, and cross-platform compatibility.',
-    outcomes: ['Strong user engagement', 'Positive player reviews', 'Monetization integration delivered'],
-  },
-  {
-    num: '11',
-    category: 'Quality Assurance',
-    region: 'India',
-    description: 'A comprehensive QA and testing engagement for a SaaS platform, covering manual testing, automation testing, performance testing, and security validation.',
-    outcomes: ['Significant reduction in post-launch bugs', 'Faster release cycles', 'Improved platform stability'],
-  },
-  {
-    num: '12',
-    category: 'IoT Solutions',
-    region: 'India',
-    description: 'A smart IoT system built for an Indian manufacturing business, connecting devices and enabling real-time monitoring and predictive maintenance capabilities.',
-    outcomes: ['Reduced downtime', 'Improved operational efficiency', 'Actionable real-time data insights'],
-  },
-];
 
 const TECH_STACK = [
   { label: 'Frontend', items: 'React.js, Next.js, Vue.js, Angular, HTML5, CSS3, Tailwind CSS, TypeScript' },
@@ -167,107 +74,7 @@ const DELIVERY_STEPS = [
   { num: '06', title: 'Launch & Post-Launch Support', desc: 'We deploy the solution and provide continued maintenance, monitoring, updates, and support after launch.' },
 ];
 
-function ProjectCard({ project }: { project: typeof PROJECTS[0] }) {
-  const [hovered, setHovered] = useState(false);
 
-  return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        padding: '40px 36px',
-        border: '1px solid rgba(255,255,255,0.1)',
-        background: hovered ? 'rgba(205,212,235,0.04)' : 'transparent',
-        transition: 'background 0.3s',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-        <span style={{
-          fontSize: '10px',
-          color: 'rgba(255,255,255,0.2)',
-          letterSpacing: '0.2em',
-          fontFamily: 'var(--font-geist-mono)',
-        }}>{project.num}</span>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          <span style={{
-            fontSize: '9px',
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
-            color: '#cdd4eb',
-            border: '1px solid rgba(205,212,235,0.35)',
-            padding: '4px 10px',
-            fontWeight: 600,
-          }}>{project.category}</span>
-          <span style={{
-            fontSize: '9px',
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.4)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            padding: '4px 10px',
-          }}>{project.region}</span>
-        </div>
-      </div>
-
-      <div style={{
-        fontSize: '11px',
-        fontWeight: 700,
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-        color: 'white',
-        marginBottom: '14px',
-      }}>
-        Client Project — To Be Named
-      </div>
-
-      <p style={{
-        fontSize: '12px',
-        color: 'rgba(255,255,255,0.5)',
-        lineHeight: 1.8,
-        margin: '0 0 20px',
-        flex: 1,
-      }}>{project.description}</p>
-
-      <div style={{ marginBottom: '24px' }}>
-        {project.outcomes.map((o, i) => (
-          <div key={i} style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '7px 0',
-            borderTop: i === 0 ? '1px solid rgba(255,255,255,0.08)' : 'none',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-          }}>
-            <span style={{ fontSize: '8px', color: '#cdd4eb' }}>▸</span>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', letterSpacing: '0.02em' }}>{o}</span>
-          </div>
-        ))}
-      </div>
-
-      <a
-        href="#"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '10px',
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color: '#cdd4eb',
-          textDecoration: 'none',
-          fontWeight: 600,
-          transition: 'opacity 0.2s',
-          opacity: hovered ? 1 : 0.6,
-        }}
-      >
-        View Case Study →
-      </a>
-    </div>
-  );
-}
 
 type CaseStudy = {
   num: string;
@@ -397,18 +204,10 @@ function CaseStudyCard({ study }: { study: CaseStudy }) {
 
 export default function ProjectsContent() {
   const { setIsLoaded } = useLoadingContext();
-  const [activeCategory, setActiveCategory] = useState('All Projects');
-  const [activeRegion, setActiveRegion] = useState('All Regions');
 
   useEffect(() => {
     setIsLoaded(true);
   }, [setIsLoaded]);
-
-  const filtered = PROJECTS.filter(p => {
-    const catMatch = activeCategory === 'All Projects' || p.category === activeCategory;
-    const regionMatch = activeRegion === 'All Regions' || p.region === activeRegion;
-    return catMatch && regionMatch;
-  });
 
   return (
     <div style={{ fontFamily: 'var(--font-geist-sans), Arial, sans-serif' }}>
@@ -528,183 +327,6 @@ export default function ProjectsContent() {
         </div>
       </section>
 
-      {/* ── SECTION 2: FILTER BAR ───────────────────────── */}
-      <section className="proj-section-pad" style={{ background: '#080b14', padding: '100px 60px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div className="proj-asym-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1.8fr',
-            gap: '80px',
-            alignItems: 'start',
-            marginBottom: '64px',
-          }}>
-            <div>
-              <SectionLabel text="Browse by Category" />
-              <h2 style={{
-                fontSize: 'clamp(1.6rem, 2.4vw, 2.5rem)',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-                lineHeight: 1.12,
-                textTransform: 'uppercase',
-                color: 'white',
-                margin: 0,
-              }}>
-                Explore projects across<br />every technology domain
-              </h2>
-            </div>
-            <p className="proj-asym-right" style={{
-              color: 'rgba(255,255,255,0.55)',
-              fontSize: '14px',
-              lineHeight: 1.85,
-              margin: 0,
-              paddingTop: '66px',
-            }}>
-              We have delivered digital solutions across 11 service domains and multiple industries worldwide.
-              Use the filters below to explore our work by category.
-            </p>
-          </div>
-
-          {/* Category filters */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                style={{
-                  padding: '9px 18px',
-                  fontSize: '10px',
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: 'none',
-                  background: activeCategory === cat ? '#cdd4eb' : 'rgba(255,255,255,0.06)',
-                  color: activeCategory === cat ? '#0d0f1a' : 'rgba(255,255,255,0.5)',
-                  transition: 'background 0.2s, color 0.2s',
-                  clipPath: activeCategory === cat ? CLIP : 'none',
-                }}
-                onMouseEnter={e => {
-                  if (activeCategory !== cat) {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.1)';
-                    (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.75)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (activeCategory !== cat) {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)';
-                    (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.5)';
-                  }
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Region filters */}
-          <div style={{
-            display: 'flex',
-            gap: '1px',
-            background: 'rgba(255,255,255,0.08)',
-            width: 'fit-content',
-          }}>
-            {REGIONS.map(region => (
-              <button
-                key={region}
-                onClick={() => setActiveRegion(region)}
-                style={{
-                  padding: '10px 22px',
-                  fontSize: '10px',
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: 'none',
-                  background: activeRegion === region ? 'rgba(205,212,235,0.15)' : 'rgba(8,11,20,1)',
-                  color: activeRegion === region ? '#cdd4eb' : 'rgba(255,255,255,0.35)',
-                  transition: 'background 0.2s, color 0.2s',
-                }}
-                onMouseEnter={e => {
-                  if (activeRegion !== region) {
-                    (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.6)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (activeRegion !== region) {
-                    (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.35)';
-                  }
-                }}
-              >
-                {region}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 3: FEATURED PROJECTS ────────────────── */}
-      <section className="proj-featured-section" style={{ background: '#0d0f1a', padding: '0 60px 120px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div className="proj-featured-header" style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '52px 0 48px',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-            marginBottom: '0',
-          }}>
-            <div>
-              <SectionLabel text="Featured Work" />
-              <h2 style={{
-                fontSize: 'clamp(1.6rem, 2.4vw, 2.5rem)',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-                lineHeight: 1.12,
-                textTransform: 'uppercase',
-                color: 'white',
-                margin: 0,
-              }}>
-                Projects we are<br />most proud of
-              </h2>
-            </div>
-            <p className="proj-featured-sub" style={{
-              color: 'rgba(255,255,255,0.5)',
-              fontSize: '13px',
-              lineHeight: 1.8,
-              maxWidth: '340px',
-              margin: 0,
-              textAlign: 'right',
-            }}>
-              These are some of our standout projects — each one representing a unique challenge, a tailored
-              solution, and a meaningful outcome.
-            </p>
-          </div>
-
-          {filtered.length === 0 ? (
-            <div style={{
-              padding: '80px 0',
-              textAlign: 'center',
-              color: 'rgba(255,255,255,0.25)',
-              fontSize: '13px',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-            }}>
-              No projects match the selected filters
-            </div>
-          ) : (
-            <div className="proj-cards-grid" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '1px',
-              background: 'rgba(255,255,255,0.06)',
-            }}>
-              {filtered.map(project => (
-                <ProjectCard key={project.num} project={project} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* ── SECTION 3B: CASE STUDIES ────────────────────── */}
       <section className="proj-section-pad" style={{ background: '#080b14', padding: '120px 60px' }}>
@@ -776,9 +398,83 @@ export default function ProjectsContent() {
                 outcomes: ['Age-segmented collections', 'Certifications & ingredients pages', 'Smart cart with recommendations'],
                 href: '/projects/little-butterfly-london',
               },
+              {
+                num: '04',
+                client: 'FinTech Platform',
+                tag: 'Digital Finance',
+                region: 'Global',
+                desc: 'A next-generation FinTech ecosystem with secure digital wallets, P2P transfers, multi-payment integration, real-time transaction processing, KYC verification, and fraud detection — built on AWS with PCI-DSS compliance.',
+                outcomes: ['Digital wallet & P2P money transfers', 'Multi-currency & QR code payments', 'Fraud detection & KYC compliance'],
+                href: '/projects/fintech-platform',
+              },
+              {
+                num: '05',
+                client: 'App Development',
+                tag: 'Mobile Applications',
+                region: 'Global',
+                desc: 'High-performance cross-platform mobile applications for modern enterprises — built with Flutter and React Native, featuring real-time notifications, secure authentication, payment integration, GPS, and offline support.',
+                outcomes: ['Cross-platform Android & iOS apps', 'Real-time sync & push notifications', 'Payment gateway & GPS integration'],
+                href: '/projects/app-development',
+              },
+              {
+                num: '06',
+                client: 'Generative AI Solutions',
+                tag: 'Artificial Intelligence',
+                region: 'Global',
+                desc: 'Custom Generative AI systems powered by GPT, Claude, and Gemini — delivering intelligent chatbots, content generation, enterprise search with RAG architecture, workflow automation, and sentiment analysis.',
+                outcomes: ['AI chatbots & virtual assistants', 'RAG-powered enterprise search', 'Content generation at scale'],
+                href: '/projects/generative-ai',
+              },
+              {
+                num: '07',
+                client: 'IoT Ecosystem',
+                tag: 'Internet of Things',
+                region: 'Global',
+                desc: 'End-to-end IoT solutions connecting devices, sensors, and cloud platforms — enabling real-time monitoring dashboards, predictive maintenance, GPS asset tracking, and industrial automation across AWS IoT and Azure IoT Hub.',
+                outcomes: ['Real-time device monitoring', 'Predictive maintenance AI', 'GPS asset tracking & automation'],
+                href: '/projects/iot-solutions',
+              },
+              {
+                num: '08',
+                client: 'Cloud Infrastructure',
+                tag: 'Cloud Solutions',
+                region: 'Global',
+                desc: 'Scalable multi-cloud infrastructure built on AWS, Azure, and GCP — with zero-downtime migration, auto-scaling, disaster recovery, Kubernetes orchestration, and 24/7 infrastructure monitoring.',
+                outcomes: ['Zero-downtime cloud migration', 'Multi-cloud Kubernetes deployment', 'Auto-scaling & disaster recovery'],
+                href: '/projects/cloud-solutions',
+              },
+              {
+                num: '09',
+                client: 'CRM Platform',
+                tag: 'CRM Solutions',
+                region: 'Global',
+                desc: 'A centralized Customer Relationship Management platform with visual sales pipelines, lead automation, email integration, support ticketing, workflow automation, and real-time business intelligence dashboards.',
+                outcomes: ['Visual sales pipeline management', 'Lead capture & workflow automation', 'Real-time analytics & reporting'],
+                href: '/projects/crm-solutions',
+              },
+              {
+                num: '10',
+                client: 'QA Assurance',
+                tag: 'Quality Assurance',
+                region: 'Global',
+                desc: 'Comprehensive end-to-end QA services covering functional, automation, performance, security, mobile, and cross-browser testing — integrated into CI/CD pipelines for continuous quality validation.',
+                outcomes: ['Selenium & Cypress automation', 'Security & performance testing', 'CI/CD pipeline integration'],
+                href: '/projects/quality-assurance',
+              },
+              {
+                num: '11',
+                client: 'Digital Marketing',
+                tag: 'Marketing Strategy',
+                region: 'Global',
+                desc: 'Data-driven digital marketing strategies across SEO, PPC, social media, content, and email — with GA4 analytics, A/B testing, retargeting campaigns, and real-time ROI dashboards for measurable growth.',
+                outcomes: ['SEO & PPC growth campaigns', 'Email automation & lead nurturing', 'GA4 analytics & ROI tracking'],
+                href: '/projects/digital-marketing',
+              },
             ].map((cs, i) => (
               <CaseStudyCard key={i} study={cs} />
             ))}
+            {/* Filler — covers the empty 3rd cell in the last row (11 items → 1 leftover slot) */}
+            <div style={{ background: '#080b14' }} />
           </div>
         </div>
       </section>

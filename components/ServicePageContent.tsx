@@ -218,6 +218,7 @@ export default function ServicePageContent({ data }: { data: ServicePageData }) 
               {data.deliverables.map((item, i) => (
                 <div
                   key={i}
+                  className="page-deliverable-row"
                   style={{
                     background: '#0d0f1a',
                     padding: '44px 48px',

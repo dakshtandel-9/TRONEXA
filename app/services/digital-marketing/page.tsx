@@ -7,37 +7,39 @@ import { SoundProvider } from '@/contexts/SoundContext';
 import { LoadingProvider } from '@/contexts/LoadingContext';
 
 export const metadata: Metadata = {
-  title: 'Digital Marketing — TRONEXA | Drive Visibility, Leads And Business Growth',
+  title: 'Digital Marketing — TRONEXA | Data-Driven Marketing That Drives Visibility & Revenue',
   description:
-    'TRONEXA delivers SEO, PPC, social media marketing, content marketing, email campaigns, brand strategy, and performance analytics for measurable business growth.',
+    'TRONEXA builds data-driven digital marketing strategies — SEO, PPC, social media, content marketing, email automation, and conversion optimization to grow your brand and increase revenue.',
 };
 
 const data: ServicePageData = {
-  num: '13',
+  num: '10',
   label: 'Digital Marketing',
-  heroHeading: 'Drive Visibility, Leads\nAnd Business Growth',
+  heroHeading: 'Accelerating Brand Growth\nThrough Digital Marketing',
   heroDesc:
-    'Reach the right audience with data-driven digital marketing strategies designed to increase awareness, engagement, and conversions.',
+    'In an increasingly competitive digital landscape, businesses need more than just an online presence — they need strategic marketing that drives measurable results. From attracting qualified leads to building brand awareness and increasing customer retention, digital marketing plays a crucial role in modern business growth.',
   overview:
-    'TRONEXA combines creativity, analytics, and performance marketing to help brands grow in competitive digital markets. We develop customized marketing strategies that improve visibility, attract qualified leads, and generate measurable business outcomes.',
+    'Tronexa helps businesses achieve their marketing goals through comprehensive digital marketing solutions tailored to their industry, audience, and objectives. By leveraging data-driven strategies across multiple digital channels, Tronexa empowers organizations to strengthen their online presence, maximize return on investment, and achieve sustainable business growth.',
   deliverables: [
-    { num: '01', title: 'Search Engine Optimization (SEO)', desc: 'Improving organic rankings and search visibility through technical SEO, on-page optimization, and authoritative link building.' },
-    { num: '02', title: 'Pay-Per-Click Advertising', desc: 'Generating high-quality leads through targeted Google Ads, Bing Ads, and display campaigns optimized for ROI.' },
-    { num: '03', title: 'Social Media Marketing', desc: 'Building brand presence and driving engagement across LinkedIn, Instagram, Facebook, and other platforms.' },
-    { num: '04', title: 'Content Marketing', desc: 'Creating valuable, SEO-optimized content that attracts audiences, builds authority, and converts visitors into leads.' },
-    { num: '05', title: 'Marketing Automation', desc: 'Streamlining customer journeys and campaign delivery through intelligent automation tools and workflow design.' },
-    { num: '06', title: 'Email Marketing', desc: 'Designing and automating targeted email campaigns for lead nurturing, customer retention, and promotions.' },
-    { num: '07', title: 'Brand Strategy', desc: 'Building strong, consistent brand identities — including messaging, visual assets, and positioning frameworks.' },
-    { num: '08', title: 'Lead Generation Campaigns', desc: 'Creating multi-channel campaigns designed to attract, capture, and qualify high-intent business leads at scale.' },
-    { num: '09', title: 'Conversion Rate Optimization', desc: 'Analyzing user behavior and testing page elements to improve conversion rates across landing pages and funnels.' },
-    { num: '10', title: 'Performance Analytics', desc: 'Tracking and reporting campaign performance with clear attribution models to continuously improve marketing outcomes.' },
+    { num: '01', title: 'Search Engine Optimization (SEO)', desc: 'On-page, off-page, and technical SEO strategies for improved rankings — conducting keyword research, content optimization, link building, and Core Web Vitals improvements to drive sustainable organic traffic growth.' },
+    { num: '02', title: 'Pay-Per-Click Advertising (PPC)', desc: 'Targeted campaigns across Google Ads, Bing Ads, and other networks — with strategic keyword selection, compelling ad copy, and continuous bid optimization to maximize return on ad spend.' },
+    { num: '03', title: 'Social Media Marketing', desc: 'Content creation, audience engagement, and campaign management across Facebook, Instagram, LinkedIn, X, YouTube, and TikTok — building brand presence and community while driving measurable business outcomes.' },
+    { num: '04', title: 'Content Marketing', desc: 'Blogs, articles, landing pages, and brand-focused content strategies — creating high-value content that educates your audience, builds authority, and converts visitors into qualified leads.' },
+    { num: '05', title: 'Email Marketing Automation', desc: 'Personalized email campaigns and customer nurturing workflows — using Mailchimp, HubSpot, and ActiveCampaign to deliver the right message to the right person at the right moment in their journey.' },
+    { num: '06', title: 'Conversion Rate Optimization (CRO)', desc: 'Improving website performance and lead conversion rates — through A/B testing, heatmap analysis, user session recording, and landing page optimization to turn more visitors into customers.' },
+    { num: '07', title: 'Lead Generation Campaigns', desc: 'Targeted acquisition strategies across multiple digital channels — designing and executing multi-touch campaigns that attract qualified prospects and move them through your sales funnel efficiently.' },
+    { num: '08', title: 'Brand Reputation Management', desc: 'Monitoring and enhancing online brand perception — tracking mentions, managing reviews, responding to feedback, and building a positive brand narrative across all digital platforms.' },
+    { num: '09', title: 'Influencer Marketing', desc: 'Strategic collaborations with industry influencers and creators — identifying and partnering with voices that authentically align with your brand to expand reach and build credibility with new audiences.' },
+    { num: '10', title: 'Retargeting Campaigns', desc: 'Re-engagement strategies for website visitors and prospects — using Meta Pixel, Google Tag Manager, and LinkedIn Insight Tag to bring warm leads back to your brand with highly relevant messaging.' },
+    { num: '11', title: 'Local SEO Optimization', desc: 'Enhanced visibility for location-based searches and local audiences — optimizing Google Business Profile, local citations, and geo-targeted content to capture customers searching near you.' },
+    { num: '12', title: 'Marketing Analytics Dashboard', desc: 'Real-time campaign tracking and performance reporting — using Google Analytics 4, Looker Studio, and custom dashboards to give you complete visibility into what\'s working and where to invest next.' },
   ],
   whyPoints: [
-    { title: 'Data-Driven Strategies', desc: 'Every decision we make is backed by data — from audience research and competitive analysis to campaign testing and attribution modeling.' },
-    { title: 'ROI-Focused Campaigns', desc: 'We tie every marketing activity to business outcomes — leads, pipeline, and revenue — not just impressions and clicks.' },
-    { title: 'Multi-Channel Expertise', desc: 'We create cohesive strategies across search, social, email, and content — ensuring consistent messaging and compounding results across channels.' },
-    { title: 'Transparent Reporting', desc: 'You always know exactly what is working and why. We provide clear, honest reporting with actionable recommendations every month.' },
-    { title: 'Sustainable Growth', desc: 'We balance short-term performance marketing with long-term brand building — creating sustainable growth that compounds over time.' },
+    { title: 'Data-Driven Strategy', desc: 'Every marketing decision is grounded in data — we analyze market trends, audience behavior, competitor positioning, and campaign performance to build strategies that consistently deliver measurable business results.' },
+    { title: 'Full-Funnel Approach', desc: 'We cover the entire customer journey — from awareness and consideration to conversion and retention — ensuring your marketing investment creates compounding value across every stage of the funnel.' },
+    { title: 'Multi-Channel Expertise', desc: 'From SEO and PPC to social media, email, and influencer marketing, our team has deep expertise across every major digital channel — building integrated campaigns that amplify each other\'s impact.' },
+    { title: 'Transparent Reporting', desc: 'You always know exactly what your marketing budget is doing — our real-time dashboards and regular reporting give you complete visibility into spend, performance, and ROI across every campaign.' },
+    { title: 'Continuous Optimization', desc: 'We don\'t set and forget — our team continuously monitors, tests, and refines campaigns based on performance data, ensuring your marketing improves month over month as we learn what resonates with your audience.' },
   ],
   cta: 'Grow Your Digital Presence',
 };

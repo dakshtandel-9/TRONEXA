@@ -7,39 +7,41 @@ import { SoundProvider } from '@/contexts/SoundContext';
 import { LoadingProvider } from '@/contexts/LoadingContext';
 
 export const metadata: Metadata = {
-  title: 'IoT Solutions — TRONEXA | Connect The Physical And Digital World',
+  title: 'IoT Solutions — TRONEXA | Intelligent IoT Ecosystems for Real-Time Monitoring & Automation',
   description:
-    'TRONEXA builds intelligent connected ecosystems — smart devices, industrial IoT, sensor networks, predictive maintenance, and real-time monitoring solutions.',
+    'TRONEXA builds end-to-end IoT solutions connecting devices, sensors, and cloud platforms — enabling real-time monitoring, predictive maintenance, industrial automation, and operational intelligence.',
 };
 
 const data: ServicePageData = {
-  num: '08',
+  num: '06',
   label: 'IoT Solutions',
-  heroHeading: 'Connect The Physical\nAnd Digital World',
+  heroHeading: 'Connecting The Physical And\nDigital World With IoT',
   heroDesc:
-    'Build intelligent connected ecosystems that improve efficiency, automate operations, and provide real-time visibility across devices, systems, and environments.',
+    'As industries become increasingly connected, businesses require intelligent systems that can collect, analyze, and act on real-time data from physical assets and devices. The Internet of Things is transforming operations by enabling organizations to improve efficiency, reduce costs, and make data-driven decisions faster than ever before.',
   overview:
-    'TRONEXA helps organizations leverage the power of the Internet of Things to create smarter operations and data-driven decision-making processes. From connected devices and smart sensors to industrial automation and predictive monitoring, we build scalable IoT ecosystems that enhance productivity, reduce costs, and unlock new business opportunities.',
+    'Tronexa specializes in developing end-to-end IoT solutions that seamlessly connect devices, sensors, machines, and cloud platforms into a unified ecosystem. From smart manufacturing and logistics tracking to healthcare monitoring and industrial automation, Tronexa delivers scalable IoT solutions designed to drive operational excellence and long-term growth.',
   deliverables: [
-    { num: '01', title: 'Smart Device Integration', desc: 'Connecting sensors, devices, and systems into unified ecosystems for seamless communication and automation.' },
-    { num: '02', title: 'Industrial IoT Solutions', desc: 'Developing IoT systems for manufacturing, logistics, and industrial automation that improve uptime and reduce waste.' },
-    { num: '03', title: 'Sensor Networks', desc: 'Designing and deploying scalable sensor networks for environmental monitoring, asset tracking, and data collection.' },
-    { num: '04', title: 'Predictive Maintenance', desc: 'Using IoT data and AI models to predict equipment failures before they occur, reducing downtime and maintenance costs.' },
-    { num: '05', title: 'Real-Time Monitoring Systems', desc: 'Building dashboards and alert systems that provide live visibility into device performance, health, and status.' },
-    { num: '06', title: 'Smart Manufacturing', desc: 'Implementing connected factory solutions that automate production lines and deliver real-time operational insights.' },
-    { num: '07', title: 'Connected Asset Tracking', desc: 'Tracking physical assets, vehicles, and inventory in real time using GPS, RFID, and IoT sensor technologies.' },
-    { num: '08', title: 'IoT Analytics Platforms', desc: 'Analyzing device-generated data to surface actionable insights, trends, and optimization opportunities.' },
-    { num: '09', title: 'Remote Management Systems', desc: 'Enabling remote monitoring, configuration, and control of connected devices and infrastructure.' },
-    { num: '10', title: 'Custom IoT Solutions', desc: 'Creating tailored IoT ecosystems designed for specific industries, use cases, and operational environments.' },
+    { num: '01', title: 'Real-Time Device Monitoring', desc: 'Continuous tracking of connected devices and assets — providing operations teams with live visibility into system status, performance metrics, and operational health across all connected infrastructure.' },
+    { num: '02', title: 'Sensor Data Collection', desc: 'Automated acquisition of environmental, operational, and equipment data — transforming raw sensor readings into structured, actionable information for analysis and decision-making.' },
+    { num: '03', title: 'Smart Dashboard', desc: 'Centralized monitoring with live metrics, charts, and analytics — giving operators a single pane of glass to view, analyze, and act on all IoT data across the organization.' },
+    { num: '04', title: 'Remote Device Management', desc: 'Configure, update, and control devices remotely — enabling teams to manage firmware, settings, and operational parameters across thousands of devices from a central platform.' },
+    { num: '05', title: 'Predictive Maintenance', desc: 'AI-driven detection of potential equipment failures before breakdowns occur — reducing unplanned downtime, extending asset lifespan, and optimizing maintenance scheduling and costs.' },
+    { num: '06', title: 'Automated Alerts & Notifications', desc: 'Instant alerts via mobile, email, or SMS for critical events and anomalies — ensuring the right people are notified immediately when conditions fall outside acceptable thresholds.' },
+    { num: '07', title: 'Asset Tracking System', desc: 'GPS-enabled location monitoring for vehicles, equipment, and inventory — providing real-time visibility into the location and movement of high-value assets across facilities and supply chains.' },
+    { num: '08', title: 'Energy Consumption Monitoring', desc: 'Track and optimize power usage across facilities and operations — identifying inefficiencies, reducing energy costs, and supporting sustainability goals with granular consumption data.' },
+    { num: '09', title: 'Industrial Automation Controls', desc: 'Automated machine operations and workflow management — integrating IoT controls with PLCs, SCADA systems, and manufacturing equipment for seamless industrial process automation.' },
+    { num: '10', title: 'Data Analytics & Reporting', desc: 'Detailed performance reports and operational intelligence — turning IoT data streams into meaningful insights that support strategic planning and continuous operational improvement.' },
+    { num: '11', title: 'Multi-Device Connectivity', desc: 'Support for sensors, gateways, machines, and smart devices — handling diverse hardware platforms including Arduino, Raspberry Pi, ESP32, and industrial PLCs across communication protocols.' },
+    { num: '12', title: 'Mobile Monitoring Application', desc: 'Access real-time IoT insights from anywhere — a fully featured mobile companion app that keeps field teams and management connected to operational data at all times.' },
   ],
   whyPoints: [
-    { title: 'Secure IoT Architecture', desc: 'Every IoT system we build incorporates end-to-end encryption, device authentication, and network segmentation to protect against threats.' },
-    { title: 'Real-Time Data Insights', desc: 'Our platforms process and surface IoT data in real time — giving your teams the visibility they need to act fast and decisively.' },
-    { title: 'Cloud Integration', desc: 'We connect IoT ecosystems with leading cloud platforms — AWS, Azure, GCP — enabling scalable storage, processing, and analytics.' },
-    { title: 'Scalable Infrastructure', desc: 'Our IoT architectures are designed to grow from dozens of devices to millions without architectural rewrites or performance degradation.' },
-    { title: 'Industry-Specific Solutions', desc: 'We bring deep domain knowledge across manufacturing, logistics, healthcare, energy, and agriculture — tailoring every solution to sector needs.' },
+    { title: 'End-to-End IoT Expertise', desc: 'From hardware selection and embedded programming to cloud infrastructure and analytics dashboards, our team covers the complete IoT stack — eliminating the need to manage multiple specialist vendors.' },
+    { title: 'Protocol-Agnostic Architecture', desc: 'We work across all major IoT communication protocols — MQTT, CoAP, HTTP, WebSockets, and Modbus — ensuring seamless connectivity regardless of your existing hardware ecosystem.' },
+    { title: 'Predictive Intelligence Built In', desc: 'Our IoT solutions incorporate machine learning for predictive maintenance and anomaly detection — moving beyond reactive monitoring to proactive operational management.' },
+    { title: 'Enterprise Security Standards', desc: 'Every IoT deployment is secured with TLS encryption, device authentication, and secure API management — protecting your operational data and connected infrastructure from threats.' },
+    { title: 'Scalable Cloud Infrastructure', desc: 'Built on AWS IoT Core, Azure IoT Hub, and Google Cloud IoT, our solutions scale from tens to hundreds of thousands of connected devices as your operations grow.' },
   ],
-  cta: 'Build Your IoT Solution',
+  cta: 'Build Your IoT Ecosystem',
 };
 
 export default function IoTSolutionsPage() {
