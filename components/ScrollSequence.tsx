@@ -43,6 +43,25 @@ const SECTION_PROGRESS = [
   1.0,                                   // section 5 → Scene 5 (aerial, end)
 ];
 
+// Compute each scene's crossfade opacity at an arbitrary timeline point `p`.
+// Used both for the live frame and to look ahead at the section we're heading
+// toward, so the incoming scene's Canvas is mounted (and warmed up) before its
+// crossfade actually begins — otherwise the fresh canvas paints black for a few
+// frames while it compiles shaders / loads the model.
+function sceneOpacities(p: number): [number, number, number, number, number] {
+  const cross = clamp01((p - FADE_START) / (FADE_END - FADE_START));
+  const cross3 = clamp01((p - S3_DRONE_END) / (S3_FADE_END - S3_DRONE_END));
+  const cross4 = clamp01((p - S4_S3_END) / (S4_FADE_END - S4_S3_END));
+  const cross5 = clamp01((p - S4_END) / (S5_FADE_END - S4_END));
+  return [
+    1 - cross,              // scene 1
+    cross * (1 - cross3),   // scene 2
+    cross3 * (1 - cross4),  // scene 3
+    cross4 * (1 - cross5),  // scene 4
+    cross5,                 // scene 5
+  ];
+}
+
 function dispatchSectionChange(index: number) {
   window.dispatchEvent(new CustomEvent('sectionchange', { detail: { index } }));
 }
@@ -199,37 +218,37 @@ export default function ScrollSequence() {
       smoothRef.current += Math.sign(diff) * move;
       const p = smoothRef.current;
 
-      // feed each scene its remapped local progress (divaya timeline math)
+      // feed each scene its remapped local progress (divaya timeline math).
+      // Crossfade opacities are computed separately in sceneOpacities(p) below.
       sceneRef.current = clamp01(p / SCENE1_ZOOM_END);
-      const cross = clamp01((p - FADE_START) / (FADE_END - FADE_START));
       scene2ScrollRef.current = clamp01((p - FADE_END) / (S3_DRONE_END - FADE_END));
-      const cross3 = clamp01((p - S3_DRONE_END) / (S3_FADE_END - S3_DRONE_END));
       scene3ScrollRef.current = clamp01((p - S3_FADE_END) / (S4_S3_END - S3_FADE_END));
-      const cross4 = clamp01((p - S4_S3_END) / (S4_FADE_END - S4_S3_END));
       scene4ScrollRef.current = clamp01((p - S4_FADE_END) / (S4_END - S4_FADE_END));
-      const cross5 = clamp01((p - S4_END) / (S5_FADE_END - S4_END));
       scene5ScrollRef.current = clamp01((p - S5_FADE_END) / (S5_END - S5_FADE_END));
 
       // per-scene opacities: scene1 on top, then 2,3,4,5 underneath
-      const o1 = 1 - cross;
-      const o2 = cross * (1 - cross3);
-      const o3 = cross3 * (1 - cross4);
-      const o4 = cross4 * (1 - cross5);
-      const o5 = cross5;
+      const [o1, o2, o3, o4, o5] = sceneOpacities(p);
       if (scene1Ref.current) scene1Ref.current.style.opacity = String(o1);
       if (scene2Ref.current) scene2Ref.current.style.opacity = String(o2);
       if (scene3Ref.current) scene3Ref.current.style.opacity = String(o3);
       if (scene4Ref.current) scene4Ref.current.style.opacity = String(o4);
       if (scene5Ref.current) scene5Ref.current.style.opacity = String(o5);
 
-      // PERF: decide which scenes should be mounted. A scene is "live" once its
-      // opacity crosses a small threshold, so a canvas mounts just before it
-      // fades in and unmounts once it's fully faded out — only 1–2 canvases (and
-      // their Bloom passes) ever run at once. Only push to React state when the
-      // live set actually changes, to avoid re-rendering every frame.
+      // PERF + no-flash: a scene's Canvas is mounted if it's visible NOW *or* if
+      // it will be visible at the section we're animating toward. Mounting the
+      // incoming scene as soon as the jump starts gives it time to warm up
+      // (compile shaders / load the model) and paint a real frame before its
+      // crossfade reaches it — so you never see the layer's black background.
+      // Once we settle (p ≈ target), the look-ahead set collapses to the live
+      // set, so off-screen scenes unmount and only 1–2 canvases keep running.
       const EPS = 0.001;
+      const tgt = sceneOpacities(targetRef.current);
       const next: [boolean, boolean, boolean, boolean, boolean] = [
-        o1 > EPS, o2 > EPS, o3 > EPS, o4 > EPS, o5 > EPS,
+        o1 > EPS || tgt[0] > EPS,
+        o2 > EPS || tgt[1] > EPS,
+        o3 > EPS || tgt[2] > EPS,
+        o4 > EPS || tgt[3] > EPS,
+        o5 > EPS || tgt[4] > EPS,
       ];
       const cur = visibleRef.current;
       if (
