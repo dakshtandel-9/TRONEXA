@@ -150,14 +150,14 @@ export default function ScrollSections() {
 
               <h2
                 style={{
-                  color: 'white',
-                  fontSize: 'clamp(1.1rem, 3.5vw, 2.2rem)',
-                  fontWeight: 800,
+                  color: '#e6edf8',
+                  fontSize: 'clamp(0.91rem, 2.52vw, 1.68rem)',
+                  fontWeight: 700,
                   textTransform: 'uppercase',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.15,
-                  textShadow: '0 2px 16px rgba(0,0,0,0.8)',
-                  margin: '0 0 18px',
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.12,
+                  textShadow: '0 2px 22px rgba(0,0,0,0.85)',
+                  margin: '0 0 20px',
                   whiteSpace: 'pre-line',
                 }}
               >
@@ -166,12 +166,13 @@ export default function ScrollSections() {
 
               <p
                 style={{
-                  color: 'rgba(255,255,255,0.72)',
-                  fontSize: '13px',
-                  lineHeight: 1.7,
-                  maxWidth: '480px',
-                  margin: '0 auto 26px',
-                  textShadow: '0 2px 12px rgba(0,0,0,0.8)',
+                  color: 'rgba(190,205,230,0.72)',
+                  fontSize: '9.45px',
+                  fontWeight: 400,
+                  lineHeight: 1.75,
+                  maxWidth: '500px',
+                  margin: '0 auto 30px',
+                  textShadow: '0 2px 14px rgba(0,0,0,0.8)',
                 }}
               >
                 {section.body}
@@ -184,28 +185,37 @@ export default function ScrollSections() {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '10px',
-                    border: '1px solid white',
-                    color: 'white',
-                    padding: '13px 30px',
-                    fontSize: '11px',
-                    letterSpacing: '0.16em',
+                    gap: '12px',
+                    border: '1px solid rgba(150,175,215,0.35)',
+                    background: 'rgba(8,14,30,0.55)',
+                    backdropFilter: 'blur(6px)',
+                    WebkitBackdropFilter: 'blur(6px)',
+                    color: '#e6edf8',
+                    padding: '15px 34px',
+                    fontSize: '7.7px',
+                    fontWeight: 600,
+                    letterSpacing: '0.22em',
                     textTransform: 'uppercase',
                     textDecoration: 'none',
-                    transition: 'background 0.2s, color 0.2s',
+                    clipPath:
+                      'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)',
+                    transition: 'background 0.25s, color 0.25s, border-color 0.25s',
                   }}
                   onMouseEnter={e => {
                     const el = e.currentTarget as HTMLElement;
-                    el.style.background = 'white';
-                    el.style.color = 'black';
+                    el.style.background = 'rgba(40,70,130,0.6)';
+                    el.style.borderColor = 'rgba(150,175,215,0.7)';
+                    el.style.color = '#ffffff';
                   }}
                   onMouseLeave={e => {
                     const el = e.currentTarget as HTMLElement;
-                    el.style.background = 'transparent';
-                    el.style.color = 'white';
+                    el.style.background = 'rgba(8,14,30,0.55)';
+                    el.style.borderColor = 'rgba(150,175,215,0.35)';
+                    el.style.color = '#e6edf8';
                   }}
                 >
-                  ⊞ {section.cta.label}
+                  <span style={{ fontSize: '9.1px', opacity: 0.85 }}>⊟</span>
+                  {section.cta.label}
                 </a>
               )}
             </>

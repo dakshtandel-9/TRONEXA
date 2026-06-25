@@ -565,6 +565,12 @@ const FOCUS_START = new THREE.Vector3(0, 2.6, -120); // early: valley horizon
 const MODEL_CENTER = new THREE.Vector3(0, 4.2, -28); // the model
 const _focus = new THREE.Vector3();
 
+// Horizontal framing correction. The valley/model sit at world x=0 but read as
+// shifted to the right on screen; panning the camera AND its focus by the same
+// +X pans the framing right, which slides the whole composition LEFT into the
+// centre of the viewport. Tune this single value to re-centre the hero.
+const PAN_X = 1.6;
+
 function CameraRig({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) {
   const par = useParallax();
 
@@ -577,11 +583,12 @@ function CameraRig({ scrollRef }: { scrollRef: React.MutableRefObject<number> })
     const focusT = THREE.MathUtils.clamp((p - 0.4) / 0.6, 0, 1);
     const focusEased = focusT * focusT * (3 - 2 * focusT);
     _focus.lerpVectors(FOCUS_START, MODEL_CENTER, focusEased);
+    _focus.x += PAN_X; // re-centre the framing horizontally
 
     // OPPOSITE-direction mouse parallax (scene drifts AGAINST the cursor): cursor
     // right → camera right → world slides left; cursor down → camera down → up.
     const m = par.update(dt);
-    const offX = m.x * PARALLAX_X;
+    const offX = PAN_X + m.x * PARALLAX_X;
     const offY = -m.y * PARALLAX_Y;
 
     // frame-rate-independent tight follow — the page already smooths scroll, so

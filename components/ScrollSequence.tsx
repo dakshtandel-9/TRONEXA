@@ -27,20 +27,27 @@ const S3_DRONE_END = 0.2867;
 const S3_FADE_END = 0.2960;
 const S4_S3_END = 0.6883;
 const S4_FADE_END = 0.6945;
-const S4_END = 0.7656;
-const S5_FADE_END = 0.7735;
+// Scene 4's rays-climb band (S4_FADE_END→S4_END) was widened to 3× its original
+// length (0.0711 → 0.2133) so section 4's animation plays out ~3× longer/slower.
+// The S4→S5 crossfade keeps its width and Scene 5 still ends at 1.0, so Scene 5's
+// aerial band absorbed the extra length (it's correspondingly shorter now).
+const S4_END = 0.9078;               // was 0.7656 (band 0.0711 → 0.2133, 3×)
+const S5_FADE_END = 0.9157;          // S4_END + original 0.0079 crossfade width
 const S5_END = 1.0;
 
 // Where each TRONEXA section (0..5) sits on the 0..1 animation timeline. Each
-// section lands on the "settled" point of its matching scene so the background
-// rests on a clean composition while that section's text is shown.
+// text section lands on its OWN scene so the pairing is 1:1:
+//   text 1 → Scene 1, text 2 → Scene 2, text 3 → Scene 3, text 4 → Scene 4,
+//   text 5 → Scene 5, and the last text (6) shows at the very end of Scene 5.
+// Sections settle on the middle of each scene's band so the background rests on
+// a clean composition while that section's text is shown.
 const SECTION_PROGRESS = [
-  0.0,                                   // section 0 → Scene 1 (hero zoom start)
-  (FADE_END + S3_DRONE_END) / 2,         // section 1 → Scene 2 (drone mid-canyon)
-  (S3_FADE_END + S4_S3_END) / 2,         // section 2 → Scene 3 (terrain flyover)
-  S4_S3_END,                             // section 3 → Scene 3 end / into Scene 4
-  (S4_FADE_END + S4_END) / 2,            // section 4 → Scene 4 (rays climbing)
-  1.0,                                   // section 5 → Scene 5 (aerial, end)
+  0.0,                                   // text 1 → Scene 1 (hero zoom start)
+  (FADE_END + S3_DRONE_END) / 2,         // text 2 → Scene 2 (drone mid-canyon)
+  (S3_FADE_END + S4_S3_END) / 2,         // text 3 → Scene 3 (terrain flyover)
+  (S4_FADE_END + S4_END) / 2,            // text 4 → Scene 4 (rays climbing)
+  (S5_FADE_END + S5_END) / 2,            // text 5 → Scene 5 (aerial)
+  1.0,                                   // text 6 → Scene 5 finish (last scene end)
 ];
 
 // Compute each scene's crossfade opacity at an arbitrary timeline point `p`.
