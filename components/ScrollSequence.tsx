@@ -1,21 +1,47 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useLoadingContext } from '@/contexts/LoadingContext';
+
+// ── divaya Three.js scenes (replace the old video background) ─────────────────
+const Scene = dynamic(() => import('@/components/Scene'), { ssr: false });
+const Scene2 = dynamic(() => import('@/components/Scene2'), { ssr: false });
+const Scene3 = dynamic(() => import('@/components/Scene3'), { ssr: false });
+const Scene4 = dynamic(() => import('@/components/Scene4'), { ssr: false });
+const Scene5 = dynamic(() => import('@/components/Scene5'), { ssr: false });
 
 const MAX_SECTION = 5;
 
-const VIDEO_SRCS = [
-  '/sequence/final(720p)1.mp4',
-  '/sequence/final(720p)2.mp4',
-  '/sequence/final(720p)3.mp4',
-  '/sequence/final(720p)4.mp4',
-  '/sequence/final(720p)5.mp4',
-];
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
-function getVideoIndex(section: number): number {
-  return Math.min(section, VIDEO_SRCS.length - 1);
-}
+// ── divaya scroll timeline (fraction of the full animation 0..1) ──────────────
+// Copied from the divaya page.tsx timeline. Each scene owns a band of the 0..1
+// progress; crossfades blend neighbouring scenes. We DON'T scroll a tall page
+// here — instead each of TRONEXA's 6 discrete sections maps to a settled point
+// in this timeline (SECTION_PROGRESS below) and we smoothly animate toward it.
+const SCENE1_ZOOM_END = 0.1453;
+const FADE_START = SCENE1_ZOOM_END;
+const FADE_END = 0.1546;
+const S3_DRONE_END = 0.2867;
+const S3_FADE_END = 0.2960;
+const S4_S3_END = 0.6883;
+const S4_FADE_END = 0.6945;
+const S4_END = 0.7656;
+const S5_FADE_END = 0.7735;
+const S5_END = 1.0;
+
+// Where each TRONEXA section (0..5) sits on the 0..1 animation timeline. Each
+// section lands on the "settled" point of its matching scene so the background
+// rests on a clean composition while that section's text is shown.
+const SECTION_PROGRESS = [
+  0.0,                                   // section 0 → Scene 1 (hero zoom start)
+  (FADE_END + S3_DRONE_END) / 2,         // section 1 → Scene 2 (drone mid-canyon)
+  (S3_FADE_END + S4_S3_END) / 2,         // section 2 → Scene 3 (terrain flyover)
+  S4_S3_END,                             // section 3 → Scene 3 end / into Scene 4
+  (S4_FADE_END + S4_END) / 2,            // section 4 → Scene 4 (rays climbing)
+  1.0,                                   // section 5 → Scene 5 (aerial, end)
+];
 
 function dispatchSectionChange(index: number) {
   window.dispatchEvent(new CustomEvent('sectionchange', { detail: { index } }));
@@ -29,7 +55,6 @@ function updateProgressBar(section: number) {
 }
 
 export default function ScrollSequence() {
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [overlayVisible, setOverlayVisible] = useState(true);
   const [overlayMounted, setOverlayMounted] = useState(true);
@@ -42,76 +67,52 @@ export default function ScrollSequence() {
   const currentMXRef = useRef(0), currentMYRef = useRef(0);
   const targetMXRef = useRef(0), targetMYRef = useRef(0);
 
-  const easeOutRafsRef = useRef<Map<number, number>>(new Map());
-  const switchToSectionRef = useRef<(targetSection: number) => void>(() => {});
+  // ── animation drive state ──────────────────────────────────────────────────
+  // targetRef  = the timeline point we're easing toward (set per section)
+  // smoothRef  = the eased current timeline point fed to every scene
+  const targetRef = useRef(0);
+  const smoothRef = useRef(0);
 
-  const startEaseOut = useCallback((video: HTMLVideoElement, idx: number) => {
-    const EASE_WINDOW = 0.5; // seconds before end to start easing
-    const MIN_RATE = 0.55;
+  // per-scene progress refs handed to each Scene component (0..1 within the scene)
+  const sceneRef = useRef(0);
+  const scene2ScrollRef = useRef(0);
+  const scene3ScrollRef = useRef(0);
+  const scene4ScrollRef = useRef(0);
+  const scene5ScrollRef = useRef(0);
 
-    function tick() {
-      if (!video.duration || video.paused || video.ended) return;
-      const remaining = video.duration - video.currentTime;
-      if (remaining <= EASE_WINDOW) {
-        // ease out: cubic easing from 1 → MIN_RATE
-        const t = remaining / EASE_WINDOW; // 1 → 0
-        const eased = MIN_RATE + (1 - MIN_RATE) * (t * t * t);
-        video.playbackRate = eased;
-        if (remaining < 0.05) {
-          video.pause();
-          video.playbackRate = 1;
-          easeOutRafsRef.current.delete(idx);
-          // only auto-advance on the last video (5th → 6th section)
-          if (idx === VIDEO_SRCS.length - 1) {
-            switchToSectionRef.current(MAX_SECTION);
-          }
-          return;
-        }
-      } else {
-        video.playbackRate = 1;
-      }
-      easeOutRafsRef.current.set(idx, requestAnimationFrame(tick));
-    }
+  // scene layer DOM refs (for crossfade opacity)
+  const scene1Ref = useRef<HTMLDivElement>(null);
+  const scene2Ref = useRef<HTMLDivElement>(null);
+  const scene3Ref = useRef<HTMLDivElement>(null);
+  const scene4Ref = useRef<HTMLDivElement>(null);
+  const scene5Ref = useRef<HTMLDivElement>(null);
 
-    const existing = easeOutRafsRef.current.get(idx);
-    if (existing) cancelAnimationFrame(existing);
-    easeOutRafsRef.current.set(idx, requestAnimationFrame(tick));
-  }, []);
+  // PERF: only mount the <Canvas> for scenes that are actually visible (the
+  // active scene plus any it's currently crossfading into). Keeping all 5
+  // canvases mounted ran 5 WebGL contexts + 5 Bloom postprocessing passes every
+  // frame even when 4 were at opacity 0 — the main source of the lag. `visible`
+  // is a bitmask-ish boolean tuple [s1..s5]; we only flip React state when the
+  // set of live scenes changes, so per-frame opacity updates stay ref-driven.
+  const [visible, setVisible] = useState<[boolean, boolean, boolean, boolean, boolean]>([
+    true, false, false, false, false,
+  ]);
+  const visibleRef = useRef(visible);
+  visibleRef.current = visible;
 
   const switchToSection = useCallback((targetSection: number) => {
     if (!isLoadedRef.current) return;
     if (targetSection < 0 || targetSection > MAX_SECTION) return;
     if (targetSection === currentSectionRef.current) return;
 
-    const oldIdx = getVideoIndex(currentSectionRef.current);
-    const newIdx = getVideoIndex(targetSection);
-    const oldVideo = videoRefs.current[oldIdx];
-    const newVideo = videoRefs.current[newIdx];
-
-    if (oldVideo) {
-      oldVideo.style.opacity = '0';
-      const oldRaf = easeOutRafsRef.current.get(oldIdx);
-      if (oldRaf) { cancelAnimationFrame(oldRaf); easeOutRafsRef.current.delete(oldIdx); }
-    }
-
-    if (newVideo && newIdx !== oldIdx) {
-      newVideo.currentTime = 0;
-      newVideo.playbackRate = 1;
-      newVideo.play().catch(() => {});
-      newVideo.style.opacity = '1';
-      startEaseOut(newVideo, newIdx);
-    } else if (newVideo) {
-      newVideo.style.opacity = '1';
-    }
+    // point the animation timeline at the new section's settled progress
+    targetRef.current = SECTION_PROGRESS[targetSection];
 
     currentSectionRef.current = targetSection;
     setCurrentSection(targetSection);
     dispatchSectionChange(targetSection);
     dispatchSectionSettled(targetSection);
     updateProgressBar(targetSection);
-  }, [startEaseOut]);
-
-  switchToSectionRef.current = switchToSection;
+  }, []);
 
   const goNext = useCallback(() => {
     const next = currentSectionRef.current + 1;
@@ -169,7 +170,10 @@ export default function ScrollSequence() {
       switchToSection(idx);
     }
 
-    function renderParallax() {
+    // ── single rAF loop: gentle parallax + ease the timeline toward target ────
+    let lastT = performance.now();
+    function renderFrame() {
+      // container parallax (mirrors the old video parallax feel)
       const container = containerRef.current;
       if (container) {
         const dx = (targetMXRef.current - currentMXRef.current) * 0.04;
@@ -180,19 +184,69 @@ export default function ScrollSequence() {
           container.style.transform = `translate(${currentMXRef.current * 75}px, ${currentMYRef.current * 62}px) scale(1.1)`;
         }
       }
-      parallaxRafRef.current = requestAnimationFrame(renderParallax);
+
+      // constant-speed ease of the timeline toward the active section's point
+      const now = performance.now();
+      const dt = Math.min((now - lastT) / 1000, 0.1);
+      lastT = now;
+
+      const MAX_SPEED = 0.16;   // timeline fraction per second
+      const EASE_ZONE = 0.04;
+      const diff = targetRef.current - smoothRef.current;
+      const dist = Math.abs(diff);
+      const speed = MAX_SPEED * Math.min(1, dist / EASE_ZONE);
+      const move = Math.min(dist, speed * dt);
+      smoothRef.current += Math.sign(diff) * move;
+      const p = smoothRef.current;
+
+      // feed each scene its remapped local progress (divaya timeline math)
+      sceneRef.current = clamp01(p / SCENE1_ZOOM_END);
+      const cross = clamp01((p - FADE_START) / (FADE_END - FADE_START));
+      scene2ScrollRef.current = clamp01((p - FADE_END) / (S3_DRONE_END - FADE_END));
+      const cross3 = clamp01((p - S3_DRONE_END) / (S3_FADE_END - S3_DRONE_END));
+      scene3ScrollRef.current = clamp01((p - S3_FADE_END) / (S4_S3_END - S3_FADE_END));
+      const cross4 = clamp01((p - S4_S3_END) / (S4_FADE_END - S4_S3_END));
+      scene4ScrollRef.current = clamp01((p - S4_FADE_END) / (S4_END - S4_FADE_END));
+      const cross5 = clamp01((p - S4_END) / (S5_FADE_END - S4_END));
+      scene5ScrollRef.current = clamp01((p - S5_FADE_END) / (S5_END - S5_FADE_END));
+
+      // per-scene opacities: scene1 on top, then 2,3,4,5 underneath
+      const o1 = 1 - cross;
+      const o2 = cross * (1 - cross3);
+      const o3 = cross3 * (1 - cross4);
+      const o4 = cross4 * (1 - cross5);
+      const o5 = cross5;
+      if (scene1Ref.current) scene1Ref.current.style.opacity = String(o1);
+      if (scene2Ref.current) scene2Ref.current.style.opacity = String(o2);
+      if (scene3Ref.current) scene3Ref.current.style.opacity = String(o3);
+      if (scene4Ref.current) scene4Ref.current.style.opacity = String(o4);
+      if (scene5Ref.current) scene5Ref.current.style.opacity = String(o5);
+
+      // PERF: decide which scenes should be mounted. A scene is "live" once its
+      // opacity crosses a small threshold, so a canvas mounts just before it
+      // fades in and unmounts once it's fully faded out — only 1–2 canvases (and
+      // their Bloom passes) ever run at once. Only push to React state when the
+      // live set actually changes, to avoid re-rendering every frame.
+      const EPS = 0.001;
+      const next: [boolean, boolean, boolean, boolean, boolean] = [
+        o1 > EPS, o2 > EPS, o3 > EPS, o4 > EPS, o5 > EPS,
+      ];
+      const cur = visibleRef.current;
+      if (
+        next[0] !== cur[0] || next[1] !== cur[1] || next[2] !== cur[2] ||
+        next[3] !== cur[3] || next[4] !== cur[4]
+      ) {
+        visibleRef.current = next;
+        setVisible(next);
+      }
+
+      parallaxRafRef.current = requestAnimationFrame(renderFrame);
     }
 
-    const firstVideo = videoRefs.current[0];
-    let markLoadedCalled = false;
-
+    // the 3D background loads instantly (no video buffering); mark loaded shortly
     function markLoaded() {
-      if (markLoadedCalled) return;
-      markLoadedCalled = true;
+      if (isLoadedRef.current) return;
       isLoadedRef.current = true;
-
-      firstVideo?.play().catch(() => {});
-      if (firstVideo) startEaseOut(firstVideo, 0);
 
       setOverlayVisible(false);
       setTimeout(() => {
@@ -202,32 +256,19 @@ export default function ScrollSequence() {
         dispatchSectionSettled(0);
       }, 500);
     }
+    const loadTimer = setTimeout(markLoaded, 600);
 
-    if (!firstVideo || firstVideo.readyState >= 2) {
-      markLoaded();
-    } else {
-      const onReady = () => {
-        firstVideo.removeEventListener('loadeddata', onReady);
-        firstVideo.removeEventListener('canplaythrough', onReady);
-        firstVideo.removeEventListener('error', onReady);
-        markLoaded();
-      };
-      firstVideo.addEventListener('loadeddata', onReady);
-      firstVideo.addEventListener('canplaythrough', onReady);
-      firstVideo.addEventListener('error', onReady);
-      setTimeout(markLoaded, 5000);
-    }
-
-    parallaxRafRef.current = requestAnimationFrame(renderParallax);
+    parallaxRafRef.current = requestAnimationFrame(renderFrame);
     window.addEventListener('mousemove', onMouseMove, { passive: true });
     window.addEventListener('navigatesection', onNavigateSection);
 
     return () => {
       if (parallaxRafRef.current !== null) cancelAnimationFrame(parallaxRafRef.current);
+      clearTimeout(loadTimer);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('navigatesection', onNavigateSection);
     };
-  }, [setIsLoaded, switchToSection, startEaseOut]);
+  }, [setIsLoaded, switchToSection]);
 
   const btnBase: React.CSSProperties = {
     border: '1px solid rgba(255,255,255,0.55)',
@@ -242,9 +283,16 @@ export default function ScrollSequence() {
     transition: 'background 0.2s, color 0.2s, opacity 0.3s',
   };
 
+  const layerBase: React.CSSProperties = {
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+  };
+
   return (
     <>
-      {/* Parallax container holds all 5 videos stacked */}
+      {/* Parallax container holds the 5 stacked Three.js scenes */}
       <div
         ref={containerRef}
         style={{
@@ -257,25 +305,29 @@ export default function ScrollSequence() {
           overflow: 'hidden',
         }}
       >
-        {VIDEO_SRCS.map((src, i) => (
-          <video
-            key={src}
-            ref={el => { videoRefs.current[i] = el; }}
-            src={src}
-            playsInline
-            muted
-            preload={i === 0 ? 'auto' : 'metadata'}
-            style={{
-              position: 'absolute',
-              top: 0, left: 0,
-              width: '100%', height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center center',
-              opacity: i === 0 ? 1 : 0,
-              transition: 'opacity 0.8s ease',
-            }}
-          />
-        ))}
+        {/* Each layer div stays mounted (it owns the opacity ref read every
+            frame); only the heavy <Canvas> inside mounts while the scene is
+            visible, so just 1–2 WebGL contexts + Bloom passes run at once. */}
+        {/* SCENE 5 — top-down aerial; fades in at the very end (above scene 4) */}
+        <div ref={scene5Ref} style={{ ...layerBase, background: '#010715', opacity: 0, zIndex: 5 }}>
+          {visible[4] && <Scene5 scrollRef={scene5ScrollRef} />}
+        </div>
+        {/* SCENE 4 — climbing rays; bottom layer */}
+        <div ref={scene4Ref} style={{ ...layerBase, background: '#16215a', opacity: 0, zIndex: 1 }}>
+          {visible[3] && <Scene4 scrollRef={scene4ScrollRef} />}
+        </div>
+        {/* SCENE 3 — terrain + energy rivers */}
+        <div ref={scene3Ref} style={{ ...layerBase, background: '#020814', opacity: 0, zIndex: 2 }}>
+          {visible[2] && <Scene3 scrollRef={scene3ScrollRef} />}
+        </div>
+        {/* SCENE 2 — canyon drone */}
+        <div ref={scene2Ref} style={{ ...layerBase, background: '#020814', opacity: 0, zIndex: 3 }}>
+          {visible[1] && <Scene2 scrollRef={scene2ScrollRef} />}
+        </div>
+        {/* SCENE 1 — hero model; on top, fades out during the zoom */}
+        <div ref={scene1Ref} style={{ ...layerBase, background: '#010715', overflow: 'hidden', zIndex: 4 }}>
+          {visible[0] && <Scene scrollRef={sceneRef} />}
+        </div>
       </div>
 
       {/* Mobile gradient overlay — bottom fade for text readability */}
