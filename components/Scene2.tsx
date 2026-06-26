@@ -3,9 +3,17 @@
 import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Points, PointMaterial } from "@react-three/drei";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import {
+  EffectComposer,
+  Bloom,
+  Vignette,
+  ChromaticAberration,
+  Noise,
+  ToneMapping,
+} from "@react-three/postprocessing";
+import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
-import EnergyRiver from "./EnergyRiver";
+import EnergyRiver, { RIVER_CURVE } from "./EnergyRiver";
 import { useParallax, PARALLAX_X, PARALLAX_Y } from "./useParallax";
 
 // ─── Noise + fBm (identical to Scene 1) ──────────────────────────────────────
@@ -67,10 +75,12 @@ function getRockTextures() {
       const crackLine = Math.pow(crack, 8);
       const v = base * 0.6 + fine * 0.4;
       const idx = (y * size + x) * 4;
+      // ALMOST BLACK rock: base ≈ #03060C (3,6,12) lifting only faintly toward a
+      // cool blue-grey on the raised grain — mountains vanish into darkness
       const lit = v * 0.9 + 0.1;
-      cimg.data[idx]     = (12 + lit * 22) | 0;
-      cimg.data[idx + 1] = (24 + lit * 40) | 0;
-      cimg.data[idx + 2] = (55 + lit * 75) | 0;
+      cimg.data[idx]     = (3 + lit * 6) | 0;        // R  3 → 9
+      cimg.data[idx + 1] = (6 + lit * 11) | 0;       // G  6 → 17
+      cimg.data[idx + 2] = (12 + lit * 22) | 0;      // B 12 → 34
       const darken = 1 - crackLine * 0.55;
       cimg.data[idx]     *= darken;
       cimg.data[idx + 1] *= darken;
@@ -109,21 +119,29 @@ function Sky() {
     `,
     fragmentShader: `
       varying vec3 vWorldPos;
-      vec3 cTop     = vec3(0.004, 0.027, 0.082);
-      vec3 cMid     = vec3(0.027, 0.078, 0.200);
-      vec3 cHorizon = vec3(0.122, 0.306, 0.659);
+      // near-black graded sky per spec: top #02050E, mid #05091A, horizon #0B1833
+      vec3 cTop     = vec3(0.008, 0.020, 0.055);   // #02050E
+      vec3 cMid     = vec3(0.020, 0.035, 0.102);   // #05091A
+      vec3 cHorizon = vec3(0.043, 0.094, 0.200);   // #0B1833
+      // subtle atmospheric horizon fog colour (#0C2D57)
+      vec3 cFog     = vec3(0.047, 0.176, 0.341);
       void main() {
         float h = normalize(vWorldPos).y;
         float t = clamp(h, 0.0, 1.0);
         vec3 col;
-        if (t < 0.12) {
-          col = mix(cHorizon, cMid, t / 0.12);
+        if (t < 0.10) {
+          col = mix(cHorizon, cMid, t / 0.10);
         } else {
-          col = mix(cMid, cTop, (t - 0.12) / 0.88);
+          col = mix(cMid, cTop, (t - 0.10) / 0.90);
         }
-        float glow = exp(-h * 14.0) * 0.45;
+        // tight glow band hugging the horizon — concentrated low, never a wash
+        float glow = exp(-max(h, 0.0) * 20.0) * 0.30;
         col += cHorizon * glow;
-        col *= 0.85;
+        // subtle atmospheric fog right at the horizon line
+        float fogBand = exp(-abs(h) * 26.0) * 0.18;
+        col += cFog * fogBand;
+        // overall exposure cut ~40% so the environment goes deep and dark
+        col *= 0.60;
         gl_FragColor = vec4(col, 1.0);
       }
     `,
@@ -174,10 +192,10 @@ function Mountain({ position, side }: { position: [number, number, number]; side
       <meshStandardMaterial
         map={colorMap}
         bumpMap={bumpMap}
-        bumpScale={1.5}
-        color="#050a16"
-        roughness={0.95}
-        metalness={0.05}
+        bumpScale={1.8}
+        color="#03060C"
+        roughness={0.99}
+        metalness={0.0}
       />
     </mesh>
   );
@@ -228,13 +246,13 @@ function Water() {
   return (
     <mesh geometry={geo} position={[0, 0.8, -20]} receiveShadow>
       <meshStandardMaterial
-        color="#1c3a6e"
-        emissive="#1c3a6e"
-        emissiveIntensity={0.55}
-        roughness={0.7}
-        metalness={0}
+        color="#040b18"
+        emissive="#0a2147"
+        emissiveIntensity={0.18}
+        roughness={0.55}
+        metalness={0.15}
         normalMap={normalMap}
-        normalScale={new THREE.Vector2(0.35, 0.35)}
+        normalScale={new THREE.Vector2(0.5, 0.5)}
       />
     </mesh>
   );
@@ -258,7 +276,7 @@ function Stars() {
   }, []);
   return (
     <Points positions={positions} stride={3} frustumCulled={false}>
-      <PointMaterial transparent color="#cfe2ff" size={0.2} sizeAttenuation depthWrite={false} opacity={0.45} />
+      <PointMaterial transparent color="#aac4e8" size={0.18} sizeAttenuation depthWrite={false} opacity={0.3} />
     </Points>
   );
 }
@@ -294,7 +312,7 @@ function Particles() {
 
   return (
     <Points ref={ref} positions={data.pos} stride={3} frustumCulled={false}>
-      <PointMaterial transparent color="#cfe3ff" size={0.045} sizeAttenuation depthWrite={false} opacity={0.6} />
+      <PointMaterial transparent color="#9fcfff" size={0.04} sizeAttenuation depthWrite={false} opacity={0.35} />
     </Points>
   );
 }
@@ -304,13 +322,16 @@ function Particles() {
 function Lighting() {
   return (
     <>
-      <ambientLight intensity={0.05} color="#0a1830" />
-      <pointLight position={[0, 3, -110]} intensity={1200} distance={260} decay={2} color="#5aa0ff" />
-      <pointLight position={[0, 1, -70]}  intensity={300}  distance={140} decay={2} color="#3b82f6" />
+      {/* very faint cool ambient — shadows stay deep blue, never grey */}
+      <ambientLight intensity={0.025} color="#0a1730" />
+      {/* dim, cool horizon glow far down the valley — gives atmospheric depth
+          without reading as daylight */}
+      <pointLight position={[0, 3, -110]} intensity={420} distance={240} decay={2} color="#2f5fa8" />
+      {/* soft cool MOONLIGHT key from high/behind (shadows kept for the canyon) */}
       <directionalLight
         position={[0, 8, -120]}
-        intensity={1.4}
-        color="#7fb0ff"
+        intensity={0.5}
+        color="#7d9ccc"
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-60}
@@ -321,7 +342,130 @@ function Lighting() {
         shadow-camera-far={260}
         shadow-bias={-0.0005}
       />
-      <hemisphereLight args={["#15407f", "#01040d", 0.2]} />
+      {/* cool sky/ground bounce — deep blue above, near-black below */}
+      <hemisphereLight args={["#0e2c58", "#01030a", 0.1]} />
+    </>
+  );
+}
+
+// ─── Ground lighting from the energy river ────────────────────────────────────
+// A string of small blue point lights riding the river spline so the nearby rock
+// banks glow softly. Each has a short distance (≈4m) with quadratic decay so the
+// blue indirect light spreads only ~2–4 m from the water and fades smoothly
+// outward — only the mountain edges facing the river receive the rim light.
+// Lights gently pulse so the illumination feels alive.
+
+function RiverGroundLight() {
+  const groupRef = useRef<THREE.Group>(null);
+  // sample evenly along the visible river path — kept sparse (perf) but enough
+  // to give a continuous glow band along the banks
+  const points = useMemo(() => {
+    const N = 9;
+    const arr: THREE.Vector3[] = [];
+    for (let i = 0; i < N; i++) {
+      const t = i / (N - 1);
+      arr.push(RIVER_CURVE.getPointAt(t));
+    }
+    return arr;
+  }, []);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const t = state.clock.elapsedTime;
+    groupRef.current.children.forEach((c, i) => {
+      const l = c as THREE.PointLight;
+      // travelling pulse along the river so the bank glow shimmers
+      l.intensity = 26 * (0.7 + 0.3 * Math.sin(t * 1.2 - i * 0.6));
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {points.map((p, i) => (
+        <pointLight
+          key={i}
+          position={[p.x, p.y + 0.4, p.z]}
+          // tight reach so blue light spreads only ~2–4 m onto the banks
+          intensity={26}
+          distance={6}
+          decay={2}
+          color={i % 2 === 0 ? "#36a5ff" : "#1557ff"}
+        />
+      ))}
+    </group>
+  );
+}
+
+// ─── Volumetric blue fog: three soft layered planes ───────────────────────────
+// One layer hugging the river surface, one mid layer over the valley, one
+// distant layer near the horizon. Each is a large additive plane with a soft
+// radial-gradient sprite so it reads as drifting volumetric haze (#0C2D57),
+// very subtle. Slowly cross-drifts so the fog never looks static.
+
+let _fogSprite: THREE.Texture | null = null;
+function getFogSprite() {
+  if (_fogSprite) return _fogSprite;
+  const size = 256;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  g.addColorStop(0.0, "rgba(255,255,255,0.55)");
+  g.addColorStop(0.5, "rgba(255,255,255,0.18)");
+  g.addColorStop(1.0, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  _fogSprite = new THREE.CanvasTexture(c);
+  return _fogSprite;
+}
+
+function FogLayer({
+  y,
+  z,
+  width,
+  height,
+  opacity,
+  driftX,
+}: {
+  y: number;
+  z: number;
+  width: number;
+  height: number;
+  opacity: number;
+  driftX: number;
+}) {
+  const sprite = useMemo(() => getFogSprite(), []);
+  const ref = useRef<THREE.Mesh>(null);
+  const base = useMemo(() => new THREE.Vector3(0, y, z), [y, z]);
+  useFrame((state) => {
+    if (!ref.current) return;
+    const t = state.clock.elapsedTime;
+    ref.current.position.x = base.x + Math.sin(t * driftX) * 6;
+  });
+  return (
+    <mesh ref={ref} position={[0, y, z]} renderOrder={-5}>
+      <planeGeometry args={[width, height]} />
+      <meshBasicMaterial
+        map={sprite}
+        color="#0C2D57"
+        transparent
+        opacity={opacity}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </mesh>
+  );
+}
+
+function VolumetricFog() {
+  return (
+    <>
+      {/* low layer hugging the river surface */}
+      <FogLayer y={2.2} z={-30} width={120} height={26} opacity={0.1} driftX={0.05} />
+      {/* mid layer over the valley */}
+      <FogLayer y={9} z={-70} width={180} height={48} opacity={0.07} driftX={0.035} />
+      {/* distant layer near the horizon */}
+      <FogLayer y={16} z={-130} width={260} height={70} opacity={0.06} driftX={0.02} />
     </>
   );
 }
@@ -360,10 +504,10 @@ function FrontMountain() {
       <meshStandardMaterial
         map={colorMap}
         bumpMap={bumpMap}
-        bumpScale={1.5}
-        color="#050a16"
-        roughness={0.95}
-        metalness={0.05}
+        bumpScale={1.8}
+        color="#03060C"
+        roughness={0.99}
+        metalness={0.0}
       />
     </mesh>
   );
@@ -429,10 +573,10 @@ function DistantRange() {
   const mat = useMemo(() => new THREE.MeshStandardMaterial({
     map:       colorMap,
     bumpMap:   bumpMap,
-    bumpScale: 1.5,
-    color:     new THREE.Color(0x050a16),
-    roughness: 0.95,
-    metalness: 0.05,
+    bumpScale: 1.8,
+    color:     new THREE.Color(0x03060C),
+    roughness: 0.99,
+    metalness: 0.0,
   }), [colorMap, bumpMap]);
 
   // far enough back to sit at the water horizon and feel distant; lowered so
@@ -487,17 +631,22 @@ export default function Scene2({ scrollRef }: { scrollRef?: React.MutableRefObje
         antialias: true,
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.0,
+        // exposure cut ~40% — deep, dark, cinematic grade
+        toneMappingExposure: 0.6,
+        powerPreference: "high-performance",
       }}
-      style={{ width: "100%", height: "100%", background: "#010715" }}
+      style={{ width: "100%", height: "100%", background: "#02050E" }}
     >
       <DroneCamera scrollRef={scrollRef} />
 
-      <fog attach="fog" args={["#0a1c45", 40, 200]} />
+      {/* distance fog: darker, denser blue-grey so far objects soften into haze
+          and near objects stay sharp — atmospheric perspective */}
+      <fog attach="fog" args={["#081632", 36, 180]} />
 
       <Lighting />
       <Sky />
       <Stars />
+      <VolumetricFog />
 
       <Mountain position={[-26, 0, -38]} side="left" />
       <Mountain position={[26, 0, -38]} side="right" />
@@ -506,19 +655,34 @@ export default function Scene2({ scrollRef }: { scrollRef?: React.MutableRefObje
       <Water />
       <Particles />
 
+      {/* blue indirect ground lighting spilling from the river onto the banks */}
+      <RiverGroundLight />
+
       {/* glowing procedural energy river — grows forward with scroll progress */}
       <EnergyRiver scrollRef={scrollRef} />
 
-      <EffectComposer>
-        {/* strong bloom tuned so only the bright additive energy river blooms;
-            the dark mountains (well below threshold) stay dark */}
+      <EffectComposer multisampling={0}>
+        {/* cinematic bloom tuned so only the bright additive energy river +
+            particles + ribbons bloom; the near-black mountains stay dark */}
         <Bloom
-          luminanceThreshold={0.15}
-          luminanceSmoothing={0.9}
-          intensity={1.8}
-          radius={0.8}
+          luminanceThreshold={0.2}
+          luminanceSmoothing={0.85}
+          intensity={1.5}
+          radius={0.75}
           mipmapBlur
         />
+        {/* subtle chromatic aberration at the edges */}
+        <ChromaticAberration
+          blendFunction={BlendFunction.NORMAL}
+          offset={new THREE.Vector2(0.0006, 0.0006)}
+          radialModulation={false}
+          modulationOffset={0}
+        />
+        {/* slight vignette → focus + contrast */}
+        <Vignette eskil={false} offset={0.3} darkness={0.78} />
+        {/* tiny film grain */}
+        <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={0.035} />
+        <ToneMapping />
       </EffectComposer>
     </Canvas>
   );

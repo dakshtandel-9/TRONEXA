@@ -152,42 +152,24 @@ export default function ScrollSequence() {
     switchToSection(prev);
   }, [switchToSection]);
 
-  const wheelDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wheelFiredRef = useRef(false);
   const lastNavClickRef = useRef(0);
-
-  useEffect(() => {
-    function onWheel(e: WheelEvent) {
-      if (!isLoadedRef.current) return;
-      if (wheelFiredRef.current) return;
-      const now = Date.now();
-      if (now - lastNavClickRef.current < 2000) return;
-      wheelFiredRef.current = true;
-      lastNavClickRef.current = now;
-
-      if (e.deltaY > 0) {
-        goNext();
-      } else if (e.deltaY < 0) {
-        goBack();
-      }
-
-      if (wheelDebounceRef.current) clearTimeout(wheelDebounceRef.current);
-      wheelDebounceRef.current = setTimeout(() => {
-        wheelFiredRef.current = false;
-      }, 800);
-    }
-
-    window.addEventListener('wheel', onWheel, { passive: true });
-    return () => {
-      window.removeEventListener('wheel', onWheel);
-      if (wheelDebounceRef.current) clearTimeout(wheelDebounceRef.current);
-    };
-  }, [goNext, goBack]);
 
   useEffect(() => {
     function onMouseMove(e: MouseEvent) {
       targetMXRef.current = e.clientX / window.innerWidth - 0.5;
       targetMYRef.current = e.clientY / window.innerHeight - 0.5;
+    }
+
+    // ── manual wheel scrub ────────────────────────────────────────────────────
+    // The wheel directly moves the timeline target (0..1) proportional to how
+    // much the user scrolls — no snapping to sections, forward and back. The
+    // rAF loop below eases smoothRef toward this target, so the scrub glides.
+    // SCRUB_SENSITIVITY: timeline fraction per "notch" (~100px) of wheel delta.
+    const SCRUB_SENSITIVITY = 0.0001125; // 0.125× of original — halved again
+    function onWheel(e: WheelEvent) {
+      if (!isLoadedRef.current) return;
+      const next = targetRef.current + e.deltaY * SCRUB_SENSITIVITY;
+      targetRef.current = clamp01(next);
     }
 
     function onNavigateSection(e: Event) {
@@ -224,6 +206,20 @@ export default function ScrollSequence() {
       const move = Math.min(dist, speed * dt);
       smoothRef.current += Math.sign(diff) * move;
       const p = smoothRef.current;
+
+      // keep the active-section state in sync with the scrub position so the
+      // progress bar and side-nav highlight follow the wheel. We pick the
+      // nearest section whose settled point the timeline has reached.
+      let nearest = 0;
+      for (let s = 0; s <= MAX_SECTION; s++) {
+        if (p >= SECTION_PROGRESS[s] - 0.0001) nearest = s;
+      }
+      if (nearest !== currentSectionRef.current) {
+        currentSectionRef.current = nearest;
+        setCurrentSection(nearest);
+        dispatchSectionChange(nearest);
+        updateProgressBar(nearest);
+      }
 
       // feed each scene its remapped local progress (divaya timeline math).
       // Crossfade opacities are computed separately in sceneOpacities(p) below.
@@ -286,12 +282,14 @@ export default function ScrollSequence() {
 
     parallaxRafRef.current = requestAnimationFrame(renderFrame);
     window.addEventListener('mousemove', onMouseMove, { passive: true });
+    window.addEventListener('wheel', onWheel, { passive: true });
     window.addEventListener('navigatesection', onNavigateSection);
 
     return () => {
       if (parallaxRafRef.current !== null) cancelAnimationFrame(parallaxRafRef.current);
       clearTimeout(loadTimer);
       window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('wheel', onWheel);
       window.removeEventListener('navigatesection', onNavigateSection);
     };
   }, [setIsLoaded, switchToSection]);

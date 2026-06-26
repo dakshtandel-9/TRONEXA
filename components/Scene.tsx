@@ -2,14 +2,24 @@
 
 import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Points, PointMaterial, useGLTF } from "@react-three/drei";
+import { Points, PointMaterial, useGLTF, Stats } from "@react-three/drei";
 import { Suspense } from "react";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import {
+  EffectComposer,
+  Bloom,
+  Vignette,
+  ToneMapping,
+  FXAA,
+  ChromaticAberration,
+  Noise,
+} from "@react-three/postprocessing";
+import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
 import { useParallax, PARALLAX_X, PARALLAX_Y } from "./useParallax";
 
 // ────────────────────────────────────────────────────────────────────────────
-const DEBUG = false; // true = disable postprocessing, verify raw composition
+const DEBUG = false;      // true = disable postprocessing, verify raw composition
+const SHOW_STATS = false; // true = show the FPS/ms/draw-call overlay (perf tuning)
 // ────────────────────────────────────────────────────────────────────────────
 
 // ─── Value noise + fBm ────────────────────────────────────────────────────────
@@ -67,7 +77,7 @@ function fbm(noise: (x: number, y: number) => number, x: number, y: number) {
   return value;
 }
 
-// ─── Sky gradient dome (darker) ───────────────────────────────────────────────
+// ─── Sky gradient dome: black → deep navy → soft blue horizon glow ────────────
 
 function Sky() {
   const mat = useMemo(
@@ -84,23 +94,25 @@ function Sky() {
         `,
         fragmentShader: `
           varying vec3 vWorldPos;
-          vec3 cTop     = vec3(0.004, 0.027, 0.082);  // #010715
-          vec3 cMid     = vec3(0.027, 0.078, 0.200);  // #071433
-          vec3 cHorizon = vec3(0.122, 0.306, 0.659);  // #1f4ea8
+          vec3 cTop     = vec3(0.004, 0.008, 0.020);   // #02040A near-black top
+          vec3 cMid     = vec3(0.018, 0.035, 0.090);   // deep indigo-navy
+          vec3 cHorizon = vec3(0.063, 0.122, 0.290);   // soft deep-blue horizon
           void main() {
             float h = normalize(vWorldPos).y;
             float t = clamp(h, 0.0, 1.0);
             vec3 col;
-            if (t < 0.12) {
-              col = mix(cHorizon, cMid, t / 0.12);
+            if (t < 0.08) {
+              col = mix(cHorizon, cMid, t / 0.08);
             } else {
-              col = mix(cMid, cTop, (t - 0.12) / 0.88);
+              col = mix(cMid, cTop, (t - 0.08) / 0.92);
             }
-            // subtle atmospheric glow band hugging the horizon
-            float glow = exp(-h * 14.0) * 0.45;
+            // tight glow band hugging the horizon, concentrated low like the ref
+            float glow = exp(-max(h, 0.0) * 22.0) * 0.45;
             col += cHorizon * glow;
-            // darken overall so it reads as night
-            col *= 0.85;
+            // a faint cool kiss right at the horizon line
+            float kiss = exp(-abs(h) * 50.0) * 0.14;
+            col += vec3(0.06, 0.16, 0.36) * kiss;
+            col *= 0.90;
             gl_FragColor = vec4(col, 1.0);
           }
         `,
@@ -136,29 +148,26 @@ function getRockTextures() {
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      // multi-octave rock detail
-      const base = fbm(noise, x * 0.012, y * 0.012) + 0.5;       // broad patches
-      const fine = fbm(noise, x * 0.05, y * 0.05) * 0.5 + 0.5;   // grain
-      // ridged "cracks" — sharp dark veins
+      const base = fbm(noise, x * 0.012, y * 0.012) + 0.5;
+      const fine = fbm(noise, x * 0.05, y * 0.05) * 0.5 + 0.5;
       const crack = 1 - Math.abs(fbm(noise, x * 0.03 + 100, y * 0.03 + 100));
-      const crackLine = Math.pow(crack, 8); // thin bright/dark lines
+      const crackLine = Math.pow(crack, 8);
 
       const v = base * 0.6 + fine * 0.4;
       const idx = (y * size + x) * 4;
 
-      // deep blue rock: dark navy, slightly lit on raised grain
+      // ALMOST BLACK rock: base #060B14 (6,11,20) lifting only faintly toward a
+      // cool blue-grey on the raised grain — no bright blue tint
       const lit = v * 0.9 + 0.1;
-      cimg.data[idx] = (12 + lit * 22) | 0;          // R
-      cimg.data[idx + 1] = (24 + lit * 40) | 0;      // G
-      cimg.data[idx + 2] = (55 + lit * 75) | 0;      // B (dominant)
-      // darken cracks
+      cimg.data[idx] = (6 + lit * 8) | 0;           // R  6 → 14
+      cimg.data[idx + 1] = (11 + lit * 14) | 0;     // G 11 → 25
+      cimg.data[idx + 2] = (20 + lit * 26) | 0;     // B 20 → 46 (gentle, not electric)
       const darken = 1 - crackLine * 0.55;
       cimg.data[idx] *= darken;
       cimg.data[idx + 1] *= darken;
       cimg.data[idx + 2] *= darken;
       cimg.data[idx + 3] = 255;
 
-      // bump: grain relief + recessed cracks
       const b = 100 + v * 90 - crackLine * 80;
       bimg.data[idx] = b;
       bimg.data[idx + 1] = b;
@@ -179,7 +188,7 @@ function getRockTextures() {
   return _rockTex;
 }
 
-// ─── Mountain (steeper, taller, closer) ──────────────────────────────────────
+// ─── Mountain (massive, sharp ridged silhouette, narrow valley) ──────────────
 
 function Mountain({
   position,
@@ -191,7 +200,9 @@ function Mountain({
   const { colorMap, bumpMap } = useMemo(() => getRockTextures(), []);
   const geo = useMemo(() => {
     const noise = makeNoise();
-    const g = new THREE.PlaneGeometry(200, 200, 160, 160);
+    // PERF: 120×120 segments instead of 200×200 — ~1/3 the verts/triangles for
+    // both the camera and shadow passes; fog + bump map hide the difference
+    const g = new THREE.PlaneGeometry(260, 260, 120, 120);
     g.rotateX(-Math.PI / 2);
     const pos = g.attributes.position;
 
@@ -199,26 +210,35 @@ function Mountain({
       const x = pos.getX(i);
       const z = pos.getZ(i);
 
-      // taller terrain: range ~4..17 (was 3..12, +40%)
-      let h = (fbm(noise, x * 0.013, z * 0.013) + 0.5) * 13 + 4;
+      // tall terrain, but lower than before so the peaks don't tower so high
+      let h = (fbm(noise, x * 0.012, z * 0.012) + 0.5) * 14 + 4;
 
-      // ridged contribution for sharper peaks
-      const ridge = 1.0 - Math.abs(fbm(noise, x * 0.02 + 50, z * 0.02 + 50));
-      h += ridge * ridge * 6;
+      // strong ridged contribution → sharp, jagged peaks (squared twice for spikes)
+      const ridge = 1.0 - Math.abs(fbm(noise, x * 0.022 + 50, z * 0.022 + 50));
+      h += ridge * ridge * 8;
+
+      // a second, finer ridge layer for uneven broken edges
+      const ridge2 = 1.0 - Math.abs(fbm(noise, x * 0.06 + 200, z * 0.06 + 200));
+      h += ridge2 * ridge2 * 3;
 
       const worldX = x + position[0];
+      const worldZ = z + position[2];
 
-      // NARROWER valley opening: inner edge starts closer to center (|worldX|~5)
-      // steeper falloff exponent for sharper inner faces
+      // Valley FLARES open toward the camera: the inner-wall threshold grows as
+      // the terrain approaches the viewer (worldZ rising from the far horizon at
+      // ~-150 toward the camera at ~+90), so the gap is ~100% wider in the front
+      // than at the back. `front` is 0 at the far end, 1 nearest the camera.
+      const front = THREE.MathUtils.clamp((worldZ + 150) / 240, 0, 1);
+      const innerStart = 7 + front * 14; // 7 (back, ~2× wider) → 21 (front)
+
       let valleyFactor: number;
       if (side === "left") {
-        valleyFactor = THREE.MathUtils.clamp((-worldX - 5) / 18, 0, 1);
+        valleyFactor = THREE.MathUtils.clamp((-worldX - innerStart) / 14, 0, 1);
       } else {
-        valleyFactor = THREE.MathUtils.clamp((worldX - 5) / 18, 0, 1);
+        valleyFactor = THREE.MathUtils.clamp((worldX - innerStart) / 14, 0, 1);
       }
-      // sharper smoothstep + power to steepen the inner face
       valleyFactor = valleyFactor * valleyFactor * (3 - 2 * valleyFactor);
-      valleyFactor = Math.pow(valleyFactor, 0.7);
+      valleyFactor = Math.pow(valleyFactor, 0.55); // sharper inner climb
 
       h *= valleyFactor;
 
@@ -230,20 +250,20 @@ function Mountain({
   }, [position, side]);
 
   return (
-    <mesh geometry={geo} position={position} castShadow receiveShadow>
+    <mesh geometry={geo} position={position}>
       <meshStandardMaterial
         map={colorMap}
         bumpMap={bumpMap}
-        bumpScale={1.5}
-        color="#050a16"
-        roughness={0.95}
-        metalness={0.05}
+        bumpScale={1.8}
+        color="#060B14"
+        roughness={0.98}
+        metalness={0.0}
       />
     </mesh>
   );
 }
 
-// ─── Subtle ripple normal map for flowing water ──────────────────────────────
+// ─── Animated ripple normal map for flowing water ────────────────────────────
 
 function makeFlowNormalMap() {
   const size = 256;
@@ -270,81 +290,280 @@ function makeFlowNormalMap() {
   ctx.putImageData(img, 0, 0);
   const tex = new THREE.CanvasTexture(canvas);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(30, 30);
+  tex.repeat.set(34, 34);
   return tex;
 }
 
-// ─── Flat water filling the valley floor, gently flowing toward the camera ──
+// ─── Water: dominant glowing foreground that fades into the fog at the horizon
+// Two cross-scrolling normal layers give a continuous, non-mirror ripple. The
+// model's glow stretches across it via emissive + a soft vertical reflection
+// gradient baked into the alpha so the reflection reads slightly blurred.
 
 function Water() {
+  // a large plane pulled forward so water fills the lower ~40-45% of the frame
   const geo = useMemo(() => {
-    const g = new THREE.PlaneGeometry(500, 500);
+    const g = new THREE.PlaneGeometry(600, 600);
     g.rotateX(-Math.PI / 2);
     return g;
   }, []);
-  const normalMap = useMemo(() => makeFlowNormalMap(), []);
+  const normA = useMemo(() => makeFlowNormalMap(), []);
+  const normB = useMemo(() => {
+    const t = makeFlowNormalMap();
+    t.repeat.set(18, 18);
+    return t;
+  }, []);
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
 
-  // scroll the ripple normals away from the camera → flowing-away look
-  useFrame((_, delta) => {
-    normalMap.offset.y += delta * 0.06;
+  // continuous gentle flow — two layers drift at different speeds/angles so the
+  // surface never looks like a tiling loop. Emissive kept very low and pulsing
+  // gently so the water reads dark, NOT a blown-out white path.
+  useFrame((state, delta) => {
+    normA.offset.y += delta * 0.05;
+    normA.offset.x += delta * 0.012;
+    normB.offset.y += delta * 0.028;
+    normB.offset.x -= delta * 0.02;
+    if (matRef.current) {
+      const t = state.clock.elapsedTime;
+      matRef.current.emissiveIntensity = 0.16 + Math.sin(t * 0.6) * 0.04;
+    }
   });
 
   return (
-    <mesh geometry={geo} position={[0, 0.8, -20]} receiveShadow>
-      {/* full glowing water — strong emissive blooms into a glow */}
+    <mesh geometry={geo} position={[0, 0.6, -20]}>
+      {/* DARK water (#04101F). Emissive cut ~65% and metalness lowered so the
+          glow path is a narrow, soft blue streak instead of a white blowout.
+          Higher ripple detail (stronger normals + finer roughness map) softly
+          distorts the reflection. */}
       <meshStandardMaterial
-        color="#1c3a6e"
-        emissive="#1c3a6e"
-        emissiveIntensity={0.55}
-        roughness={0.7}
-        metalness={0}
-        normalMap={normalMap}
-        normalScale={new THREE.Vector2(0.35, 0.35)}
+        ref={matRef}
+        color="#04101F"
+        emissive="#0b2a5c"
+        emissiveIntensity={0.16}
+        roughness={0.55}
+        metalness={0.18}
+        normalMap={normA}
+        normalScale={new THREE.Vector2(0.62, 0.62)}
+        roughnessMap={normB}
       />
     </mesh>
   );
 }
 
-// ─── Sparse tiny particles ────────────────────────────────────────────────────
+// ─── Floating glow particles ─────────────────────────────────────────────────
+// Tiny luminous blue-white motes drifting up from the water, like fireflies or
+// energy the water is releasing. ONE system, THREE depth layers (foreground /
+// midground / background) for cinematic depth. Each particle has its own 4–10s
+// lifetime: it fades in off the surface, drifts up with a slow sine sway and a
+// twinkle, then fades out and respawns. Density is concentrated around the
+// centre reflection and thins toward the edges. Renders as soft feathered
+// circles via a radial-gradient sprite + additive blending.
 
-function Particles() {
-  const ref = useRef<THREE.Points>(null);
-  const data = useMemo(() => {
-    const count = 200;
-    const pos = new Float32Array(count * 3);
-    const vel = new Float32Array(count);
-    for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 70;
-      pos[i * 3 + 1] = Math.random() * 14 + 0.5;
-      pos[i * 3 + 2] = -Math.random() * 55 - 2;
-      vel[i] = Math.random() * 0.0012 + 0.0003;
-    }
-    return { pos, vel, count };
-  }, []);
-  const live = useRef(data.pos.slice());
+// the 5-colour reference palette (white → pale → cyan-blue)
+const GLOW_COLORS = [
+  new THREE.Color("#FFFFFF"),
+  new THREE.Color("#EAF8FF"),
+  new THREE.Color("#BEEBFF"),
+  new THREE.Color("#8FD9FF"),
+  new THREE.Color("#63C6FF"),
+];
 
-  useFrame(() => {
-    if (!ref.current) return;
-    const attr = ref.current.geometry.attributes.position;
-    for (let i = 0; i < data.count; i++) {
-      live.current[i * 3 + 1] += data.vel[i];
-      if (live.current[i * 3 + 1] > 15) live.current[i * 3 + 1] = 0.5;
-      attr.setXYZ(i, live.current[i * 3], live.current[i * 3 + 1], live.current[i * 3 + 2]);
+// soft feathered circular sprite — a radial gradient that's opaque at the centre
+// and feathers to zero at the rim, so each point reads as a glowing dot with a
+// soft bloom rather than a hard square
+let _glowSprite: THREE.Texture | null = null;
+function getGlowSprite() {
+  if (_glowSprite) return _glowSprite;
+  const size = 64;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  g.addColorStop(0.0, "rgba(255,255,255,1)");
+  g.addColorStop(0.25, "rgba(255,255,255,0.65)");
+  g.addColorStop(0.55, "rgba(255,255,255,0.18)");
+  g.addColorStop(1.0, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  _glowSprite = new THREE.CanvasTexture(c);
+  return _glowSprite;
+}
+
+type GlowLayerConfig = {
+  count: number;
+  size: number;       // point size (world units; sizeAttenuation on)
+  xSpread: number;    // half-width of the spawn band
+  zNear: number;      // nearest z (toward camera)
+  zFar: number;       // farthest z
+  yTop: number;       // world Y at which a particle has fully risen/faded
+  riseMin: number;    // slowest rise speed (units/sec)
+  riseMax: number;    // fastest rise speed
+  lifeMin: number;    // seconds
+  lifeMax: number;
+  brightMin: number;  // 0..1 (maps to the 20%–90% opacity range)
+  brightMax: number;
+  toMountains: number; // fraction of particles that drift wide toward the slopes
+};
+
+// GPU-driven: all motion (rise, sway, twinkle, height fade) is computed in the
+// vertex shader from a single uTime uniform. The CPU sets static per-particle
+// attributes ONCE and then only updates uTime each frame — no per-particle JS
+// loop, no buffer re-upload — so tens of thousands of particles stay at 60fps.
+function GlowLayer({ cfg }: { cfg: GlowLayerConfig }) {
+  const sprite = useMemo(() => getGlowSprite(), []);
+
+  const { geometry, material } = useMemo(() => {
+    const n = cfg.count;
+    const aBase = new Float32Array(n * 3);   // x (sway centre), spawnZ, unused
+    const aColor = new Float32Array(n * 3);
+    const aRise = new Float32Array(n);
+    const aSway = new Float32Array(n);
+    const aSwaySpeed = new Float32Array(n);
+    const aTwSpeed = new Float32Array(n);
+    const aPhase = new Float32Array(n);
+    const aBright = new Float32Array(n);
+    const aCycle = new Float32Array(n);      // seconds to rise from surface → yTop
+    const aOffset = new Float32Array(n);     // desync along the cycle
+
+    const centred = () => (Math.random() + Math.random() - 1);
+    const span = cfg.yTop - 0.6;
+
+    for (let i = 0; i < n; i++) {
+      const wide = Math.random() < cfg.toMountains;
+      const x = wide
+        ? (Math.random() - 0.5) * cfg.xSpread * 2.4
+        : centred() * cfg.xSpread;
+      const z = cfg.zNear - Math.random() * (cfg.zNear - cfg.zFar);
+      aBase[i * 3] = x;
+      aBase[i * 3 + 1] = z;
+      aBase[i * 3 + 2] = 0;
+      aRise[i] = cfg.riseMin + Math.random() * (cfg.riseMax - cfg.riseMin);
+      aSway[i] = 0.3 + Math.random() * 0.9;
+      aSwaySpeed[i] = 0.15 + Math.random() * 0.4;
+      aTwSpeed[i] = 0.4 + Math.random() * 1.3;
+      aPhase[i] = Math.random() * Math.PI * 2;
+      aBright[i] = cfg.brightMin + Math.random() * (cfg.brightMax - cfg.brightMin);
+      // cycle length = time to traverse the full span at this particle's speed
+      aCycle[i] = span / aRise[i];
+      aOffset[i] = Math.random() * aCycle[i]; // desync so they don't rise in unison
+      const c = GLOW_COLORS[(Math.random() * GLOW_COLORS.length) | 0];
+      aColor[i * 3] = c.r; aColor[i * 3 + 1] = c.g; aColor[i * 3 + 2] = c.b;
     }
-    attr.needsUpdate = true;
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(aBase, 3));
+    geo.setAttribute("aColor", new THREE.BufferAttribute(aColor, 3));
+    geo.setAttribute("aRise", new THREE.BufferAttribute(aRise, 1));
+    geo.setAttribute("aSway", new THREE.BufferAttribute(aSway, 1));
+    geo.setAttribute("aSwaySpeed", new THREE.BufferAttribute(aSwaySpeed, 1));
+    geo.setAttribute("aTwSpeed", new THREE.BufferAttribute(aTwSpeed, 1));
+    geo.setAttribute("aPhase", new THREE.BufferAttribute(aPhase, 1));
+    geo.setAttribute("aBright", new THREE.BufferAttribute(aBright, 1));
+    geo.setAttribute("aCycle", new THREE.BufferAttribute(aCycle, 1));
+    geo.setAttribute("aOffset", new THREE.BufferAttribute(aOffset, 1));
+    // generous bounding sphere so the whole layer is never frustum-culled wrongly
+    geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, cfg.yTop * 0.5, 0), 400);
+
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uSize: { value: cfg.size },
+        uYTop: { value: cfg.yTop },
+        uSprite: { value: sprite },
+      },
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: `
+        uniform float uTime;
+        uniform float uSize;
+        uniform float uYTop;
+        attribute vec3 aColor;
+        attribute float aRise;
+        attribute float aSway;
+        attribute float aSwaySpeed;
+        attribute float aTwSpeed;
+        attribute float aPhase;
+        attribute float aBright;
+        attribute float aCycle;
+        attribute float aOffset;
+        varying vec3 vColor;
+        varying float vBright;
+        void main() {
+          float baseX = position.x;
+          float z = position.y; // spawnZ packed into position.y
+
+          // rise from the surface (0.6) and recycle every aCycle seconds
+          float tt = mod(uTime + aOffset, aCycle);
+          float y = 0.6 + tt * aRise;
+          float x = baseX + sin(uTime * aSwaySpeed + aPhase) * aSway;
+
+          // height-based envelope (matches the old CPU logic)
+          float span = uYTop - 0.6;
+          float h = clamp((y - 0.6) / span, 0.0, 1.0);
+          float fadeIn = clamp(h / 0.12, 0.0, 1.0);
+          float fadeOut = 1.0 - clamp((h - 0.35) / 0.65, 0.0, 1.0);
+          float tw = 0.6 + 0.4 * sin(uTime * aTwSpeed + aPhase);
+          vBright = aBright * fadeIn * fadeOut * tw;
+          vColor = aColor;
+
+          vec4 mv = modelViewMatrix * vec4(x, y, z, 1.0);
+          // size attenuation — matches drei PointMaterial's world→pixel scaling
+          // (size * viewportHeight / -z); ~900 stands in for the viewport factor
+          gl_PointSize = uSize * 900.0 / max(-mv.z, 0.001);
+          gl_Position = projectionMatrix * mv;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D uSprite;
+        varying vec3 vColor;
+        varying float vBright;
+        void main() {
+          float a = texture2D(uSprite, gl_PointCoord).a;
+          gl_FragColor = vec4(vColor * vBright * a, a * vBright);
+        }
+      `,
+    });
+
+    return { geometry: geo, material: mat };
+  }, [cfg, sprite]);
+
+  // ONLY per-frame work: advance the time uniform (no JS loop, no upload)
+  useFrame((state) => {
+    material.uniforms.uTime.value = state.clock.elapsedTime;
   });
 
+  return <points geometry={geometry} material={material} frustumCulled={false} />;
+}
+
+// three layers → cinematic depth. Counts 50× the original (~21,500 total).
+const GLOW_LAYERS: GlowLayerConfig[] = [
+  // FOREGROUND — fewer, larger, brighter, nearest the camera (pushed forward)
+  {
+    count: 875, size: 0.14, xSpread: 22, zNear: 34, zFar: -22, yTop: 16,
+    riseMin: 0.18, riseMax: 0.5, lifeMin: 4, lifeMax: 8,
+    brightMin: 0.45, brightMax: 0.9, toMountains: 0.18,
+  },
+  // MIDGROUND — the bulk of the particles, around the reflection & model
+  {
+    count: 3250, size: 0.075, xSpread: 16, zNear: 24, zFar: -42, yTop: 15,
+    riseMin: 0.1, riseMax: 0.32, lifeMin: 5, lifeMax: 10,
+    brightMin: 0.3, brightMax: 0.8, toMountains: 0.22,
+  },
+  // BACKGROUND — tiny, dim, slow, drifting deeper (some toward the sky)
+  {
+    count: 1250, size: 0.05, xSpread: 30, zNear: 4, zFar: -80, yTop: 22,
+    riseMin: 0.05, riseMax: 0.16, lifeMin: 6, lifeMax: 10,
+    brightMin: 0.2, brightMax: 0.5, toMountains: 0.3,
+  },
+];
+
+function GlowParticles() {
   return (
-    <Points ref={ref} positions={data.pos} stride={3} frustumCulled={false}>
-      <PointMaterial
-        transparent
-        color="#cfe3ff"
-        size={0.045}
-        sizeAttenuation
-        depthWrite={false}
-        opacity={0.6}
-      />
-    </Points>
+    <>
+      {GLOW_LAYERS.map((cfg, i) => (
+        <GlowLayer key={i} cfg={cfg} />
+      ))}
+    </>
   );
 }
 
@@ -369,49 +588,42 @@ function Stars() {
     <Points positions={positions} stride={3} frustumCulled={false}>
       <PointMaterial
         transparent
-        color="#cfe2ff"
-        size={0.2}
+        color="#aac4e8"
+        size={0.18}
         sizeAttenuation
         depthWrite={false}
-        opacity={0.45}
+        opacity={0.32}
       />
     </Points>
   );
 }
 
-// ─── Lighting: slope rim/bounce only, NO glowing objects in water ────────────
+// ─── Cinematic lighting: moonlight + soft ambient + rim, no white ────────────
 
 function Lighting() {
-  // SpotLights aimed at the inner slopes from above/side, so they light the
   return (
     <>
-      {/* very faint cold ambient */}
-      <ambientLight intensity={0.05} color="#0a1830" />
+      {/* very faint cool ambient — reduced; shadows stay deep blue, never gray */}
+      <ambientLight intensity={0.035} color="#0a1730" />
 
-      {/* HORIZON LIGHT — bright glow at the valley center where the water meets
-          the sky; shines back toward the camera, lighting the inner slopes */}
-      <pointLight position={[0, 3, -110]} intensity={1200} distance={260} decay={2} color="#5aa0ff" />
-      <pointLight position={[0, 1, -70]} intensity={300} distance={140} decay={2} color="#3b82f6" />
+      {/* horizon glow that lights the inner valley slopes from far away —
+          dimmer + cooler so it no longer reads as daylight */}
+      <pointLight position={[0, 3, -120]} intensity={750} distance={260} decay={2} color="#2f5fa8" />
 
-      {/* directional fill from the horizon center toward the camera (casts
-          mountain & model shadows forward onto the water) */}
-      <directionalLight
-        position={[0, 8, -120]}
-        intensity={1.4}
-        color="#7fb0ff"
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-60}
-        shadow-camera-right={60}
-        shadow-camera-top={60}
-        shadow-camera-bottom={-60}
-        shadow-camera-near={1}
-        shadow-camera-far={260}
-        shadow-bias={-0.0005}
-      />
+      {/* soft MOONLIGHT — cool directional key from high/behind. PERF: shadows
+          disabled — in this near-black scene the cast shadow was invisible but
+          cost a full extra scene render every frame */}
+      <directionalLight position={[6, 26, -90]} intensity={0.6} color="#7d9ccc" />
 
-      {/* soft blue bounce fill across the valley floor */}
-      <hemisphereLight args={["#15407f", "#01040d", 0.2]} />
+      {/* faint cool RIM lights skimming the inner mountain edges toward camera */}
+      <pointLight position={[-10, 14, -34]} intensity={110} distance={58} decay={2} color="#2e63c0" />
+      <pointLight position={[10, 14, -34]} intensity={110} distance={58} decay={2} color="#2e63c0" />
+
+      {/* soft blue bounce FROM the water onto the lower mountain faces */}
+      <pointLight position={[0, 1.2, -26]} intensity={60} distance={50} decay={2} color="#1b4f9e" />
+
+      {/* cool sky/ground bounce — deep blue above, near-black below */}
+      <hemisphereLight args={["#0e2c58", "#01030a", 0.12]} />
     </>
   );
 }
@@ -427,13 +639,11 @@ function makePanelTextures() {
   const cctx = colorCanvas.getContext("2d")!;
   const bctx = bumpCanvas.getContext("2d")!;
 
-  // base
   cctx.fillStyle = "#3b82f6";
   cctx.fillRect(0, 0, size, size);
-  bctx.fillStyle = "#808080"; // mid = flat for bump
+  bctx.fillStyle = "#808080";
   bctx.fillRect(0, 0, size, size);
 
-  // recursively split into panels (like the reference's box grid)
   type Rect = { x: number; y: number; w: number; h: number };
   const panels: Rect[] = [];
   const split = (r: Rect, depth: number) => {
@@ -456,7 +666,6 @@ function makePanelTextures() {
   split({ x: 0, y: 0, w: size, h: size }, 6);
 
   for (const p of panels) {
-    // slight per-panel brightness/hue variation
     const v = 0.82 + Math.random() * 0.32;
     const r = Math.min(255, 0x3b * v + (Math.random() - 0.5) * 14);
     const g = Math.min(255, 0x82 * v + (Math.random() - 0.5) * 14);
@@ -464,7 +673,6 @@ function makePanelTextures() {
     cctx.fillStyle = `rgb(${r | 0},${g | 0},${b | 0})`;
     cctx.fillRect(p.x, p.y, p.w, p.h);
 
-    // seam lines: darker border on color, dark groove on bump
     cctx.strokeStyle = "rgba(10,40,110,0.55)";
     cctx.lineWidth = 2;
     cctx.strokeRect(p.x + 1, p.y + 1, p.w - 2, p.h - 2);
@@ -472,7 +680,7 @@ function makePanelTextures() {
     const bv = 110 + Math.random() * 40;
     bctx.fillStyle = `rgb(${bv | 0},${bv | 0},${bv | 0})`;
     bctx.fillRect(p.x, p.y, p.w, p.h);
-    bctx.strokeStyle = "#202020"; // recessed seams
+    bctx.strokeStyle = "#202020";
     bctx.lineWidth = 3;
     bctx.strokeRect(p.x + 1.5, p.y + 1.5, p.w - 3, p.h - 3);
   }
@@ -486,63 +694,62 @@ function makePanelTextures() {
 
 // ─── Hero model (floating in the valley center) ──────────────────────────────
 
-// position the model in the middle of the valley, floating above the water
 const MODEL_POS = new THREE.Vector3(0, 4.2, -28);
 
 function HeroModel({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) {
-  // Draco-compressed model — decoder served locally from /public/draco (no CDN).
   const { scene } = useGLTF("/HeroModul-opt.glb", "/draco/");
   const groupRef = useRef<THREE.Group>(null);
   const lastScroll = useRef(0);
-  const spin = useRef(0); // accumulated rotation
+  const spin = useRef(0);
 
-  // glassy translucent blue with paneled box texture + seam lines
+  // glassy translucent blue with paneled box texture + seam lines, now glowing
+  // brighter so it blooms strongly and reads as the scene's primary light source
   useMemo(() => {
     const { colorMap, bumpMap } = makePanelTextures();
     scene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         (child as THREE.Mesh).material = new THREE.MeshPhysicalMaterial({
           color: new THREE.Color(0x3b82f6),
-          map: colorMap,             // paneled box color variation
-          bumpMap: bumpMap,          // recessed seam lines
+          map: colorMap,
+          bumpMap: bumpMap,
           bumpScale: 1.2,
-          emissive: new THREE.Color(0x3b82f6),
-          emissiveMap: colorMap,     // glow follows the panel detail
-          emissiveIntensity: 4.5,    // very bright glow → strong bloom
+          emissive: new THREE.Color(0x42a7ff), // middle glow tone
+          emissiveMap: colorMap,
+          emissiveIntensity: 4.0, // softer glow → restrained bloom
           metalness: 0.0,
-          roughness: 0.25,
-          transmission: 0,           // disabled: was forcing a full second scene render every frame
+          roughness: 0.22,
+          transmission: 0,
           clearcoat: 1,
-          clearcoatRoughness: 0.15,
+          clearcoatRoughness: 0.12,
           transparent: true,
           opacity: 0.96,
         });
-        (child as THREE.Mesh).castShadow = true;
-        (child as THREE.Mesh).receiveShadow = true;
       }
     });
   }, [scene]);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (!groupRef.current) return;
     const g = groupRef.current;
-    const t = performance.now() / 1000;
+    const t = state.clock.elapsedTime;
 
-    // scroll velocity (how fast the user is scrolling right now)
+    // scroll velocity drives extra spin (preserved scroll behaviour)
     const vel = Math.abs(scrollRef.current - lastScroll.current);
     lastScroll.current = scrollRef.current;
 
-    // base idle spin + extra spin proportional to scroll speed
-    const baseSpeed = 0.25;             // slow idle rotation
-    const scrollBoost = vel * 35;       // faster when scrolling fast (softened to avoid whip)
+    const baseSpeed = 0.18; // slower, more elegant idle rotation
+    const scrollBoost = vel * 35;
     spin.current += (baseSpeed + scrollBoost) * delta;
     g.rotation.y = spin.current;
-    // gentle tilt wobble
-    g.rotation.x = Math.sin(t * 0.5) * 0.08;
-    g.rotation.z = Math.sin(t * 0.35) * 0.05;
 
-    // idle floating bob (slow jump up/down when not scrolling)
-    g.position.y = MODEL_POS.y + Math.sin(t * 0.9) * 0.6;
+    // subtle tilt wobble — gentle, layered sines for natural drift
+    g.rotation.x = Math.sin(t * 0.4) * 0.06;
+    g.rotation.z = Math.sin(t * 0.28) * 0.04;
+
+    // elegant slow hover: a primary slow bob + a tiny secondary motion + a
+    // micro horizontal float so it never feels locked in place
+    g.position.y = MODEL_POS.y + Math.sin(t * 0.65) * 0.55 + Math.sin(t * 1.7) * 0.08;
+    g.position.x = MODEL_POS.x + Math.sin(t * 0.33) * 0.12;
   });
 
   return (
@@ -554,27 +761,56 @@ function HeroModel({ scrollRef }: { scrollRef: React.MutableRefObject<number> })
 
 useGLTF.preload("/HeroModul-opt.glb", "/draco/");
 
-// ─── Camera: scroll zooms toward the model, then holds (crossfade in page.tsx) ─
+// ─── Pulsing glow lights that travel with the model ──────────────────────────
+// A bright blue point light at the model spills onto the nearby water and inner
+// mountain edges; its intensity softly pulses in sync with the model's emissive.
 
-const START_Z = 47;        // pulled back to frame the whole valley at start
+function ModelGlow() {
+  const coreRef = useRef<THREE.PointLight>(null);
+  const haloRef = useRef<THREE.PointLight>(null);
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const bob = Math.sin(t * 0.65) * 0.55;
+    const pulse = 0.85 + Math.sin(t * 0.9) * 0.15;
+    if (coreRef.current) {
+      coreRef.current.position.y = 4.2 + bob;
+      coreRef.current.intensity = 240 * pulse;
+    }
+    if (haloRef.current) {
+      haloRef.current.position.y = 4.2 + bob;
+      haloRef.current.intensity = 95 * pulse;
+    }
+  });
+  return (
+    <>
+      {/* tight inner core (#8EE8FF) — lights the water directly under the model */}
+      <pointLight ref={coreRef} position={[0, 4.2, -28]} intensity={240} distance={72} decay={2} color="#8ee8ff" />
+      {/* wider outer halo (#1557FF) — reaches the inner mountain faces */}
+      <pointLight ref={haloRef} position={[0, 4.2, -24]} intensity={95} distance={52} decay={2} color="#1557ff" />
+    </>
+  );
+}
+
+// ─── Camera: lower, floating just above the water, narrower cinematic FOV ─────
+// Scroll still zooms from the wide framing toward the model and holds, exactly
+// as before (driven by scrollRef 0..1); only the heights/FOV/focus are retuned.
+
+const START_Z = 47;        // wide framing of the whole valley at start
 const ZOOM_END_Z = -19;    // ends right up against the model's face
-const START_Y = 1.4;
-const ZOOM_END_Y = 4.2;    // rise to the model's center height
+const START_Y = 1.45;      // LOW — camera floats just above the water (nudged up)
+const ZOOM_END_Y = 4.2;    // rise to the model's center height during the zoom
 
-const FOCUS_START = new THREE.Vector3(0, 2.6, -120); // early: valley horizon
-const MODEL_CENTER = new THREE.Vector3(0, 4.2, -28); // the model
+// focus low early so the horizon sits slightly ABOVE screen centre
+const FOCUS_START = new THREE.Vector3(0, 2.1, -120);
+const MODEL_CENTER = new THREE.Vector3(0, 4.2, -28);
 const _focus = new THREE.Vector3();
 
-// Horizontal framing correction. The valley/model sit at world x=0 but read as
-// shifted to the right on screen; panning the camera AND its focus by the same
-// +X pans the framing right, which slides the whole composition LEFT into the
-// centre of the viewport. Tune this single value to re-centre the hero.
-const PAN_X = 1.6;
+const PAN_X = 1.0; // horizontal framing correction (lowered → composition pans right)
 
 function CameraRig({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) {
   const par = useParallax();
 
-  useFrame(({ camera }, dt) => {
+  useFrame(({ camera, clock }, dt) => {
     const p = THREE.MathUtils.clamp(scrollRef.current, 0, 1);
 
     const targetZ = START_Z + (ZOOM_END_Z - START_Z) * p;
@@ -583,20 +819,22 @@ function CameraRig({ scrollRef }: { scrollRef: React.MutableRefObject<number> })
     const focusT = THREE.MathUtils.clamp((p - 0.4) / 0.6, 0, 1);
     const focusEased = focusT * focusT * (3 - 2 * focusT);
     _focus.lerpVectors(FOCUS_START, MODEL_CENTER, focusEased);
-    _focus.x += PAN_X; // re-centre the framing horizontally
+    _focus.x += PAN_X;
 
-    // OPPOSITE-direction mouse parallax (scene drifts AGAINST the cursor): cursor
-    // right → camera right → world slides left; cursor down → camera down → up.
     const m = par.update(dt);
     const offX = PAN_X + m.x * PARALLAX_X;
     const offY = -m.y * PARALLAX_Y;
 
-    // frame-rate-independent tight follow — the page already smooths scroll, so
-    // this avoids stacking two lags and keeps forward/reverse identical
+    // extremely subtle camera "breathing" — slow layered sines so the scene
+    // feels alive without ever reading as deliberate movement
+    const t = clock.elapsedTime;
+    const breatheY = Math.sin(t * 0.45) * 0.045 + Math.sin(t * 0.13) * 0.02;
+    const breatheZ = Math.sin(t * 0.32) * 0.06;
+
     const k = 1 - Math.exp(-Math.min(dt, 0.1) * 30);
     camera.position.x += (offX - camera.position.x) * k;
-    camera.position.z += (targetZ - camera.position.z) * k;
-    camera.position.y += (targetY + offY - camera.position.y) * k;
+    camera.position.z += (targetZ + breatheZ - camera.position.z) * k;
+    camera.position.y += (targetY + offY + breatheY - camera.position.y) * k;
     camera.lookAt(_focus);
   });
   return null;
@@ -607,47 +845,66 @@ function CameraRig({ scrollRef }: { scrollRef: React.MutableRefObject<number> })
 export default function Scene({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) {
   return (
     <Canvas
-      shadows
-      dpr={[1, 1.5]}
-      camera={{ position: [0, 1.4, 47], fov: 38, near: 0.1, far: 800 }}
+      // PERF: shadows removed (invisible in this dark scene, cost a full extra
+      // render pass/frame); dpr capped at 1.25 so the fullscreen post passes
+      // don't render at up to 1.5× on Retina
+      dpr={[1, 1.25]}
+      camera={{ position: [0, 1.05, 47], fov: 32, near: 0.1, far: 800 }}
       gl={{
         antialias: true,
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.0,
+        toneMappingExposure: 0.85, // darker, richer cinematic grade
+        powerPreference: "high-performance",
       }}
-      style={{ width: "100%", height: "100%", background: "#010715" }}
+      style={{ width: "100%", height: "100%", background: "#040812" }}
     >
+      {SHOW_STATS && <Stats />}
       <CameraRig scrollRef={scrollRef} />
 
-      {/* atmospheric depth fog */}
-      <fog attach="fog" args={["#0a1c45", 28, 150]} />
+      {/* exponential blue-grey fog — subtle, never white, soft atmospheric depth
+          that hides distant geometry and blends mountain layers into haze */}
+      <fogExp2 attach="fog" args={["#0c1d3a", 0.015]} />
 
       <Lighting />
       <Sky />
       <Stars />
 
-      <Mountain position={[-26, 0, -38]} side="left" />
-      <Mountain position={[26, 0, -38]} side="right" />
+      <Mountain position={[-22, 0, -38]} side="left" />
+      <Mountain position={[22, 0, -38]} side="right" />
       <Water />
-      <Particles />
+      <GlowParticles />
 
-      {/* Hero model floating in the valley center — glowing light source */}
-      <pointLight position={[0, 4.2, -28]} intensity={260} distance={70} decay={2} color="#4f9bff" />
-      <pointLight position={[0, 4.2, -24]} intensity={110} distance={40} decay={2} color="#9ec5ff" />
+      {/* glowing model + its travelling glow lights */}
+      <ModelGlow />
       <Suspense fallback={null}>
         <HeroModel scrollRef={scrollRef} />
       </Suspense>
 
       {!DEBUG && (
-        <EffectComposer>
+        <EffectComposer multisampling={0}>
+          {/* RESTRAINED bloom: high threshold so only the model's true highlights
+              bloom (not the water) — small radius, no scene-wide wash */}
           <Bloom
-            luminanceThreshold={0.7}
-            luminanceSmoothing={0.9}
-            intensity={0.4}
+            luminanceThreshold={0.85}
+            luminanceSmoothing={0.6}
+            intensity={0.45}
             radius={0.5}
             mipmapBlur
           />
+          {/* subtle chromatic aberration at the edges */}
+          <ChromaticAberration
+            blendFunction={BlendFunction.NORMAL}
+            offset={new THREE.Vector2(0.0005, 0.0005)}
+            radialModulation={false}
+            modulationOffset={0}
+          />
+          {/* very light vignette */}
+          <Vignette eskil={false} offset={0.32} darkness={0.7} />
+          {/* tiny amount of film grain */}
+          <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={0.03} />
+          <ToneMapping />
+          <FXAA />
         </EffectComposer>
       )}
     </Canvas>
