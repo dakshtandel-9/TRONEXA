@@ -78,10 +78,11 @@ function getRockTextures() {
       const v = base * 0.6 + fine * 0.4;
       const idx = (y * size + x) * 4;
 
+      // ALMOST BLACK rock: base ≈ #03060C (3,6,12) — mountains vanish into dark
       const lit = v * 0.9 + 0.1;
-      cimg.data[idx] = (12 + lit * 22) | 0;
-      cimg.data[idx + 1] = (24 + lit * 40) | 0;
-      cimg.data[idx + 2] = (55 + lit * 75) | 0;
+      cimg.data[idx] = (3 + lit * 6) | 0;           // R  3 → 9
+      cimg.data[idx + 1] = (6 + lit * 11) | 0;      // G  6 → 17
+      cimg.data[idx + 2] = (12 + lit * 22) | 0;     // B 12 → 34
       const darken = 1 - crackLine * 0.55;
       cimg.data[idx] *= darken;
       cimg.data[idx + 1] *= darken;
@@ -160,10 +161,10 @@ function FrontMountain() {
       <meshStandardMaterial
         map={colorMap}
         bumpMap={bumpMap}
-        bumpScale={1.5}
-        color="#050a16"
-        roughness={0.95}
-        metalness={0.05}
+        bumpScale={1.8}
+        color="#03060C"
+        roughness={0.99}
+        metalness={0.0}
       />
     </mesh>
   );
@@ -201,10 +202,10 @@ function SideMountain({ position, side, seed }) {
       <meshStandardMaterial
         map={colorMap}
         bumpMap={bumpMap}
-        bumpScale={1.5}
-        color="#050a16"
-        roughness={0.95}
-        metalness={0.05}
+        bumpScale={1.8}
+        color="#03060C"
+        roughness={0.99}
+        metalness={0.0}
       />
     </mesh>
   );
@@ -218,6 +219,20 @@ function SideMountain({ position, side, seed }) {
 // just above the ground.
 
 const RAY_LIFT = 0.85;
+
+// premium energy palette (per the reference spec)
+//   center #FFFFFF · inner #9BE8FF · outer glow #36A5FF · outer edge #0A5CFF
+const C_CENTER = new THREE.Color("#FFFFFF");
+const C_INNER = new THREE.Color("#9BE8FF");
+const C_OUTER = new THREE.Color("#36A5FF");
+const C_EDGE = new THREE.Color("#0A5CFF");
+// particle palette: white → pale → cyan → blue
+const P_COLORS = [
+  new THREE.Color("#FFFFFF"),
+  new THREE.Color("#AEEFFF"),
+  new THREE.Color("#7AD8FF"),
+  new THREE.Color("#3AA9FF"),
+];
 
 const RAY_CURVE = (() => {
   // control points as [x, z]; Y is filled from mountainHeight so it hugs the climb
@@ -263,9 +278,31 @@ function sampleRayFrames() {
   return frames;
 }
 
+// soft feathered circular sprite — opaque core feathering to zero at the rim
+let _spark = null;
+function getSparkSprite() {
+  if (_spark) return _spark;
+  const size = 64;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d");
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  g.addColorStop(0.0, "rgba(255,255,255,1)");
+  g.addColorStop(0.2, "rgba(255,255,255,0.7)");
+  g.addColorStop(0.5, "rgba(255,255,255,0.18)");
+  g.addColorStop(1.0, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  _spark = new THREE.CanvasTexture(c);
+  return _spark;
+}
+
+// ribbon geometry now carries the per-vertex `right` vector so the vertex shader
+// can push the strand sideways at runtime → strands weave / separate / cross
 function buildRibbonGeometry(frames, offset, halfWidth) {
   const verts = [];
   const uvs = [];
+  const aRight = [];
   const indices = [];
   for (let i = 0; i <= RAY_SAMPLES; i++) {
     const f = frames[i];
@@ -274,8 +311,10 @@ function buildRibbonGeometry(frames, offset, halfWidth) {
     const v = i / RAY_SAMPLES;
     verts.push(cx - f.right.x * halfWidth, f.pos.y, cz - f.right.z * halfWidth);
     uvs.push(0, v);
+    aRight.push(f.right.x, f.right.z);
     verts.push(cx + f.right.x * halfWidth, f.pos.y, cz + f.right.z * halfWidth);
     uvs.push(1, v);
+    aRight.push(f.right.x, f.right.z);
   }
   for (let i = 0; i < RAY_SAMPLES; i++) {
     const a = i * 2;
@@ -284,24 +323,43 @@ function buildRibbonGeometry(frames, offset, halfWidth) {
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
   g.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  g.setAttribute("aRight", new THREE.Float32BufferAttribute(aRight, 2));
   g.setIndex(indices);
   return g;
 }
 
-function makeRibbonMaterial(color, baseOpacity, glow) {
+// shared flowing-energy shader with a slow per-ribbon lateral weave (matches
+// Scene 2): independent strands curve, separate, merge, split and cross.
+function makeRibbonMaterial(color, baseOpacity, glow, weaveAmp = 0, weaveFreq = 6, weavePhase = 0, weaveSpeed = 0.4) {
   return new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
       uColor: { value: color },
       uOpacity: { value: baseOpacity },
       uGlow: { value: glow },
-      uReveal: { value: 0.35 },
+      uReveal: { value: 0.1 },
+      uWeaveAmp: { value: weaveAmp },
+      uWeaveFreq: { value: weaveFreq },
+      uWeavePhase: { value: weavePhase },
+      uWeaveSpeed: { value: weaveSpeed },
     },
     vertexShader: /* glsl */ `
+      uniform float uTime;
+      uniform float uWeaveAmp;
+      uniform float uWeaveFreq;
+      uniform float uWeavePhase;
+      uniform float uWeaveSpeed;
+      attribute vec2 aRight;
       varying vec2 vUv;
       void main() {
         vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        float wob =
+            sin(uv.y * uWeaveFreq + uWeavePhase + uTime * uWeaveSpeed) * uWeaveAmp
+          + sin(uv.y * uWeaveFreq * 2.17 + uWeavePhase * 1.7 - uTime * uWeaveSpeed * 0.6) * uWeaveAmp * 0.4;
+        vec3 p = position;
+        p.x += aRight.x * wob;
+        p.z += aRight.y * wob;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
       }
     `,
     fragmentShader: /* glsl */ `
@@ -312,16 +370,32 @@ function makeRibbonMaterial(color, baseOpacity, glow) {
       uniform float uReveal;
       varying vec2 vUv;
       void main() {
-        if (vUv.y > uReveal) discard;
-        float edge = 1.0 - abs(vUv.x - 0.5) * 2.0;
-        edge = pow(clamp(edge, 0.0, 1.0), 1.5);
+        // soft feathered cross-width falloff: a smooth bell curve instead of a
+        // sharp pow() so the ribbon rim fades out gently with no hard line
+        float d = abs(vUv.x - 0.5) * 2.0;            // 0 centre → 1 rim
+        float edge = exp(-d * d * 4.5);              // gaussian glow profile
+        float softEdge = smoothstep(1.0, 0.0, d);    // extra rim feather for alpha
+
+        // POINTED growth front: the cutoff recedes toward the rim so the strand
+        // tapers to a V/point instead of a flat horizontal cut. The centre reaches
+        // the full uReveal; the edges stop ~0.05 short, and a long soft fade leads
+        // into the tip so it comes to a clean point.
+        float tipLen = 0.05;                          // how far the V tapers back
+        float localReveal = uReveal - d * tipLen;     // center reaches furthest
+        if (vUv.y > localReveal) discard;
+        float vFade = smoothstep(localReveal, localReveal - 0.12, vUv.y); // taper
+
         float flow = vUv.y * 6.0 + uTime * 0.6;
         float bands = 0.55 + 0.45 * sin(flow * 3.14159);
         float pulse = pow(0.5 + 0.5 * sin(vUv.y * 30.0 - uTime * 2.0), 4.0);
-        float tail = smoothstep(0.0, 0.06, vUv.y);
-        float tip  = smoothstep(uReveal - 0.04, uReveal, vUv.y);
-        float intensity = edge * (bands + pulse * 0.6 + tip * 1.5) * uGlow * tail;
-        gl_FragColor = vec4(uColor * intensity, uOpacity * edge * tail);
+        // gentle fade in at the tail (near origin)
+        float tail = smoothstep(0.0, 0.1, vUv.y);
+        // bright leading glow concentrated at the very point of the V
+        float tip  = smoothstep(localReveal - 0.06, localReveal, vUv.y);
+        float intensity = edge * (bands + pulse * 0.5 + tip * 1.2) * uGlow * tail * vFade;
+        // alpha feathered by the gaussian core, rim smoothstep, tail + tip taper
+        float alpha = uOpacity * edge * softEdge * tail * vFade;
+        gl_FragColor = vec4(uColor * intensity, alpha);
       }
     `,
     transparent: true,
@@ -329,6 +403,248 @@ function makeRibbonMaterial(color, baseOpacity, glow) {
     blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide,
   });
+}
+
+// bake the spline (pos + right) into a DataTexture so the GPU particle system can
+// sample any point along the ray path in the vertex shader
+function makeSplineTexture(frames) {
+  const w = RAY_SAMPLES + 1;
+  const data = new Float32Array(w * 2 * 4);
+  for (let i = 0; i <= RAY_SAMPLES; i++) {
+    const f = frames[i];
+    data[i * 4 + 0] = f.pos.x;
+    data[i * 4 + 1] = f.pos.y;
+    data[i * 4 + 2] = f.pos.z;
+    data[i * 4 + 3] = 1.0;
+    const o = (w + i) * 4;
+    data[o + 0] = f.right.x;
+    data[o + 1] = f.right.z;
+    data[o + 2] = 0.0;
+    data[o + 3] = 1.0;
+  }
+  const tex = new THREE.DataTexture(data, w, 2, THREE.RGBAFormat, THREE.FloatType);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+// ─── GPU particle field flowing along the ray (matches Scene 2) ──────────────
+// thousands of tiny glowing motes; all motion computed in the vertex shader from
+// a baked spline texture so they flow downstream, sway, twinkle, fade in/out.
+function ParticleField({ frames, revealRef, cfg }) {
+  const sprite = useMemo(() => getSparkSprite(), []);
+  const splineTex = useMemo(() => makeSplineTexture(frames), [frames]);
+
+  const { geometry, material } = useMemo(() => {
+    const n = cfg.count;
+    const aSeed = new Float32Array(n);
+    const aSpeed = new Float32Array(n);
+    const aLateral = new Float32Array(n);
+    const aSway = new Float32Array(n);
+    const aSwaySpeed = new Float32Array(n);
+    const aLift = new Float32Array(n);
+    const aSize = new Float32Array(n);
+    const aColor = new Float32Array(n * 3);
+    const aTwSpeed = new Float32Array(n);
+    const aPhase = new Float32Array(n);
+    const centred = () => (Math.random() + Math.random() - 1);
+
+    for (let i = 0; i < n; i++) {
+      aSeed[i] = Math.random();
+      aSpeed[i] = cfg.speedMin + Math.random() * (cfg.speedMax - cfg.speedMin);
+      aLateral[i] = centred() * cfg.lateralBand;
+      aSway[i] = 0.1 + Math.random() * 0.5;
+      aSwaySpeed[i] = 0.3 + Math.random() * 1.2;
+      aLift[i] = cfg.yLift * (0.4 + Math.random() * 0.6);
+      aSize[i] = cfg.sizeMin + Math.random() * (cfg.sizeMax - cfg.sizeMin);
+      aTwSpeed[i] = 0.6 + Math.random() * 2.4;
+      aPhase[i] = Math.random() * Math.PI * 2;
+      const c = P_COLORS[(Math.random() * P_COLORS.length) | 0];
+      aColor[i * 3] = c.r; aColor[i * 3 + 1] = c.g; aColor[i * 3 + 2] = c.b;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+    geo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed, 1));
+    geo.setAttribute("aSpeed", new THREE.BufferAttribute(aSpeed, 1));
+    geo.setAttribute("aLateral", new THREE.BufferAttribute(aLateral, 1));
+    geo.setAttribute("aSway", new THREE.BufferAttribute(aSway, 1));
+    geo.setAttribute("aSwaySpeed", new THREE.BufferAttribute(aSwaySpeed, 1));
+    geo.setAttribute("aLift", new THREE.BufferAttribute(aLift, 1));
+    geo.setAttribute("aSize", new THREE.BufferAttribute(aSize, 1));
+    geo.setAttribute("aColor", new THREE.BufferAttribute(aColor, 3));
+    geo.setAttribute("aTwSpeed", new THREE.BufferAttribute(aTwSpeed, 1));
+    geo.setAttribute("aPhase", new THREE.BufferAttribute(aPhase, 1));
+    geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 8, -40), 400);
+
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uReveal: { value: 0.1 },
+        uSpline: { value: splineTex },
+        uSprite: { value: sprite },
+      },
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: /* glsl */ `
+        uniform float uTime;
+        uniform float uReveal;
+        uniform sampler2D uSpline;
+        attribute float aSeed;
+        attribute float aSpeed;
+        attribute float aLateral;
+        attribute float aSway;
+        attribute float aSwaySpeed;
+        attribute float aLift;
+        attribute float aSize;
+        attribute vec3  aColor;
+        attribute float aTwSpeed;
+        attribute float aPhase;
+        varying vec3 vColor;
+        varying float vBright;
+        void main() {
+          float t = mod(aSeed + uTime * aSpeed, 1.0) * uReveal;
+          vec3 pos   = texture2D(uSpline, vec2(t, 0.25)).xyz;
+          vec2 right = texture2D(uSpline, vec2(t, 0.75)).xy;
+          float sway = aLateral + sin(uTime * aSwaySpeed + aPhase) * aSway;
+          pos.x += right.x * sway;
+          pos.z += right.y * sway;
+          pos.y += 0.08 + abs(sin(uTime * 0.6 + aPhase)) * aLift;
+          float headFade = smoothstep(0.0, 0.04, t);
+          float tipFade  = 1.0 - smoothstep(uReveal - 0.05, uReveal, t);
+          float tw = 0.55 + 0.45 * sin(uTime * aTwSpeed + aPhase);
+          vBright = headFade * tipFade * tw;
+          vColor = aColor;
+          vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+          gl_PointSize = aSize * 900.0 / max(-mv.z, 0.001);
+          gl_Position = projectionMatrix * mv;
+        }
+      `,
+      fragmentShader: /* glsl */ `
+        uniform sampler2D uSprite;
+        varying vec3 vColor;
+        varying float vBright;
+        void main() {
+          float a = texture2D(uSprite, gl_PointCoord).a;
+          gl_FragColor = vec4(vColor * vBright * a, a * vBright);
+        }
+      `,
+    });
+    return { geometry: geo, material: mat };
+  }, [cfg, sprite, splineTex]);
+
+  useFrame((state) => {
+    material.uniforms.uTime.value = state.clock.elapsedTime;
+    material.uniforms.uReveal.value = revealRef.current;
+  });
+
+  return <points geometry={geometry} material={material} frustumCulled={false} renderOrder={4} />;
+}
+
+const RAY_PARTICLE_LAYERS = [
+  { count: 4200, sizeMin: 0.012, sizeMax: 0.045, lateralBand: 0.55, speedMin: 0.05, speedMax: 0.14, yLift: 0.18 },
+  { count: 2600, sizeMin: 0.02, sizeMax: 0.06, lateralBand: 1.6, speedMin: 0.03, speedMax: 0.09, yLift: 0.4 },
+  { count: 700, sizeMin: 0.03, sizeMax: 0.08, lateralBand: 0.9, speedMin: 0.14, speedMax: 0.3, yLift: 0.7 },
+];
+
+// ─── Edge sparkles clinging to the ray banks (matches Scene 2) ────────────────
+function EdgeSparkles({ frames, revealRef }) {
+  const sprite = useMemo(() => getSparkSprite(), []);
+  const splineTex = useMemo(() => makeSplineTexture(frames), [frames]);
+
+  const { geometry, material } = useMemo(() => {
+    const n = 900;
+    const aSeed = new Float32Array(n);
+    const aSpeed = new Float32Array(n);
+    const aLateral = new Float32Array(n);
+    const aSize = new Float32Array(n);
+    const aColor = new Float32Array(n * 3);
+    const aTwSpeed = new Float32Array(n);
+    const aPhase = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      aSeed[i] = Math.random();
+      aSpeed[i] = 0.01 + Math.random() * 0.04;
+      const sign = Math.random() < 0.5 ? -1 : 1;
+      aLateral[i] = sign * (2.6 + Math.random() * 1.4);
+      aSize[i] = 0.012 + Math.random() * 0.03;
+      aTwSpeed[i] = 1.0 + Math.random() * 3.0;
+      aPhase[i] = Math.random() * Math.PI * 2;
+      const c = Math.random() < 0.5 ? C_OUTER : C_EDGE;
+      aColor[i * 3] = c.r; aColor[i * 3 + 1] = c.g; aColor[i * 3 + 2] = c.b;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+    geo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed, 1));
+    geo.setAttribute("aSpeed", new THREE.BufferAttribute(aSpeed, 1));
+    geo.setAttribute("aLateral", new THREE.BufferAttribute(aLateral, 1));
+    geo.setAttribute("aSize", new THREE.BufferAttribute(aSize, 1));
+    geo.setAttribute("aColor", new THREE.BufferAttribute(aColor, 3));
+    geo.setAttribute("aTwSpeed", new THREE.BufferAttribute(aTwSpeed, 1));
+    geo.setAttribute("aPhase", new THREE.BufferAttribute(aPhase, 1));
+    geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 6, -40), 400);
+
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uReveal: { value: 0.1 },
+        uSpline: { value: splineTex },
+        uSprite: { value: sprite },
+      },
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: /* glsl */ `
+        uniform float uTime;
+        uniform float uReveal;
+        uniform sampler2D uSpline;
+        attribute float aSeed;
+        attribute float aSpeed;
+        attribute float aLateral;
+        attribute float aSize;
+        attribute vec3  aColor;
+        attribute float aTwSpeed;
+        attribute float aPhase;
+        varying vec3 vColor;
+        varying float vBright;
+        void main() {
+          float t = mod(aSeed + uTime * aSpeed, 1.0) * uReveal;
+          vec3 pos   = texture2D(uSpline, vec2(t, 0.25)).xyz;
+          vec2 right = texture2D(uSpline, vec2(t, 0.75)).xy;
+          float flick = 1.0 + 0.12 * sin(uTime * aTwSpeed * 1.7 + aPhase);
+          pos.x += right.x * aLateral * flick;
+          pos.z += right.y * aLateral * flick;
+          pos.y += 0.05;
+          float headFade = smoothstep(0.0, 0.05, t);
+          float tipFade  = 1.0 - smoothstep(uReveal - 0.05, uReveal, t);
+          float tw = pow(0.5 + 0.5 * sin(uTime * aTwSpeed + aPhase), 3.0);
+          vBright = headFade * tipFade * tw * 0.6;
+          vColor = aColor;
+          vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+          gl_PointSize = aSize * 900.0 / max(-mv.z, 0.001);
+          gl_Position = projectionMatrix * mv;
+        }
+      `,
+      fragmentShader: /* glsl */ `
+        uniform sampler2D uSprite;
+        varying vec3 vColor;
+        varying float vBright;
+        void main() {
+          float a = texture2D(uSprite, gl_PointCoord).a;
+          gl_FragColor = vec4(vColor * vBright * a, a * vBright);
+        }
+      `,
+    });
+    return { geometry: geo, material: mat };
+  }, [sprite, splineTex]);
+
+  useFrame((state) => {
+    material.uniforms.uTime.value = state.clock.elapsedTime;
+    material.uniforms.uReveal.value = revealRef.current;
+  });
+
+  return <points geometry={geometry} material={material} frustumCulled={false} renderOrder={4} />;
 }
 
 // scroll → revealed fraction of the spline (the ray grows up and over the ridge)
@@ -347,47 +663,36 @@ function ClimbingRay({ scrollRef }) {
   const frames = useMemo(() => sampleRayFrames(), []);
   const revealRef = useRef(0.1); // match revealFromScroll's 10% start
 
-  // bright core
-  const coreGeo = useMemo(() => buildRibbonGeometry(frames, 0, 0.55), [frames]);
-  const coreMat = useMemo(() => makeRibbonMaterial(new THREE.Color("#9FEFFF"), 0.95, 10.0), []);
+  // bright white-hot core — gentle weave so the spine stays readable
+  const coreGeo = useMemo(() => buildRibbonGeometry(frames, 0, 0.42), [frames]);
+  const coreMat = useMemo(() => makeRibbonMaterial(C_CENTER.clone(), 0.85, 7.0, 0.18, 9.0, 0.0, 0.5), []);
 
-  // thin outer ribbons
+  // 12 independent ribbons that weave / separate / merge / split / cross,
+  // colour-graded inner → outer → deep edge (identical system to Scene 2)
   const ribbons = useMemo(() => {
-    const N = 16;
+    const N = 12;
     const out = [];
     for (let i = 0; i < N; i++) {
       const pair = Math.floor(i / 2) + 1;
       const sign = i % 2 === 0 ? 1 : -1;
-      const offset = sign * pair * 0.42;
+      const baseOffset = sign * pair * 0.5 * (0.7 + Math.random() * 0.6);
       const dist = pair / (N / 2 + 1);
-      const opacity = THREE.MathUtils.lerp(0.55, 0.25, dist) * (0.8 + Math.random() * 0.3);
-      const glow = THREE.MathUtils.lerp(3.5, 1.2, dist);
+      const col = dist < 0.4 ? C_INNER.clone() : dist < 0.75 ? C_OUTER.clone() : C_EDGE.clone();
+      // gentler opacity + glow so the outer strands read as soft glowing threads
+      const opacity = THREE.MathUtils.lerp(0.34, 0.1, dist) * (0.8 + Math.random() * 0.4);
+      const glow = THREE.MathUtils.lerp(2.2, 0.7, dist);
+      const weaveAmp = 0.5 + Math.random() * 1.4;
+      const weaveFreq = 3.0 + Math.random() * 6.0;
+      const weavePhase = Math.random() * Math.PI * 2;
+      const weaveSpeed = 0.25 + Math.random() * 0.7;
       out.push({
-        geo: buildRibbonGeometry(frames, offset, 0.05),
-        mat: makeRibbonMaterial(new THREE.Color("#74D8FF"), opacity, glow),
+        // slightly wider ribbons → the soft gaussian rim has more room to feather
+        geo: buildRibbonGeometry(frames, baseOffset, 0.07 + Math.random() * 0.04),
+        mat: makeRibbonMaterial(col, opacity, glow, weaveAmp, weaveFreq, weavePhase, weaveSpeed),
       });
     }
     return out;
   }, [frames]);
-
-  // moving particles
-  const COUNT = 400;
-  const meshRef = useRef(null);
-  const pdata = useMemo(() => {
-    const t = new Float32Array(COUNT);
-    const speed = new Float32Array(COUNT);
-    const lateral = new Float32Array(COUNT);
-    const scale = new Float32Array(COUNT);
-    for (let i = 0; i < COUNT; i++) {
-      t[i] = Math.random();
-      speed[i] = 0.015 + Math.random() * 0.03;
-      lateral[i] = (Math.random() - 0.5) * 1.6;
-      scale[i] = 0.6 + Math.random() * 0.9;
-    }
-    return { t, speed, lateral, scale };
-  }, []);
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-  const _p = useMemo(() => new THREE.Vector3(), []);
 
   useFrame((_, dt) => {
     // reveal driven directly from the page's smoothed scroll (single smoothing
@@ -400,26 +705,6 @@ function ClimbingRay({ scrollRef }) {
     for (const r of ribbons) {
       r.mat.uniforms.uTime.value += dt;
       r.mat.uniforms.uReveal.value = reveal;
-    }
-
-    const mesh = meshRef.current;
-    if (mesh) {
-      for (let i = 0; i < COUNT; i++) {
-        pdata.t[i] = (pdata.t[i] + pdata.speed[i] * dt) % 1;
-        const tt = pdata.t[i] * reveal;
-        const fi = Math.min(RAY_SAMPLES, Math.floor(tt * RAY_SAMPLES));
-        const f = frames[fi];
-        _p.set(
-          f.pos.x + f.right.x * pdata.lateral[i],
-          f.pos.y + 0.12 + Math.sin((pdata.t[i] + i) * 6.0) * 0.05,
-          f.pos.z + f.right.z * pdata.lateral[i]
-        );
-        dummy.position.copy(_p);
-        dummy.scale.setScalar(pdata.scale[i] * 0.09);
-        dummy.updateMatrix();
-        mesh.setMatrixAt(i, dummy.matrix);
-      }
-      mesh.instanceMatrix.needsUpdate = true;
     }
   });
 
@@ -435,10 +720,10 @@ function ClimbingRay({ scrollRef }) {
       <mesh geometry={coreGeo} renderOrder={3}>
         <primitive object={coreMat} attach="material" />
       </mesh>
-      <instancedMesh ref={meshRef} args={[undefined, undefined, COUNT]} renderOrder={4}>
-        <sphereGeometry args={[1, 8, 8]} />
-        <meshBasicMaterial color="#CFF4FF" transparent opacity={0.95} blending={THREE.AdditiveBlending} depthWrite={false} />
-      </instancedMesh>
+      {RAY_PARTICLE_LAYERS.map((cfg, i) => (
+        <ParticleField key={i} frames={frames} revealRef={revealRef} cfg={cfg} />
+      ))}
+      <EdgeSparkles frames={frames} revealRef={revealRef} />
     </group>
   );
 }
@@ -458,15 +743,21 @@ function Sky() {
     `,
     fragmentShader: `
       varying vec3 vWorldPos;
-      vec3 cTop     = vec3(0.004, 0.027, 0.082);
-      vec3 cMid     = vec3(0.027, 0.078, 0.200);
-      vec3 cHorizon = vec3(0.122, 0.306, 0.659);
+      // near-black graded sky per spec: top #02050E, mid #05091A, horizon #0B1833
+      vec3 cTop     = vec3(0.008, 0.020, 0.055);   // #02050E
+      vec3 cMid     = vec3(0.020, 0.035, 0.102);   // #05091A
+      vec3 cHorizon = vec3(0.043, 0.094, 0.200);   // #0B1833
+      vec3 cFog     = vec3(0.047, 0.176, 0.341);   // #0C2D57 atmospheric fog
       void main() {
         float h = normalize(vWorldPos).y;
         float t = clamp(h, 0.0, 1.0);
-        vec3 col = t < 0.12 ? mix(cHorizon, cMid, t / 0.12) : mix(cMid, cTop, (t - 0.12) / 0.88);
-        col += cHorizon * exp(-h * 14.0) * 0.45;
-        col *= 0.85;
+        vec3 col = t < 0.10 ? mix(cHorizon, cMid, t / 0.10) : mix(cMid, cTop, (t - 0.10) / 0.90);
+        // tight glow band hugging the horizon
+        col += cHorizon * exp(-max(h, 0.0) * 20.0) * 0.30;
+        // subtle atmospheric fog right at the horizon line
+        col += cFog * exp(-abs(h) * 26.0) * 0.18;
+        // overall exposure cut ~40% so the environment goes deep and dark
+        col *= 0.60;
         gl_FragColor = vec4(col, 1.0);
       }
     `,
@@ -497,7 +788,7 @@ function Stars() {
   }, []);
   return (
     <Points positions={positions} stride={3} frustumCulled={false}>
-      <PointMaterial transparent color="#cfe2ff" size={0.2} sizeAttenuation depthWrite={false} opacity={0.45} />
+      <PointMaterial transparent color="#aac4e8" size={0.18} sizeAttenuation depthWrite={false} opacity={0.3} />
     </Points>
   );
 }
@@ -505,12 +796,14 @@ function Stars() {
 function Lighting() {
   return (
     <>
-      <ambientLight intensity={0.05} color="#0a1830" />
-      <pointLight position={[0, 6, -40]} intensity={400} distance={120} decay={2} color="#5aa0ff" />
+      <ambientLight intensity={0.025} color="#0a1730" />
+      {/* dim cool glow near the ray base — gives depth without daylight */}
+      <pointLight position={[0, 6, -40]} intensity={160} distance={110} decay={2} color="#2f5fa8" />
+      {/* soft cool MOONLIGHT key */}
       <directionalLight
         position={[0, 30, 10]}
-        intensity={1.0}
-        color="#7fb0ff"
+        intensity={0.45}
+        color="#7d9ccc"
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-80}
@@ -521,7 +814,7 @@ function Lighting() {
         shadow-camera-far={300}
         shadow-bias={-0.0005}
       />
-      <hemisphereLight args={["#15407f", "#01040d", 0.2]} />
+      <hemisphereLight args={["#0e2c58", "#01030a", 0.1]} />
     </>
   );
 }
@@ -577,17 +870,18 @@ export default function Scene3({ scrollRef }) {
   return (
     <Canvas
       shadows
-      dpr={[1, 1.5]}
+      dpr={[1, 1.25]}
       camera={{ position: [0, 16, 60], fov: 50, near: 0.1, far: 800 }}
       gl={{
         antialias: true,
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.0,
+        toneMappingExposure: 0.6, // exposure cut ~40% — deep cinematic grade
+        powerPreference: "high-performance",
       }}
-      style={{ width: "100%", height: "100%", background: "#010715" }}
+      style={{ width: "100%", height: "100%", background: "#02050E" }}
     >
-      <fog attach="fog" args={["#0a1c45", 45, 220]} />
+      <fog attach="fog" args={["#081632", 40, 200]} />
 
       <ClimbCamera scrollRef={scrollRef} />
       <Lighting />
@@ -600,12 +894,14 @@ export default function Scene3({ scrollRef }) {
 
       <ClimbingRay scrollRef={scrollRef} />
 
-      <EffectComposer>
+      <EffectComposer multisampling={0}>
+        {/* bloom tuned so only the bright additive ray blooms; near-black
+            mountains (well below threshold) stay dark */}
         <Bloom
-          luminanceThreshold={0.15}
-          luminanceSmoothing={0.9}
-          intensity={1.8}
-          radius={0.8}
+          luminanceThreshold={0.2}
+          luminanceSmoothing={0.85}
+          intensity={1.5}
+          radius={0.75}
           mipmapBlur
         />
       </EffectComposer>

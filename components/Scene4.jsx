@@ -2,7 +2,15 @@
 
 import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import {
+  EffectComposer,
+  Bloom,
+  Vignette,
+  ChromaticAberration,
+  Noise,
+  ToneMapping,
+} from "@react-three/postprocessing";
+import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
 import { useParallax, PARALLAX_X, PARALLAX_Y } from "./useParallax";
 
@@ -101,10 +109,11 @@ function getRockTextures() {
       const v = base * 0.6 + fine * 0.4;
       const idx = (y * size + x) * 4;
 
+      // ALMOST BLACK rock — terrain hidden in darkness (≈ #04070F)
       const lit = v * 0.9 + 0.1;
-      cimg.data[idx] = (12 + lit * 22) | 0;
-      cimg.data[idx + 1] = (24 + lit * 40) | 0;
-      cimg.data[idx + 2] = (55 + lit * 75) | 0;
+      cimg.data[idx] = (4 + lit * 6) | 0;           // R  4 → 10
+      cimg.data[idx + 1] = (7 + lit * 11) | 0;      // G  7 → 18
+      cimg.data[idx + 2] = (15 + lit * 24) | 0;     // B 15 → 39
       const darken = 1 - crackLine * 0.55;
       cimg.data[idx] *= darken;
       cimg.data[idx + 1] *= darken;
@@ -136,7 +145,8 @@ function getRockTextures() {
 // just the procedural bump map for subtle surface relief, so the flat colour
 // still feels like it has a textured, bumpy surface rather than a dead flat fill.
 
-const BG_COLOR = "#16215a"; // solid dark navy blue
+const BG_COLOR = "#02040D"; // near-black sky per spec — rays are the focus
+const TERRAIN_COLOR = "#04070F"; // near-black terrain backdrop
 
 function RockBackdrop() {
   const { bumpMap } = useMemo(() => getRockTextures(), []);
@@ -154,12 +164,13 @@ function RockBackdrop() {
       {/* oversized so the backdrop fills the entire frame with margin to spare */}
       <planeGeometry args={[260, 180]} />
       <meshStandardMaterial
-        // solid navy colour — no colour map; only the bump gives surface relief
-        color={BG_COLOR}
+        // near-black terrain — only the bump gives faint surface relief; the
+        // backdrop stays hidden in darkness so the rays dominate
+        color={TERRAIN_COLOR}
         bumpMap={bgBump}
-        bumpScale={1.4}
-        roughness={0.92}
-        metalness={0.05}
+        bumpScale={1.6}
+        roughness={0.99}
+        metalness={0.0}
       />
     </mesh>
   );
@@ -173,7 +184,10 @@ function RockBackdrop() {
 //   phase   – offsets the wave so the three snakes don't move in lockstep
 // A high CatmullRom tension keeps the curve smooth and rounded (a snake, not a
 // sharp zig-zag).
-function makeSnakeCurve(xStart, xEnd, amp, waves, phase) {
+//   bend – a one-directional lean added across the height (negative = leans
+//          left as it climbs, positive = leans right, 0 = straight). Lets some
+//          rays curve toward a side while others run straight up.
+function makeSnakeCurve(xStart, xEnd, amp, waves, phase, bend = 0) {
   const pts = [];
   const total = 64; // many points → very smooth curve
   for (let i = 0; i <= total; i++) {
@@ -181,10 +195,12 @@ function makeSnakeCurve(xStart, xEnd, amp, waves, phase) {
     const y = THREE.MathUtils.lerp(Y_BOTTOM, Y_TOP, t);
     // base path drifts from xStart (bottom) to xEnd (top corner)
     const drift = THREE.MathUtils.lerp(xStart, xEnd, t * t); // ease toward the corner
+    // one-directional lean: a smooth bow toward one side over the climb
+    const lean = bend * Math.sin(t * Math.PI * 0.5);
     // smooth sine snake wiggle, tapered at the very ends
     const taper = Math.sin(t * Math.PI) * 0.85 + 0.15;
     const wiggle = Math.sin(t * Math.PI * 2 * waves + phase) * amp * taper;
-    const x = drift + wiggle;
+    const x = drift + lean + wiggle;
     const z = Math.sin(t * Math.PI * waves + phase) * amp * 0.18; // subtle depth
     pts.push(new THREE.Vector3(x, y, z));
   }
@@ -205,9 +221,47 @@ function sampleFrames(curve) {
   return frames;
 }
 
+// ─── Premium fiber-optic ray palette (per the reference spec) ─────────────────
+//   center #FFFFFF · inner #B7F1FF · middle #63CFFF · outer #238EFF · fade #0B3C8D
+const C_CENTER = new THREE.Color("#FFFFFF");
+const C_INNER = new THREE.Color("#B7F1FF");
+const C_MIDDLE = new THREE.Color("#63CFFF");
+const C_OUTER = new THREE.Color("#238EFF");
+const C_FADE = new THREE.Color("#0B3C8D");
+// particle palette: white → pale → cyan → blue
+const P_COLORS = [
+  new THREE.Color("#FFFFFF"),
+  new THREE.Color("#BFEFFF"),
+  new THREE.Color("#7ED8FF"),
+  new THREE.Color("#42B5FF"),
+];
+
+// soft feathered circular sprite — opaque core feathering to zero at the rim
+let _spark = null;
+function getSparkSprite() {
+  if (_spark) return _spark;
+  const size = 64;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d");
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  g.addColorStop(0.0, "rgba(255,255,255,1)");
+  g.addColorStop(0.2, "rgba(255,255,255,0.7)");
+  g.addColorStop(0.5, "rgba(255,255,255,0.18)");
+  g.addColorStop(1.0, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  _spark = new THREE.CanvasTexture(c);
+  return _spark;
+}
+
+// ribbon geometry carries the per-vertex `right` vector (vec3 here — Scene 4
+// rays live in the full screen plane) so the vertex shader can push the strand
+// sideways at runtime → strands weave / separate / merge / cross
 function buildRibbonGeometry(frames, offset, halfWidth) {
   const verts = [];
   const uvs = [];
+  const aRight = [];
   const indices = [];
   for (let i = 0; i <= RAY_SAMPLES; i++) {
     const f = frames[i];
@@ -217,8 +271,10 @@ function buildRibbonGeometry(frames, offset, halfWidth) {
     const v = i / RAY_SAMPLES;
     verts.push(cx - f.right.x * halfWidth, cy - f.right.y * halfWidth, cz - f.right.z * halfWidth);
     uvs.push(0, v);
+    aRight.push(f.right.x, f.right.y, f.right.z);
     verts.push(cx + f.right.x * halfWidth, cy + f.right.y * halfWidth, cz + f.right.z * halfWidth);
     uvs.push(1, v);
+    aRight.push(f.right.x, f.right.y, f.right.z);
   }
   for (let i = 0; i < RAY_SAMPLES; i++) {
     const a = i * 2;
@@ -227,13 +283,15 @@ function buildRibbonGeometry(frames, offset, halfWidth) {
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
   g.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  g.setAttribute("aRight", new THREE.Float32BufferAttribute(aRight, 3));
   g.setIndex(indices);
   return g;
 }
 
-// Same flowing-energy shader as Scene 2 / Scene 3, with uReveal cutting the ray
-// off so it grows from the bottom (v=0) toward the top (v=1).
-function makeRibbonMaterial(color, baseOpacity, glow) {
+// flowing-energy shader with per-ribbon lateral weave + soft Gaussian edges + a
+// pointed V growth front (identical look to Scene 2 / Scene 3). uReveal cuts the
+// ray off so it grows from the bottom (v=0) toward the top (v=1).
+function makeRibbonMaterial(color, baseOpacity, glow, weaveAmp = 0, weaveFreq = 6, weavePhase = 0, weaveSpeed = 0.4) {
   return new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
@@ -241,12 +299,26 @@ function makeRibbonMaterial(color, baseOpacity, glow) {
       uOpacity: { value: baseOpacity },
       uGlow: { value: glow },
       uReveal: { value: 0.0 },
+      uWeaveAmp: { value: weaveAmp },
+      uWeaveFreq: { value: weaveFreq },
+      uWeavePhase: { value: weavePhase },
+      uWeaveSpeed: { value: weaveSpeed },
     },
     vertexShader: /* glsl */ `
+      uniform float uTime;
+      uniform float uWeaveAmp;
+      uniform float uWeaveFreq;
+      uniform float uWeavePhase;
+      uniform float uWeaveSpeed;
+      attribute vec3 aRight;
       varying vec2 vUv;
       void main() {
         vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        float wob =
+            sin(uv.y * uWeaveFreq + uWeavePhase + uTime * uWeaveSpeed) * uWeaveAmp
+          + sin(uv.y * uWeaveFreq * 2.17 + uWeavePhase * 1.7 - uTime * uWeaveSpeed * 0.6) * uWeaveAmp * 0.4;
+        vec3 p = position + aRight * wob;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
       }
     `,
     fragmentShader: /* glsl */ `
@@ -257,16 +329,28 @@ function makeRibbonMaterial(color, baseOpacity, glow) {
       uniform float uReveal;
       varying vec2 vUv;
       void main() {
-        if (vUv.y > uReveal) discard;
-        float edge = 1.0 - abs(vUv.x - 0.5) * 2.0;
-        edge = pow(clamp(edge, 0.0, 1.0), 1.5);
+        // soft feathered cross-width falloff: a smooth bell curve so the rim
+        // fades gently with no hard line (never a thick glowing blob)
+        float d = abs(vUv.x - 0.5) * 2.0;            // 0 centre → 1 rim
+        float edge = exp(-d * d * 4.5);              // gaussian glow profile
+        float softEdge = smoothstep(1.0, 0.0, d);
+
+        // POINTED growth front: cutoff recedes toward the rim so the strand
+        // tapers to a V/point instead of a flat cut
+        float tipLen = 0.05;
+        float localReveal = uReveal - d * tipLen;
+        if (vUv.y > localReveal) discard;
+        float vFade = smoothstep(localReveal, localReveal - 0.12, vUv.y);
+
         float flow = vUv.y * 6.0 + uTime * 0.6;
         float bands = 0.55 + 0.45 * sin(flow * 3.14159);
         float pulse = pow(0.5 + 0.5 * sin(vUv.y * 30.0 - uTime * 2.0), 4.0);
-        float tail = smoothstep(0.0, 0.04, vUv.y);
-        float tip  = smoothstep(uReveal - 0.04, uReveal, vUv.y); // glowing growth front
-        float intensity = edge * (bands + pulse * 0.6 + tip * 1.5) * uGlow * tail;
-        gl_FragColor = vec4(uColor * intensity, uOpacity * edge * tail);
+        float tail = smoothstep(0.0, 0.1, vUv.y);
+        float tip  = smoothstep(localReveal - 0.06, localReveal, vUv.y);
+
+        float intensity = edge * (bands + pulse * 0.5 + tip * 1.2) * uGlow * tail * vFade;
+        float alpha = uOpacity * edge * softEdge * tail * vFade;
+        gl_FragColor = vec4(uColor * intensity, alpha);
       }
     `,
     transparent: true,
@@ -276,83 +360,206 @@ function makeRibbonMaterial(color, baseOpacity, glow) {
   });
 }
 
-// ─── A single zig-zag ray: core + ribbons + particles ─────────────────────────
+// bake the spline (pos + right) into a DataTexture so the GPU particle system can
+// sample any point along the ray path in the vertex shader (right packed as vec3)
+function makeSplineTexture(frames) {
+  const w = RAY_SAMPLES + 1;
+  const data = new Float32Array(w * 2 * 4);
+  for (let i = 0; i <= RAY_SAMPLES; i++) {
+    const f = frames[i];
+    data[i * 4 + 0] = f.pos.x;
+    data[i * 4 + 1] = f.pos.y;
+    data[i * 4 + 2] = f.pos.z;
+    data[i * 4 + 3] = 1.0;
+    const o = (w + i) * 4;
+    data[o + 0] = f.right.x;
+    data[o + 1] = f.right.y;
+    data[o + 2] = f.right.z;
+    data[o + 3] = 1.0;
+  }
+  const tex = new THREE.DataTexture(data, w, 2, THREE.RGBAFormat, THREE.FloatType);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+// ─── GPU particle field flowing up the ray (identical to Scene 2 / Scene 3) ───
+// thousands of tiny motes; all motion computed in the vertex shader from a baked
+// spline texture → flow upward, sway, twinkle, fade in/out, occasionally detach.
+function ParticleField({ frames, revealRef, cfg, seed = 0 }) {
+  const sprite = useMemo(() => getSparkSprite(), []);
+  const splineTex = useMemo(() => makeSplineTexture(frames), [frames]);
+
+  const { geometry, material } = useMemo(() => {
+    const n = cfg.count;
+    const aSeed = new Float32Array(n);
+    const aSpeed = new Float32Array(n);
+    const aLateral = new Float32Array(n);
+    const aSway = new Float32Array(n);
+    const aSwaySpeed = new Float32Array(n);
+    const aDetach = new Float32Array(n);   // outward drift when a mote detaches
+    const aSize = new Float32Array(n);
+    const aColor = new Float32Array(n * 3);
+    const aTwSpeed = new Float32Array(n);
+    const aPhase = new Float32Array(n);
+    const centred = () => (Math.random() + Math.random() - 1);
+
+    for (let i = 0; i < n; i++) {
+      aSeed[i] = Math.random();
+      aSpeed[i] = cfg.speedMin + Math.random() * (cfg.speedMax - cfg.speedMin);
+      aLateral[i] = centred() * cfg.lateralBand;
+      aSway[i] = 0.05 + Math.random() * 0.3;
+      aSwaySpeed[i] = 0.3 + Math.random() * 1.2;
+      // ~18% of motes occasionally detach and drift outward before vanishing
+      aDetach[i] = Math.random() < 0.18 ? (0.4 + Math.random() * 1.1) : 0.0;
+      aSize[i] = cfg.sizeMin + Math.random() * (cfg.sizeMax - cfg.sizeMin);
+      aTwSpeed[i] = 0.6 + Math.random() * 2.4;
+      aPhase[i] = Math.random() * Math.PI * 2;
+      const c = P_COLORS[(Math.random() * P_COLORS.length) | 0];
+      aColor[i * 3] = c.r; aColor[i * 3 + 1] = c.g; aColor[i * 3 + 2] = c.b;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+    geo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed, 1));
+    geo.setAttribute("aSpeed", new THREE.BufferAttribute(aSpeed, 1));
+    geo.setAttribute("aLateral", new THREE.BufferAttribute(aLateral, 1));
+    geo.setAttribute("aSway", new THREE.BufferAttribute(aSway, 1));
+    geo.setAttribute("aSwaySpeed", new THREE.BufferAttribute(aSwaySpeed, 1));
+    geo.setAttribute("aDetach", new THREE.BufferAttribute(aDetach, 1));
+    geo.setAttribute("aSize", new THREE.BufferAttribute(aSize, 1));
+    geo.setAttribute("aColor", new THREE.BufferAttribute(aColor, 3));
+    geo.setAttribute("aTwSpeed", new THREE.BufferAttribute(aTwSpeed, 1));
+    geo.setAttribute("aPhase", new THREE.BufferAttribute(aPhase, 1));
+    geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 200);
+
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uReveal: { value: 0.0 },
+        uSpline: { value: splineTex },
+        uSprite: { value: sprite },
+      },
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: /* glsl */ `
+        uniform float uTime;
+        uniform float uReveal;
+        uniform sampler2D uSpline;
+        attribute float aSeed;
+        attribute float aSpeed;
+        attribute float aLateral;
+        attribute float aSway;
+        attribute float aSwaySpeed;
+        attribute float aDetach;
+        attribute float aSize;
+        attribute vec3  aColor;
+        attribute float aTwSpeed;
+        attribute float aPhase;
+        varying vec3 vColor;
+        varying float vBright;
+        void main() {
+          // flow UP the ray, looping within the revealed window
+          float t = mod(aSeed + uTime * aSpeed, 1.0) * uReveal;
+          vec3 pos   = texture2D(uSpline, vec2(t, 0.25)).xyz;
+          vec3 right = texture2D(uSpline, vec2(t, 0.75)).xyz;
+          float sway = aLateral + sin(uTime * aSwaySpeed + aPhase) * aSway;
+          // occasional detach: motes near the end of their cycle drift outward
+          float life = fract(aSeed + uTime * aSpeed);
+          sway += aDetach * smoothstep(0.7, 1.0, life);
+          pos += right * sway;
+          float headFade = smoothstep(0.0, 0.04, t);
+          float tipFade  = 1.0 - smoothstep(uReveal - 0.05, uReveal, t);
+          float tw = 0.55 + 0.45 * sin(uTime * aTwSpeed + aPhase);
+          vBright = headFade * tipFade * tw;
+          vColor = aColor;
+          vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+          gl_PointSize = aSize * 900.0 / max(-mv.z, 0.001);
+          gl_Position = projectionMatrix * mv;
+        }
+      `,
+      fragmentShader: /* glsl */ `
+        uniform sampler2D uSprite;
+        varying vec3 vColor;
+        varying float vBright;
+        void main() {
+          float a = texture2D(uSprite, gl_PointCoord).a;
+          gl_FragColor = vec4(vColor * vBright * a, a * vBright);
+        }
+      `,
+    });
+    return { geometry: geo, material: mat };
+  }, [cfg, sprite, splineTex, seed]);
+
+  useFrame((state) => {
+    material.uniforms.uTime.value = state.clock.elapsedTime;
+    material.uniforms.uReveal.value = revealRef.current;
+  });
+
+  return <points geometry={geometry} material={material} frustumCulled={false} renderOrder={4} />;
+}
+
+// per-ray particle layers → ~7,000 motes per ray (5,000–10,000 spec range)
+const RAY_PARTICLE_LAYERS = [
+  { count: 4200, sizeMin: 0.01, sizeMax: 0.035, lateralBand: 0.16, speedMin: 0.06, speedMax: 0.16, },
+  { count: 2200, sizeMin: 0.015, sizeMax: 0.05, lateralBand: 0.34, speedMin: 0.04, speedMax: 0.1, },
+  { count: 700, sizeMin: 0.025, sizeMax: 0.065, lateralBand: 0.24, speedMin: 0.16, speedMax: 0.32, },
+];
+
+// ─── A single ray: thin white core + 15–30 weaving fiber strands + particles ──
 
 function ZigZagRay({ curve, revealRef, seedOffset = 0 }) {
   const frames = useMemo(() => sampleFrames(curve), [curve]);
 
-  const coreGeo = useMemo(() => buildRibbonGeometry(frames, 0, 0.35), [frames]);
-  const coreMat = useMemo(() => makeRibbonMaterial(new THREE.Color("#9FEFFF"), 0.95, 10.0), []);
+  // VERY THIN white-hot core — a fine fiber, never a thick tube
+  const coreGeo = useMemo(() => buildRibbonGeometry(frames, 0, 0.05), [frames]);
+  const coreMat = useMemo(
+    () => makeRibbonMaterial(C_CENTER.clone(), 0.85, 6.0, 0.04, 9.0, seedOffset, 0.5),
+    [seedOffset]
+  );
 
+  // 22 ultra-thin fiber strands that weave / separate / merge / split / cross,
+  // colour-graded inner → middle → outer → fade. Tiny random offsets per strand.
   const ribbons = useMemo(() => {
-    const N = 10;
+    const N = 22; // within the 15–30 spec range
     const out = [];
     for (let i = 0; i < N; i++) {
       const pair = Math.floor(i / 2) + 1;
       const sign = i % 2 === 0 ? 1 : -1;
-      // tight spread: ribbons hug the core so they read as one glowing snake,
-      // not a wide fanned-out mesh
-      const offset = sign * pair * 0.1;
+      // tiny random base offset so strands hug the core yet stay slightly apart
+      const baseOffset = sign * pair * 0.035 * (0.6 + Math.random() * 0.8);
       const dist = pair / (N / 2 + 1);
-      const opacity = THREE.MathUtils.lerp(0.5, 0.2, dist) * (0.85 + Math.random() * 0.25);
-      const glow = THREE.MathUtils.lerp(3.0, 1.2, dist);
+      const col =
+        dist < 0.3 ? C_INNER.clone() :
+        dist < 0.6 ? C_MIDDLE.clone() :
+        dist < 0.85 ? C_OUTER.clone() : C_FADE.clone();
+      // soft blue glow, gentle opacity — outer strands fade out delicately
+      const opacity = THREE.MathUtils.lerp(0.32, 0.08, dist) * (0.8 + Math.random() * 0.4);
+      const glow = THREE.MathUtils.lerp(2.0, 0.6, dist);
+      // independent weave per strand (different amp / freq / phase / speed)
+      const weaveAmp = 0.12 + Math.random() * 0.5;
+      const weaveFreq = 3.0 + Math.random() * 7.0;
+      const weavePhase = seedOffset + Math.random() * Math.PI * 2;
+      const weaveSpeed = 0.2 + Math.random() * 0.8;
       out.push({
-        geo: buildRibbonGeometry(frames, offset, 0.03),
-        mat: makeRibbonMaterial(new THREE.Color("#74D8FF"), opacity, glow),
+        geo: buildRibbonGeometry(frames, baseOffset, 0.02 + Math.random() * 0.02),
+        mat: makeRibbonMaterial(col, opacity, glow, weaveAmp, weaveFreq, weavePhase, weaveSpeed),
       });
     }
     return out;
-  }, [frames]);
-
-  // flowing particles riding the ray
-  const COUNT = 260;
-  const meshRef = useRef(null);
-  const pdata = useMemo(() => {
-    const t = new Float32Array(COUNT);
-    const speed = new Float32Array(COUNT);
-    const lateral = new Float32Array(COUNT);
-    const scale = new Float32Array(COUNT);
-    for (let i = 0; i < COUNT; i++) {
-      t[i] = Math.random();
-      speed[i] = 0.02 + Math.random() * 0.04;
-      lateral[i] = (Math.random() - 0.5) * 0.3;
-      scale[i] = 0.6 + Math.random() * 0.9;
-    }
-    return { t, speed, lateral, scale };
-  }, []);
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-  const _p = useMemo(() => new THREE.Vector3(), []);
+  }, [frames, seedOffset]);
 
   useFrame((_, dt) => {
     const reveal = revealRef.current;
-
-    // advance the flow faster so the energy reads as quicker & livelier
-    const flowDt = dt * 1.6;
+    // advance the flow a touch faster so the energy reads as lively
+    const flowDt = dt * 1.4;
     coreMat.uniforms.uTime.value += flowDt;
     coreMat.uniforms.uReveal.value = reveal;
     for (const r of ribbons) {
       r.mat.uniforms.uTime.value += flowDt;
       r.mat.uniforms.uReveal.value = reveal;
-    }
-
-    const mesh = meshRef.current;
-    if (mesh) {
-      for (let i = 0; i < COUNT; i++) {
-        pdata.t[i] = (pdata.t[i] + pdata.speed[i] * dt) % 1;
-        const tt = pdata.t[i] * reveal;
-        const fi = Math.min(RAY_SAMPLES, Math.floor(tt * RAY_SAMPLES));
-        const f = frames[fi];
-        _p.set(
-          f.pos.x + f.right.x * pdata.lateral[i],
-          f.pos.y + f.right.y * pdata.lateral[i] + Math.sin((pdata.t[i] + i + seedOffset) * 6.0) * 0.04,
-          f.pos.z + f.right.z * pdata.lateral[i]
-        );
-        dummy.position.copy(_p);
-        dummy.scale.setScalar(pdata.scale[i] * 0.07);
-        dummy.updateMatrix();
-        mesh.setMatrixAt(i, dummy.matrix);
-      }
-      mesh.instanceMatrix.needsUpdate = true;
     }
   });
 
@@ -368,10 +575,9 @@ function ZigZagRay({ curve, revealRef, seedOffset = 0 }) {
       <mesh geometry={coreGeo} renderOrder={3}>
         <primitive object={coreMat} attach="material" />
       </mesh>
-      <instancedMesh ref={meshRef} args={[undefined, undefined, COUNT]} renderOrder={4}>
-        <sphereGeometry args={[1, 8, 8]} />
-        <meshBasicMaterial color="#CFF4FF" transparent opacity={0.95} blending={THREE.AdditiveBlending} depthWrite={false} />
-      </instancedMesh>
+      {RAY_PARTICLE_LAYERS.map((cfg, i) => (
+        <ParticleField key={i} frames={frames} revealRef={revealRef} cfg={cfg} seed={seedOffset + i} />
+      ))}
     </group>
   );
 }
@@ -384,27 +590,50 @@ function Rays({ scrollRef }) {
   //   left  → top-LEFT corner   (xEnd negative)
   //   mid   → straight up        (xEnd 0)
   //   right → top-RIGHT corner  (xEnd positive)
+  // five rays spread edge-to-edge (full screen width) but each with its OWN
+  // character — different amplitude, wave count, phase and a one-directional
+  // bend — so some snake hard, some lean left, some lean right, some run nearly
+  // straight. They never look like five copies of the same wave.
+  //   args: (xStart, xEnd, amp, waves, phase, bend)
   const curves = useMemo(() => [
-    makeSnakeCurve(-2.5, -10.5, 1.1, 2.5, 0.0),
-    makeSnakeCurve(0.0, 0.0, 1.4, 3.0, 1.6),
-    makeSnakeCurve(2.5, 10.5, 1.1, 2.5, 3.2),
+    makeSnakeCurve(-12.0, -15.0, 1.6, 2.0, 0.0, -2.2),  // far-left: leans further left
+    makeSnakeCurve(-6.0, -7.0, 0.9, 3.2, 2.1, 1.6),     // inner-left: bends back right
+    makeSnakeCurve(0.0, 0.0, 0.4, 2.4, 1.6, 0.0),       // centre: nearly straight up
+    makeSnakeCurve(6.0, 7.0, 1.1, 2.8, 4.3, -1.8),      // inner-right: bends toward left
+    makeSnakeCurve(12.0, 15.0, 1.5, 2.2, 3.2, 2.4),     // far-right: leans further right
   ], []);
 
-  // reveal is driven DIRECTLY from the page's already-smoothed scroll — no second
-  // smoothing pass here. A single smoothing stage means forward and reverse have
-  // identical speed/motion (stacking two lerps gave reverse extra lag because both
-  // stages carried momentum toward the old direction).
-  const revealRef = useRef(0);
+  // STAGGERED reveal: each ray grows during its OWN slice of the scroll instead
+  // of all five appearing at once. The windows below overlap a little, and they
+  // fire in a scattered order (far-left → centre → far-right → inner-left →
+  // inner-right) keyed by curve index so the rays come in one after another.
+  //   each entry = [scrollStart, scrollEnd] for curve index i
+  const REVEAL_WINDOWS = useMemo(() => [
+    [0.00, 0.42], // 0  far-left  → first
+    [0.34, 0.74], // 1  inner-left → fourth
+    [0.12, 0.54], // 2  centre    → second
+    [0.46, 0.88], // 3  inner-right → fifth (last)
+    [0.24, 0.66], // 4  far-right → third
+  ], []);
+
+  // one reveal ref per ray, each remapping the global scroll through its window.
+  // Driven DIRECTLY from the page's already-smoothed scroll (single smoothing
+  // stage) so forward and reverse have identical speed/motion.
+  const revealRefs = useMemo(() => curves.map(() => ({ current: 0.0001 })), [curves]);
 
   useFrame(() => {
-    const target = scrollRef ? THREE.MathUtils.clamp(scrollRef.current, 0, 1) : 0;
-    revealRef.current = THREE.MathUtils.clamp(target, 0.0001, 1);
+    const p = scrollRef ? THREE.MathUtils.clamp(scrollRef.current, 0, 1) : 0;
+    for (let i = 0; i < revealRefs.length; i++) {
+      const [s, e] = REVEAL_WINDOWS[i];
+      const local = THREE.MathUtils.clamp((p - s) / (e - s), 0, 1);
+      revealRefs[i].current = THREE.MathUtils.clamp(local, 0.0001, 1);
+    }
   });
 
   return (
     <group>
       {curves.map((c, i) => (
-        <ZigZagRay key={i} curve={c} revealRef={revealRef} seedOffset={i * 13} />
+        <ZigZagRay key={i} curve={c} revealRef={revealRefs[i]} seedOffset={i * 13} />
       ))}
     </group>
   );
@@ -415,13 +644,14 @@ function Rays({ scrollRef }) {
 export default function Scene4({ scrollRef }) {
   return (
     <Canvas
-      dpr={[1, 1.5]}
+      dpr={[1, 1.25]}
       camera={{ position: [0, 0, 22], fov: 50, near: 0.1, far: 200 }}
       gl={{
         antialias: true,
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.0,
+        toneMappingExposure: 0.62, // reduced exposure — deep cinematic grade
+        powerPreference: "high-performance",
       }}
       style={{ width: "100%", height: "100%", background: BG_COLOR }}
     >
@@ -429,22 +659,42 @@ export default function Scene4({ scrollRef }) {
 
       <ParallaxCamera />
 
-      {/* lighting so the rock backdrop texture reads clearly across the whole
-          frame (the rays are additive and stay bright regardless) */}
-      <ambientLight intensity={0.6} color="#27406b" />
-      <directionalLight position={[0, 6, 20]} intensity={1.6} color="#9fc3ff" />
-      <hemisphereLight args={["#2a5390", "#050a16", 0.6]} />
+      {/* subtle blue RIM lighting only — the rays softly catch the nearby
+          backdrop; no global scene glow, everything else stays in darkness */}
+      <ambientLight intensity={0.04} color="#0a1730" />
+      <pointLight position={[-6, -2, 8]} intensity={28} distance={26} decay={2} color="#238eff" />
+      <pointLight position={[0, 3, 8]} intensity={28} distance={26} decay={2} color="#63cfff" />
+      <pointLight position={[6, -2, 8]} intensity={28} distance={26} decay={2} color="#238eff" />
+      <hemisphereLight args={["#0c2545", "#01030a", 0.08]} />
+
+      {/* very subtle blue volumetric fog around the rays — depth only */}
+      <fog attach="fog" args={["#0a1d3a", 24, 70]} />
 
       <RockBackdrop />
       <Rays scrollRef={scrollRef} />
-      <EffectComposer>
+
+      <EffectComposer multisampling={0}>
+        {/* bloom reduced ~70%: only the brightest white core blooms; edges stay
+            crisp and the rays remain clearly defined with no overexposed wash */}
         <Bloom
-          luminanceThreshold={0.15}
-          luminanceSmoothing={0.9}
-          intensity={1.9}
-          radius={0.85}
+          luminanceThreshold={0.55}
+          luminanceSmoothing={0.7}
+          intensity={0.55}
+          radius={0.55}
           mipmapBlur
         />
+        {/* very light chromatic aberration */}
+        <ChromaticAberration
+          blendFunction={BlendFunction.NORMAL}
+          offset={new THREE.Vector2(0.0005, 0.0005)}
+          radialModulation={false}
+          modulationOffset={0}
+        />
+        {/* very subtle vignette → focus + contrast */}
+        <Vignette eskil={false} offset={0.3} darkness={0.78} />
+        {/* tiny film grain */}
+        <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={0.035} />
+        <ToneMapping />
       </EffectComposer>
     </Canvas>
   );

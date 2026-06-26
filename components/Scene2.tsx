@@ -625,7 +625,7 @@ export default function Scene2({ scrollRef }: { scrollRef?: React.MutableRefObje
   return (
     <Canvas
       shadows
-      dpr={[1, 1.5]}
+      dpr={[1, 1.25]}
       camera={{ position: [0, 38, 52], fov: 50, near: 0.1, far: 800 }}
       gl={{
         antialias: true,

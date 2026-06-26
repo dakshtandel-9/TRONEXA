@@ -333,11 +333,11 @@ export default function ScrollSequence() {
             frame); only the heavy <Canvas> inside mounts while the scene is
             visible, so just 1–2 WebGL contexts + Bloom passes run at once. */}
         {/* SCENE 5 — top-down aerial; fades in at the very end (above scene 4) */}
-        <div ref={scene5Ref} style={{ ...layerBase, background: '#010715', opacity: 0, zIndex: 5 }}>
+        <div ref={scene5Ref} style={{ ...layerBase, background: '#02040C', opacity: 0, zIndex: 5 }}>
           {visible[4] && <Scene5 scrollRef={scene5ScrollRef} />}
         </div>
         {/* SCENE 4 — climbing rays; bottom layer */}
-        <div ref={scene4Ref} style={{ ...layerBase, background: '#16215a', opacity: 0, zIndex: 1 }}>
+        <div ref={scene4Ref} style={{ ...layerBase, background: '#02040D', opacity: 0, zIndex: 1 }}>
           {visible[3] && <Scene4 scrollRef={scene4ScrollRef} />}
         </div>
         {/* SCENE 3 — terrain + energy rivers */}

@@ -179,12 +179,20 @@ function makeRibbonMaterial(
       uniform float uReveal;
       varying vec2 vUv;
       void main() {
-        // hard cut anything beyond the currently revealed length
-        if (vUv.y > uReveal) discard;
+        // soft feathered cross-width falloff: a smooth bell curve instead of a
+        // sharp pow() so the ribbon rim fades out gently with no hard line
+        float d = abs(vUv.x - 0.5) * 2.0;            // 0 centre → 1 rim
+        float edge = exp(-d * d * 4.5);              // gaussian glow profile
+        float softEdge = smoothstep(1.0, 0.0, d);    // extra rim feather for alpha
 
-        // soft edge falloff across the ribbon width (bright core, faded edges)
-        float edge = 1.0 - abs(vUv.x - 0.5) * 2.0;
-        edge = pow(clamp(edge, 0.0, 1.0), 1.5);
+        // POINTED growth front: the cutoff recedes toward the rim so the strand
+        // tapers to a V/point instead of a flat horizontal cut. The centre reaches
+        // the full uReveal; the edges stop ~0.05 short, with a long soft fade into
+        // the tip so it comes to a clean point.
+        float tipLen = 0.05;
+        float localReveal = uReveal - d * tipLen;
+        if (vUv.y > localReveal) discard;
+        float vFade = smoothstep(localReveal, localReveal - 0.12, vUv.y);
 
         // travelling energy bands flowing toward the mountain
         float flow = vUv.y * 6.0 + uTime * 0.6;
@@ -192,13 +200,13 @@ function makeRibbonMaterial(
         // sharper pulses riding on top
         float pulse = pow(0.5 + 0.5 * sin(vUv.y * 30.0 - uTime * 2.0), 4.0);
 
-        // fade the tail (near camera); add a bright leading tip at the reveal
-        // edge so the growth front reads as glowing energy carving forward
-        float tail = smoothstep(0.0, 0.06, vUv.y);
-        float tip  = smoothstep(uReveal - 0.04, uReveal, vUv.y); // glowing growth front
+        // gentle fade in at the tail; bright leading glow at the V tip
+        float tail = smoothstep(0.0, 0.1, vUv.y);
+        float tip  = smoothstep(localReveal - 0.06, localReveal, vUv.y);
 
-        float intensity = edge * (bands + pulse * 0.6 + tip * 1.5) * uGlow * tail;
-        gl_FragColor = vec4(uColor * intensity, uOpacity * edge * tail);
+        float intensity = edge * (bands + pulse * 0.5 + tip * 1.2) * uGlow * tail * vFade;
+        float alpha = uOpacity * edge * softEdge * tail * vFade;
+        gl_FragColor = vec4(uColor * intensity, alpha);
       }
     `,
     transparent: true,
@@ -254,8 +262,9 @@ function EnergyRibbons({ frames, revealRef }: { frames: Frame[]; revealRef: Reac
       const dist = pair / (N / 2 + 1);
       const col =
         dist < 0.4 ? C_INNER.clone() : dist < 0.75 ? C_OUTER.clone() : C_EDGE.clone();
-      const opacity = THREE.MathUtils.lerp(0.5, 0.18, dist) * (0.8 + Math.random() * 0.4);
-      const glow = THREE.MathUtils.lerp(3.0, 0.9, dist);
+      // gentler opacity + glow so the outer strands read as soft glowing threads
+      const opacity = THREE.MathUtils.lerp(0.34, 0.1, dist) * (0.8 + Math.random() * 0.4);
+      const glow = THREE.MathUtils.lerp(2.2, 0.7, dist);
 
       // per-ribbon weave so no two share a path — this is what makes them
       // separate / merge / split / cross continuously
@@ -264,7 +273,8 @@ function EnergyRibbons({ frames, revealRef }: { frames: Frame[]; revealRef: Reac
       const weavePhase = Math.random() * Math.PI * 2;
       const weaveSpeed = 0.25 + Math.random() * 0.7;
 
-      const geo = buildRibbonGeometry(frames, baseOffset, 0.045 + Math.random() * 0.03);
+      // slightly wider ribbons → the soft gaussian rim has room to feather
+      const geo = buildRibbonGeometry(frames, baseOffset, 0.07 + Math.random() * 0.04);
       const mat = makeRibbonMaterial(col, opacity, glow, weaveAmp, weaveFreq, weavePhase, weaveSpeed);
       out.push({ geo, mat });
     }
