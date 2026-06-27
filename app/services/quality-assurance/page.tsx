@@ -20,6 +20,8 @@ const data: ServicePageData = {
     'In today\'s fast-paced digital landscape, software quality plays a critical role in customer satisfaction, business reputation, and operational success. Even minor defects can lead to security vulnerabilities, performance issues, revenue loss, and poor user experiences. Tronexa provides comprehensive QA services designed to ensure software products meet the highest standards.',
   overview:
     'Our QA experts work closely with development teams to identify issues early, reduce risks, and deliver flawless digital experiences. By implementing structured testing processes, advanced automation frameworks, and continuous quality monitoring, Tronexa helps organizations launch software products with confidence and maintain long-term operational excellence.',
+  deliverablesLabel: 'Testing & QA Capabilities',
+  deliverablesHeading: 'End-to-end testing that\nguarantees software quality',
   deliverables: [
     { num: '01', title: 'Functional Testing', desc: 'Validation of application features, workflows, and business requirements — ensuring every user story and acceptance criterion is met before release through rigorous manual and scripted testing.' },
     { num: '02', title: 'Automated Testing Framework', desc: 'Reusable automated test cases for faster and more reliable testing — built with Selenium, Cypress, and Playwright and integrated directly into your CI/CD pipeline for continuous validation.' },

@@ -20,6 +20,8 @@ const data: ServicePageData = {
     'As industries become increasingly connected, businesses require intelligent systems that can collect, analyze, and act on real-time data from physical assets and devices. The Internet of Things is transforming operations by enabling organizations to improve efficiency, reduce costs, and make data-driven decisions faster than ever before.',
   overview:
     'Tronexa specializes in developing end-to-end IoT solutions that seamlessly connect devices, sensors, machines, and cloud platforms into a unified ecosystem. From smart manufacturing and logistics tracking to healthcare monitoring and industrial automation, Tronexa delivers scalable IoT solutions designed to drive operational excellence and long-term growth.',
+  deliverablesLabel: 'IoT Platform Capabilities',
+  deliverablesHeading: 'Connected intelligence across\nevery device and asset',
   deliverables: [
     { num: '01', title: 'Real-Time Device Monitoring', desc: 'Continuous tracking of connected devices and assets — providing operations teams with live visibility into system status, performance metrics, and operational health across all connected infrastructure.' },
     { num: '02', title: 'Sensor Data Collection', desc: 'Automated acquisition of environmental, operational, and equipment data — transforming raw sensor readings into structured, actionable information for analysis and decision-making.' },

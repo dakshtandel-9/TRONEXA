@@ -20,6 +20,8 @@ const data: ServicePageData = {
     'In today\'s competitive business environment, managing customer relationships effectively is essential for driving sales, improving customer satisfaction, and achieving sustainable growth. Many organizations struggle with fragmented customer data, disconnected communication channels, and inefficient sales processes.',
   overview:
     'Tronexa specializes in developing customized Customer Relationship Management (CRM) solutions that centralize customer information, automate workflows, and provide actionable business insights. By combining automation, analytics, and seamless integrations, we deliver CRM platforms that help businesses streamline operations, increase revenue, and create personalized customer experiences at scale.',
+  deliverablesLabel: 'CRM Capabilities',
+  deliverablesHeading: 'Everything you need to manage\ncustomers in one platform',
   deliverables: [
     { num: '01', title: 'Customer Management Dashboard', desc: 'Centralized view of all customer information and activities — giving sales, support, and management teams complete context for every customer relationship in a single, unified interface.' },
     { num: '02', title: 'Lead Capture & Management', desc: 'Automated lead collection, assignment, and tracking — capturing prospects from web forms, emails, and integrations and routing them to the right team members with full interaction history.' },

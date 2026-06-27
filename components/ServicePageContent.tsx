@@ -36,6 +36,10 @@ export interface ServicePageData {
   heroDesc: string;
   overview: string;
   deliverables: ServiceItem[];
+  /** Small uppercase label above the deliverables section. */
+  deliverablesLabel?: string;
+  /** Heading for the deliverables section (supports a single <br /> via "\n"). */
+  deliverablesHeading?: string;
   whyPoints: WhyPoint[];
   cta: string;
 }
@@ -199,7 +203,7 @@ export default function ServicePageContent({ data }: { data: ServicePageData }) 
         <section className="page-section-sm-pad" style={{ background: '#0d0f1a', padding: '120px 60px' }}>
           <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
             <div style={{ marginBottom: '64px' }}>
-              <SectionLabel text="ERP Platforms We Manage" />
+              <SectionLabel text={data.deliverablesLabel ?? 'What We Deliver'} />
               <h2 style={{
                 fontSize: 'clamp(1.6rem, 2.4vw, 2.5rem)',
                 fontWeight: 800,
@@ -209,8 +213,9 @@ export default function ServicePageContent({ data }: { data: ServicePageData }) 
                 color: 'white',
                 margin: 0,
                 maxWidth: '600px',
+                whiteSpace: 'pre-line',
               }}>
-                10 leading ERP systems,<br />fully managed by Tronexa
+                {data.deliverablesHeading ?? 'Capabilities engineered\nfor real business outcomes'}
               </h2>
             </div>
 

@@ -20,6 +20,8 @@ const data: ServicePageData = {
     'As businesses navigate an increasingly digital landscape, Generative AI has emerged as a powerful tool for enhancing productivity, automating workflows, and delivering personalized customer experiences. Tronexa helps businesses harness the full potential of Generative AI by developing custom AI-powered solutions tailored to their unique requirements.',
   overview:
     'From intelligent chatbots and virtual assistants to content generation platforms and enterprise AI automation systems, our solutions are designed to create measurable business value. By combining advanced AI models, scalable cloud infrastructure, and seamless system integrations, Tronexa empowers organizations to transform how they operate, engage customers, and innovate at scale.',
+  deliverablesLabel: 'Generative AI Capabilities',
+  deliverablesHeading: 'Intelligent capabilities that\nautomate, create, and scale',
   deliverables: [
     { num: '01', title: 'AI Chatbot & Virtual Assistant', desc: 'Human-like conversational experiences for customer support and internal operations — powered by fine-tuned language models that understand context, intent, and nuance.' },
     { num: '02', title: 'Content Generation Engine', desc: 'Automated creation of blogs, emails, product descriptions, and marketing content — enabling teams to scale content production without scaling headcount.' },

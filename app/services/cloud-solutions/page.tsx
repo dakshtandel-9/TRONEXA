@@ -20,6 +20,8 @@ const data: ServicePageData = {
     'As businesses continue to embrace digital transformation, cloud technology has become the foundation for scalability, agility, and operational efficiency. Organizations require flexible infrastructure that can support rapid growth, secure critical data, and enable seamless collaboration across teams and locations.',
   overview:
     'Tronexa helps businesses modernize their IT environments through customized cloud solutions designed to improve performance, reduce infrastructure costs, and enhance business continuity. From cloud migration and infrastructure management to hybrid and multi-cloud deployments, our expertise enables organizations to unlock the full potential of cloud computing.',
+  deliverablesLabel: 'Cloud Capabilities',
+  deliverablesHeading: 'Scalable, secure cloud\ninfrastructure end to end',
   deliverables: [
     { num: '01', title: 'Cloud Infrastructure Deployment', desc: 'End-to-end setup of public, private, and hybrid cloud environments — architected for performance, security, and cost-efficiency using AWS, Microsoft Azure, and Google Cloud Platform.' },
     { num: '02', title: 'Cloud Migration Services', desc: 'Seamless migration of applications, databases, and workloads — with minimal disruption to business operations and a structured approach that ensures data integrity throughout the process.' },

@@ -20,6 +20,8 @@ const data: ServicePageData = {
     'In an increasingly competitive digital landscape, businesses need more than just an online presence — they need strategic marketing that drives measurable results. From attracting qualified leads to building brand awareness and increasing customer retention, digital marketing plays a crucial role in modern business growth.',
   overview:
     'Tronexa helps businesses achieve their marketing goals through comprehensive digital marketing solutions tailored to their industry, audience, and objectives. By leveraging data-driven strategies across multiple digital channels, Tronexa empowers organizations to strengthen their online presence, maximize return on investment, and achieve sustainable business growth.',
+  deliverablesLabel: 'Marketing Capabilities',
+  deliverablesHeading: 'Data-driven marketing across\nevery digital channel',
   deliverables: [
     { num: '01', title: 'Search Engine Optimization (SEO)', desc: 'On-page, off-page, and technical SEO strategies for improved rankings — conducting keyword research, content optimization, link building, and Core Web Vitals improvements to drive sustainable organic traffic growth.' },
     { num: '02', title: 'Pay-Per-Click Advertising (PPC)', desc: 'Targeted campaigns across Google Ads, Bing Ads, and other networks — with strategic keyword selection, compelling ad copy, and continuous bid optimization to maximize return on ad spend.' },

@@ -195,10 +195,11 @@ export default function DevelopmentContent() {
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
           {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '72px', gap: 0 }}>
+          <div className="page-dev-tabs" style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '72px', gap: 0 }}>
             {SUB_SERVICES.map(s => (
               <button
                 key={s.id}
+                className="page-dev-tab"
                 onClick={() => setActiveTab(s.id)}
                 style={{
                   background: 'none',
@@ -212,6 +213,7 @@ export default function DevelopmentContent() {
                   fontWeight: 700,
                   cursor: 'pointer',
                   marginBottom: '-1px',
+                  whiteSpace: 'nowrap',
                   transition: 'color 0.2s, border-color 0.2s',
                 }}
                 onMouseEnter={e => { if (activeTab !== s.id) (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)'; }}
@@ -267,7 +269,7 @@ export default function DevelopmentContent() {
                   Full Details →
                 </a>
               </div>
-              <div style={{ paddingTop: '66px' }}>
+              <div className="page-asym-right" style={{ paddingTop: '66px' }}>
                 <p style={{
                   color: 'rgba(255,255,255,0.55)',
                   fontSize: '14px',

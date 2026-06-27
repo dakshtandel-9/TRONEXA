@@ -19,7 +19,9 @@ const data: ServicePageData = {
   heroDesc:
     'Streamline workflows, improve service delivery, and accelerate digital transformation with intelligent ServiceNow solutions.',
   overview:
-    'TRONEXA provides comprehensive ServiceNow services that help organizations automate processes, improve operational visibility, and optimize enterprise performance. From implementation and customization to integrations and ongoing support, we help businesses unlock the full value of the ServiceNow platform.',
+    'TRONEXA provides comprehensive ServiceNow services that help organizations automate processes, improve operational visibility, and optimize enterprise performance. From implementation and customization to integrations and ongoing managed support, we help businesses unlock the full value of the ServiceNow platform across IT, HR, and customer service operations.',
+  deliverablesLabel: 'ServiceNow Capabilities',
+  deliverablesHeading: 'Automate and unify enterprise\nservice operations',
   deliverables: [
     { num: '01', title: 'ServiceNow Implementation', desc: 'Deploying ServiceNow modules tailored to your organization\'s workflows, processes, and business objectives.' },
     { num: '02', title: 'IT Service Management', desc: 'Streamlining incident, problem, change, and service request management for improved IT performance and SLA compliance.' },

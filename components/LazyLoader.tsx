@@ -73,7 +73,7 @@ export default function LazyLoader({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 200,
+        zIndex: 1999, // above all UI/border overlays so nothing shows through
         background: '#02040C',
         display: 'flex',
         flexDirection: 'column',

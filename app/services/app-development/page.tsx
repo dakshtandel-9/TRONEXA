@@ -19,7 +19,9 @@ const data: ServicePageData = {
   heroDesc:
     'In today\'s mobile-first world, businesses need applications that not only look great but also deliver exceptional user experiences and measurable business outcomes. Tronexa specializes in designing and developing custom mobile applications that help organizations streamline operations, engage customers, and accelerate growth.',
   overview:
-    'Our team combines strategic planning, intuitive UI/UX design, robust development practices, and scalable architecture to create mobile applications that perform seamlessly across devices. Whether it\'s a customer-facing platform, an enterprise solution, or a startup MVP, Tronexa delivers mobile experiences built for long-term success.',
+    'Our team combines strategic planning, intuitive UI/UX design, robust development practices, and scalable architecture to create mobile applications that perform seamlessly across devices. We build natively for Android and iOS and cross-platform with Flutter and React Native, backed by Node.js, NestJS, and Firebase services and deployed on AWS, Google Cloud, and Azure with auto-scaling, disaster recovery, and 24/7 monitoring. Whether it\'s a customer-facing platform, an enterprise solution, or a startup MVP, Tronexa delivers mobile experiences built for long-term success.',
+  deliverablesLabel: 'App Capabilities',
+  deliverablesHeading: 'Features engineered for\nengagement and scale',
   deliverables: [
     { num: '01', title: 'Cross-Platform Compatibility', desc: 'Seamless performance across Android and iOS devices using Flutter and React Native — one codebase, multiple platforms, zero compromise on quality.' },
     { num: '02', title: 'User Authentication & Role Management', desc: 'Secure login, registration, and granular access controls — supporting JWT, OAuth 2.0, Firebase Authentication, and Single Sign-On (SSO) workflows.' },
