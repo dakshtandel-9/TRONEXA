@@ -1003,57 +1003,23 @@ function Lighting() {
 const _camPos = new THREE.Vector3();
 const _camLook = new THREE.Vector3();
 
-// where the camera ends up in the top-down drone shot (high, centred over the
-// mid-city) and where it looks (straight down at the floor beneath it)
-const DRONE_SPLIT = 0.78; // scroll point where the climb-to-top-down begins —
-                          // pushed later so the aerial glide lasts longer first
-
+// single-phase aerial glide across the whole scroll — no drone / top-down view
 function AerialCamera({ scrollRef }) {
   const par = useParallax();
   useFrame(({ camera }, dt) => {
     const p = scrollRef ? THREE.MathUtils.clamp(scrollRef.current, 0, 1) : 0;
+    const eased = p * p * (3 - 2 * p);
     const k = 1 - Math.exp(-Math.min(dt, 0.1) * 15);
     const m = par.update(dt);
 
-    if (p <= DRONE_SPLIT) {
-      // PHASE 1 — original aerial glide (remapped to complete within 0..SPLIT)
-      const q = p / DRONE_SPLIT;
-      const eased = q * q * (3 - 2 * q);
-      // travel FURTHER forward across the scene before the drone lift: z glides
-      // from 50 all the way to -12 (was 10) so the camera covers more ground
-      const y = THREE.MathUtils.lerp(16, 28, eased);
-      const z = THREE.MathUtils.lerp(50, -12, eased);
-      const x = THREE.MathUtils.lerp(-6, 6, eased);
-      _camPos.set(x + m.x * PARALLAX_X, y - m.y * PARALLAX_Y, z);
-      camera.position.lerp(_camPos, k);
-      _camLook.set(x * 0.3, -2, -90);
-      camera.lookAt(_camLook);
-    } else {
-      // PHASE 2 — climb high and tilt up & over into a straight-down drone view.
-      // Position eases from the phase-1 end (x6,y26,z10) up to high overhead,
-      // centred over the mid-city; the look target eases from the forward
-      // horizon point to a point directly BELOW the camera → looking straight down.
-      const q = (p - DRONE_SPLIT) / (1 - DRONE_SPLIT);
-      const eased = q * q * (3 - 2 * q);
+    const y = THREE.MathUtils.lerp(16, 28, eased);
+    const z = THREE.MathUtils.lerp(50, -12, eased);
+    const x = THREE.MathUtils.lerp(-6, 6, eased);
+    _camPos.set(x + m.x * PARALLAX_X, y - m.y * PARALLAX_Y, z);
+    camera.position.lerp(_camPos, k);
 
-      // start values match phase-1's new end (x6, y28, z-12) for a seamless handoff
-      const camX = THREE.MathUtils.lerp(6, 0, eased);
-      const camY = THREE.MathUtils.lerp(28, 130, eased);   // rise high above the city
-      const camZ = THREE.MathUtils.lerp(-12, -70, eased);  // drift out over the centre
-      // parallax kept subtle as we go overhead so it doesn't swing the framing
-      _camPos.set(camX + m.x * PARALLAX_X * (1 - eased), camY, camZ - m.y * PARALLAX_Y * (1 - eased));
-      camera.position.lerp(_camPos, k);
-
-      // look target: forward horizon → a 65° downward tilt (NOT straight down).
-      // at 65° below horizontal the target sits forward of straight-below by
-      // height / tan(65°); aiming the floor (lookY 0) gives that fixed pitch.
-      const ahead = camY / Math.tan(THREE.MathUtils.degToRad(65)); // forward offset
-      const lookX = THREE.MathUtils.lerp(6 * 0.3, camX, eased);
-      const lookY = THREE.MathUtils.lerp(-2, 0, eased);
-      const lookZ = THREE.MathUtils.lerp(-90, camZ - ahead, eased); // 65° down, looking forward
-      _camLook.set(lookX, lookY, lookZ);
-      camera.lookAt(_camLook);
-    }
+    _camLook.set(x * 0.3, -2, -90);
+    camera.lookAt(_camLook);
   });
   return null;
 }

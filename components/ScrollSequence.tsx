@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useLoadingContext } from '@/contexts/LoadingContext';
+import LazyLoader from '@/components/LazyLoader';
 
 // ── divaya Three.js scenes (replace the old video background) ─────────────────
 const Scene = dynamic(() => import('@/components/Scene'), { ssr: false });
@@ -82,7 +83,9 @@ function updateProgressBar(section: number) {
 
 export default function ScrollSequence() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [overlayVisible, setOverlayVisible] = useState(true);
+  // loader state: `sceneReady` flips true only once the 3D scene has truly
+  // downloaded + painted; `overlayMounted` keeps the loader up until it fades.
+  const [sceneReady, setSceneReady] = useState(false);
   const [overlayMounted, setOverlayMounted] = useState(true);
   const [currentSection, setCurrentSection] = useState(0);
   const { setIsLoaded } = useLoadingContext();
@@ -124,6 +127,16 @@ export default function ScrollSequence() {
   ]);
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
+
+  // WARM-UP: while the loader is up we mount ALL 5 scenes at once so every
+  // canvas compiles its shaders, loads its model and paints real frames behind
+  // the loader. Because everything is already warm + the GLB is in cache when
+  // the loader opens, re-mounting a scene later paints instantly — no black
+  // flash between sections. After warm-up ends the normal on-demand mounting
+  // (1–2 live canvases) resumes for performance.
+  const [warmup, setWarmup] = useState(true);
+  const warmupRef = useRef(true);
+  warmupRef.current = warmup;
 
   const switchToSection = useCallback((targetSection: number) => {
     if (!isLoadedRef.current) return;
@@ -246,12 +259,13 @@ export default function ScrollSequence() {
       // set, so off-screen scenes unmount and only 1–2 canvases keep running.
       const EPS = 0.001;
       const tgt = sceneOpacities(targetRef.current);
+      const warm = warmupRef.current; // while warming up, mount every scene
       const next: [boolean, boolean, boolean, boolean, boolean] = [
-        o1 > EPS || tgt[0] > EPS,
-        o2 > EPS || tgt[1] > EPS,
-        o3 > EPS || tgt[2] > EPS,
-        o4 > EPS || tgt[3] > EPS,
-        o5 > EPS || tgt[4] > EPS,
+        warm || o1 > EPS || tgt[0] > EPS,
+        warm || o2 > EPS || tgt[1] > EPS,
+        warm || o3 > EPS || tgt[2] > EPS,
+        warm || o4 > EPS || tgt[3] > EPS,
+        warm || o5 > EPS || tgt[4] > EPS,
       ];
       const cur = visibleRef.current;
       if (
@@ -265,20 +279,67 @@ export default function ScrollSequence() {
       parallaxRafRef.current = requestAnimationFrame(renderFrame);
     }
 
-    // the 3D background loads instantly (no video buffering); mark loaded shortly
-    function markLoaded() {
-      if (isLoadedRef.current) return;
-      isLoadedRef.current = true;
+    // ── REAL readiness detection ──────────────────────────────────────────────
+    // Don't reveal on a fixed timer — wait until everything has actually loaded
+    // and painted: (1) the page's own assets are done (document complete),
+    // (2) the hero 3D model has downloaded, and (3) the first scene's <canvas>
+    // has mounted AND we've seen several animation frames after it (so shaders
+    // have compiled and the first real frames are on screen). Only then do we
+    // tell the LazyLoader it's `ready`, which lets it finish its countdown.
+    let cancelled = false;
 
-      setOverlayVisible(false);
-      setTimeout(() => {
-        setOverlayMounted(false);
-        setIsLoaded(true);
-        dispatchSectionChange(0);
-        dispatchSectionSettled(0);
-      }, 500);
+    const waitForCanvasPaint = () =>
+      new Promise<void>((resolve) => {
+        const startedAt = performance.now();
+        const refs = [scene1Ref, scene2Ref, scene3Ref, scene4Ref, scene5Ref];
+        const check = () => {
+          if (cancelled) return resolve();
+          // ALL five scene canvases must exist with a real backing buffer (they
+          // have each painted at least once) — so every section is warm before
+          // we reveal and there is no per-section black flash.
+          const allPainted = refs.every((r) => {
+            const canvas = r.current?.querySelector('canvas');
+            return !!canvas && canvas.width > 0 && canvas.height > 0;
+          });
+          // hard cap so we never hang forever on a stalled GPU/context
+          const timedOut = performance.now() - startedAt > 20000;
+          if (allPainted || timedOut) {
+            // let several more frames pass so shaders finish compiling + the
+            // first real frames are on screen for every scene before we reveal
+            let extra = 12;
+            const settle = () => {
+              if (cancelled) return resolve();
+              if (extra-- <= 0) return resolve();
+              requestAnimationFrame(settle);
+            };
+            requestAnimationFrame(settle);
+          } else {
+            requestAnimationFrame(check);
+          }
+        };
+        requestAnimationFrame(check);
+      });
+
+    const waitForWindowLoad = () =>
+      new Promise<void>((resolve) => {
+        if (document.readyState === 'complete') return resolve();
+        const onLoad = () => resolve();
+        window.addEventListener('load', onLoad, { once: true });
+      });
+
+    const waitForModel = () =>
+      // warm the hero GLB into the browser cache; ignore failures (the scene
+      // also preloads it, this just makes the readiness gate honest)
+      fetch('/HeroModul-opt.glb').then(() => undefined).catch(() => undefined);
+
+    async function detectReady() {
+      await Promise.all([waitForWindowLoad(), waitForModel(), waitForCanvasPaint()]);
+      if (cancelled) return;
+      // the LazyLoader sees `ready` and finishes its countdown → onDone() flips
+      // isLoadedRef so scroll/nav only become active once the loader has gone.
+      setSceneReady(true);
     }
-    const loadTimer = setTimeout(markLoaded, 600);
+    detectReady();
 
     parallaxRafRef.current = requestAnimationFrame(renderFrame);
     window.addEventListener('mousemove', onMouseMove, { passive: true });
@@ -286,8 +347,8 @@ export default function ScrollSequence() {
     window.addEventListener('navigatesection', onNavigateSection);
 
     return () => {
+      cancelled = true;
       if (parallaxRafRef.current !== null) cancelAnimationFrame(parallaxRafRef.current);
-      clearTimeout(loadTimer);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('wheel', onWheel);
       window.removeEventListener('navigatesection', onNavigateSection);
@@ -440,26 +501,23 @@ export default function ScrollSequence() {
         />
       </div>
 
-      {/* Loading overlay */}
+      {/* Lazy loader: a countdown that finishes only once the scene has truly
+          loaded + painted (sceneReady), then fades out to reveal the site. */}
       {overlayMounted && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 200,
-            background: '#000',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'opacity 0.5s ease',
-            opacity: overlayVisible ? 1 : 0,
-            pointerEvents: overlayVisible ? 'auto' : 'none',
+        <LazyLoader
+          ready={sceneReady}
+          onDone={() => {
+            isLoadedRef.current = true; // enable scroll/nav now the loader has gone
+            setOverlayMounted(false);
+            setIsLoaded(true);
+            dispatchSectionChange(0);
+            dispatchSectionSettled(0);
+            // end warm-up after a short grace period so every scene has settled;
+            // then on-demand mounting resumes for performance. By now all shaders
+            // are compiled and the GLB is cached, so re-mounts paint instantly.
+            setTimeout(() => setWarmup(false), 1200);
           }}
-        >
-          <div style={{ color: '#fff', fontFamily: 'sans-serif', fontSize: 18, letterSpacing: 2 }}>
-            Loading...
-          </div>
-        </div>
+        />
       )}
     </>
   );
