@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useRef, useMemo, useEffect } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Points, PointMaterial } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
@@ -866,6 +866,17 @@ function ClimbCamera({ scrollRef }) {
 
 // ─── Scene 3 ──────────────────────────────────────────────────────────────────
 
+// frees this scene's WebGL context immediately on unmount so contexts don't leak
+function ContextReleaser() {
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    return () => {
+      try { gl.forceContextLoss(); gl.dispose(); } catch { /* ignore */ }
+    };
+  }, [gl]);
+  return null;
+}
+
 export default function Scene3({ scrollRef }) {
   return (
     <Canvas
@@ -883,6 +894,7 @@ export default function Scene3({ scrollRef }) {
     >
       <fog attach="fog" args={["#081632", 40, 200]} />
 
+      <ContextReleaser />
       <ClimbCamera scrollRef={scrollRef} />
       <Lighting />
       <Sky />

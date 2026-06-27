@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useEffect } from "react";
 import { Points, PointMaterial, useGLTF, Stats } from "@react-three/drei";
 import { Suspense } from "react";
 import {
@@ -842,6 +843,17 @@ function CameraRig({ scrollRef }: { scrollRef: React.MutableRefObject<number> })
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// frees this scene's WebGL context immediately on unmount so contexts don't leak
+function ContextReleaser() {
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    return () => {
+      try { gl.forceContextLoss(); gl.dispose(); } catch { /* ignore */ }
+    };
+  }, [gl]);
+  return null;
+}
+
 export default function Scene({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) {
   return (
     <Canvas
@@ -860,6 +872,7 @@ export default function Scene({ scrollRef }: { scrollRef: React.MutableRefObject
       style={{ width: "100%", height: "100%", background: "#040812" }}
     >
       {SHOW_STATS && <Stats />}
+      <ContextReleaser />
       <CameraRig scrollRef={scrollRef} />
 
       {/* exponential blue-grey fog — subtle, never white, soft atmospheric depth

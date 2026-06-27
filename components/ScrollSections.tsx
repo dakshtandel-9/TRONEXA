@@ -1,10 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useEffect, useRef } from 'react';
 import HeroContent from './HeroContent';
 
-const Model3D = dynamic(() => import('./Model3D'), { ssr: false });
 
 type SectionData =
   | { id: string; isHero: true; label: string }
@@ -63,7 +61,6 @@ const SECTIONS: SectionData[] = [
 
 export default function ScrollSections() {
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [heroVisible, setHeroVisible] = useState(true);
 
   useEffect(() => {
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -72,9 +69,13 @@ export default function ScrollSections() {
       sectionRefs.current.forEach((ref, i) => {
         if (!ref) return;
         ref.style.transition = 'none';
-        ref.style.opacity = i === index ? '1' : '0';
+        const isActive = i === index;
+        ref.style.opacity = isActive ? '1' : '0';
+        // only the ACTIVE section captures clicks — the others are faded out but
+        // (being position:fixed full-area) would otherwise sit on top and block
+        // the active section's buttons. pointer-events:none lets clicks through.
+        ref.style.pointerEvents = isActive ? 'auto' : 'none';
       });
-      setHeroVisible(index === 0);
     }
 
     function onSectionChange(e: Event) {
@@ -99,25 +100,6 @@ export default function ScrollSections() {
 
   return (
     <>
-      {/* 3D model — hidden on mobile */}
-      <div
-        className="mobile-model-hide"
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -58%)',
-          width: 'min(420px, 55vw)',
-          height: 'min(420px, 55vw)',
-          zIndex: 1,
-          opacity: heroVisible ? 1 : 0,
-          transition: 'opacity 0.6s ease',
-          pointerEvents: 'none',
-        }}
-      >
-        <Model3D />
-      </div>
-
       {SECTIONS.map((section, i) => (
         <div
           key={section.id}
@@ -134,6 +116,7 @@ export default function ScrollSections() {
             textAlign: 'center',
             zIndex: 1,
             opacity: i === 0 ? 1 : 0,
+            pointerEvents: i === 0 ? 'auto' : 'none',
             transition: 'opacity 0.6s ease',
             willChange: 'opacity',
           }}

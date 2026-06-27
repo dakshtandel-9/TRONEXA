@@ -24,16 +24,22 @@ const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const SCENE1_ZOOM_END = 0.1453;
 const FADE_START = SCENE1_ZOOM_END;
 const FADE_END = 0.1546;
-const S3_DRONE_END = 0.2867;
-const S3_FADE_END = 0.2960;
+// Scene 2's band (FADE_END → S3_DRONE_END) widened so section 2 occupies much
+// more of the scroll timeline (≈2× longer). Scene 3's band absorbs the shift
+// (it just starts later); scenes 4 & 5 are unchanged.
+const S3_DRONE_END = 0.4267;          // was 0.2867 (+0.14 → scene-2 band ≈2× wider)
+const S3_FADE_END = 0.4360;           // S3_DRONE_END + original 0.0093 crossfade
 const S4_S3_END = 0.6883;
 const S4_FADE_END = 0.6945;
 // Scene 4's rays-climb band (S4_FADE_END→S4_END) was widened to 3× its original
 // length (0.0711 → 0.2133) so section 4's animation plays out ~3× longer/slower.
 // The S4→S5 crossfade keeps its width and Scene 5 still ends at 1.0, so Scene 5's
 // aerial band absorbed the extra length (it's correspondingly shorter now).
-const S4_END = 0.9078;               // was 0.7656 (band 0.0711 → 0.2133, 3×)
-const S5_FADE_END = 0.9157;          // S4_END + original 0.0079 crossfade width
+// Scene 5's band (S5_FADE_END → 1.0) widened so the final section runs longer:
+// S4_END is pulled earlier (Scene 4's long climb band shortens a little) so
+// Scene 5 gets ~2× its previous length. Scene 5 still ends at 1.0.
+const S4_END = 0.7400;               // pulled earlier again → Scene 5 even longer
+const S5_FADE_END = 0.7479;          // S4_END + original 0.0079 crossfade width
 const S5_END = 1.0;
 
 // Where each TRONEXA section (0..5) sits on the 0..1 animation timeline. Each
@@ -128,15 +134,6 @@ export default function ScrollSequence() {
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
 
-  // WARM-UP: while the loader is up we mount ALL 5 scenes at once so every
-  // canvas compiles its shaders, loads its model and paints real frames behind
-  // the loader. Because everything is already warm + the GLB is in cache when
-  // the loader opens, re-mounting a scene later paints instantly — no black
-  // flash between sections. After warm-up ends the normal on-demand mounting
-  // (1–2 live canvases) resumes for performance.
-  const [warmup, setWarmup] = useState(true);
-  const warmupRef = useRef(true);
-  warmupRef.current = warmup;
 
   const switchToSection = useCallback((targetSection: number) => {
     if (!isLoadedRef.current) return;
@@ -179,9 +176,17 @@ export default function ScrollSequence() {
     // rAF loop below eases smoothRef toward this target, so the scrub glides.
     // SCRUB_SENSITIVITY: timeline fraction per "notch" (~100px) of wheel delta.
     const SCRUB_SENSITIVITY = 0.0001125; // 0.125× of original — halved again
+    // Scenes 2 and 4 scroll SLOWER: while the timeline sits inside their band the
+    // wheel moves the target less per notch, so those sections take more scrolling.
+    const S2_SLOW = 0.80; // 80% of normal speed within scene 2
+    const S4_SLOW = 0.65; // 65% of normal speed within scene 4
     function onWheel(e: WheelEvent) {
       if (!isLoadedRef.current) return;
-      const next = targetRef.current + e.deltaY * SCRUB_SENSITIVITY;
+      const pos = targetRef.current;
+      const inScene2 = pos >= FADE_END && pos <= S3_DRONE_END;
+      const inScene4 = pos >= S4_FADE_END && pos <= S4_END;
+      const slow = inScene2 ? S2_SLOW : inScene4 ? S4_SLOW : 1;
+      const next = pos + e.deltaY * SCRUB_SENSITIVITY * slow;
       targetRef.current = clamp01(next);
     }
 
@@ -257,15 +262,22 @@ export default function ScrollSequence() {
       // crossfade reaches it — so you never see the layer's black background.
       // Once we settle (p ≈ target), the look-ahead set collapses to the live
       // set, so off-screen scenes unmount and only 1–2 canvases keep running.
+      // On-demand mounting only — at most the live scene + the one it's fading
+      // toward. We do NOT force-mount all 5 at once: 5 simultaneous WebGL
+      // contexts (each with its own EffectComposer) + the transition canvases
+      // exhausts the browser's context limit and the next <Canvas> gets a null
+      // GL context (the "Cannot read properties of null (reading 'alpha')" crash).
+      // Mount ONLY the scenes currently contributing to the frame (at most the
+      // two that are crossfading). Dropping the look-ahead mount keeps the live
+      // WebGL-context count at ≤2 so we never exhaust the browser's context
+      // limit (which caused the "reading 'alpha'" null-context crash).
       const EPS = 0.001;
-      const tgt = sceneOpacities(targetRef.current);
-      const warm = warmupRef.current; // while warming up, mount every scene
       const next: [boolean, boolean, boolean, boolean, boolean] = [
-        warm || o1 > EPS || tgt[0] > EPS,
-        warm || o2 > EPS || tgt[1] > EPS,
-        warm || o3 > EPS || tgt[2] > EPS,
-        warm || o4 > EPS || tgt[3] > EPS,
-        warm || o5 > EPS || tgt[4] > EPS,
+        o1 > EPS,
+        o2 > EPS,
+        o3 > EPS,
+        o4 > EPS,
+        o5 > EPS,
       ];
       const cur = visibleRef.current;
       if (
@@ -291,19 +303,16 @@ export default function ScrollSequence() {
     const waitForCanvasPaint = () =>
       new Promise<void>((resolve) => {
         const startedAt = performance.now();
-        const refs = [scene1Ref, scene2Ref, scene3Ref, scene4Ref, scene5Ref];
         const check = () => {
           if (cancelled) return resolve();
-          // ALL five scene canvases must exist with a real backing buffer (they
-          // have each painted at least once) — so every section is warm before
-          // we reveal and there is no per-section black flash.
-          const allPainted = refs.every((r) => {
-            const canvas = r.current?.querySelector('canvas');
-            return !!canvas && canvas.width > 0 && canvas.height > 0;
-          });
+          // wait for the FIRST scene's canvas to exist with a real backing buffer
+          // (it has painted). We only mount scene 1 at start now (on-demand), so
+          // we gate on scene 1 — not all five (which are never live at once).
+          const canvas = scene1Ref.current?.querySelector('canvas');
+          const painted = !!canvas && canvas.width > 0 && canvas.height > 0;
           // hard cap so we never hang forever on a stalled GPU/context
-          const timedOut = performance.now() - startedAt > 20000;
-          if (allPainted || timedOut) {
+          const timedOut = performance.now() - startedAt > 15000;
+          if (painted || timedOut) {
             // let several more frames pass so shaders finish compiling + the
             // first real frames are on screen for every scene before we reveal
             let extra = 12;
@@ -512,10 +521,6 @@ export default function ScrollSequence() {
             setIsLoaded(true);
             dispatchSectionChange(0);
             dispatchSectionSettled(0);
-            // end warm-up after a short grace period so every scene has settled;
-            // then on-demand mounting resumes for performance. By now all shaders
-            // are compiled and the GLB is cached, so re-mounts paint instantly.
-            setTimeout(() => setWarmup(false), 1200);
           }}
         />
       )}

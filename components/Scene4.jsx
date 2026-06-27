@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useRef, useMemo, useEffect } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   EffectComposer,
   Bloom,
@@ -641,6 +641,21 @@ function Rays({ scrollRef }) {
 
 // ─── Scene 4 ──────────────────────────────────────────────────────────────────
 
+// When this scene's Canvas unmounts, force-release its WebGL context so the
+// browser frees it immediately instead of leaking it until GC — otherwise rapid
+// scene mount/unmount during scrubbing piles up stale contexts and the next
+// Canvas gets a null GL context ("Cannot read properties of null (reading
+// 'alpha')").
+function ContextReleaser() {
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    return () => {
+      try { gl.forceContextLoss(); gl.dispose(); } catch { /* ignore */ }
+    };
+  }, [gl]);
+  return null;
+}
+
 export default function Scene4({ scrollRef }) {
   return (
     <Canvas
@@ -657,6 +672,7 @@ export default function Scene4({ scrollRef }) {
     >
       <color attach="background" args={[BG_COLOR]} />
 
+      <ContextReleaser />
       <ParallaxCamera />
 
       {/* subtle blue RIM lighting only — the rays softly catch the nearby

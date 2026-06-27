@@ -1,9 +1,7 @@
 "use client";
 
-import { useRef, useMemo, Suspense } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
-import { SkeletonUtils } from "three-stdlib";
+import { useRef, useMemo, useEffect } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { useParallax, PARALLAX_X, PARALLAX_Y } from "./useParallax";
@@ -148,16 +146,18 @@ function Ground() {
   const { colorMap, bumpMap } = useMemo(() => getRockTextures(), []);
   const geo = useMemo(() => {
     const noise = makeNoise(2024);
-    const g = new THREE.PlaneGeometry(400, 400, 200, 200);
+    // FLAT SURFACE: a near-flat plane with only the faintest undulation so the
+    // network sits on an even ground (no rising hills carving the view). The far
+    // mountain silhouette is provided by the Sky/horizon, not the ground.
+    // PERF: 48×48 segments (was 120×120 → ~6× fewer verts) — the ground is near
+    // flat and dark, so the lower resolution is invisible but much cheaper.
+    const g = new THREE.PlaneGeometry(400, 400, 48, 48);
     g.rotateX(-Math.PI / 2);
     const pos = g.attributes.position;
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const z = pos.getZ(i);
-      let h = (fbm(noise, x * 0.01, z * 0.01) + 0.5) * 1.2;
-      const far = THREE.MathUtils.clamp((-z - 120) / 80, 0, 1);
-      const hill = (fbm(noise, x * 0.012 + 20, z * 0.012 + 20) + 0.5) * 10;
-      h += hill * far * far;
+      const h = (fbm(noise, x * 0.008, z * 0.008) + 0.5) * 0.4; // tiny ripple only
       pos.setY(i, h);
     }
     g.computeVertexNormals();
@@ -165,7 +165,7 @@ function Ground() {
   }, []);
 
   return (
-    <mesh geometry={geo} position={[0, 0, -40]} receiveShadow>
+    <mesh geometry={geo} position={[0, 0, -40]}>
       <meshStandardMaterial
         map={colorMap}
         bumpMap={bumpMap}
@@ -210,7 +210,7 @@ function ForegroundHill({ side, seed }) {
 
   const xPos = side === "left" ? -78 : 78;
   return (
-    <mesh geometry={geo} position={[xPos, 0, 14]} receiveShadow castShadow>
+    <mesh geometry={geo} position={[xPos, 0, 14]}>
       <meshStandardMaterial
         map={colorMap}
         bumpMap={bumpMap}
@@ -332,93 +332,59 @@ function Stars() {
 // every connection; glowing node sprites pulse/flicker on top.
 
 const CITY = {
-  nodeCount: 460,   // PERF: trimmed base scatter (connection pass is O(n²))
-  spanX: 320,
-  zNear: 12,
-  zFar: -180,
+  spanX: 320,       // full ground width
+  zNear: 14,        // nearest edge (in front of camera)
+  zFar: -175,       // far edge near the horizon
   floorY: 0.2,
+  cols: 26,         // grid columns across X (sparser web → lighter)
+  rows: 17,         // grid rows across Z (near → far)
 };
 
-// build nodes + a connection list (each connection = pair of node indices + a
-// gently bowed mid control point so the link curves rather than running straight)
+// build nodes on a REGULAR JITTERED GRID + connect each to its grid neighbours.
+// A grid guarantees UNIFORM coverage with NO gaps anywhere (random scatter kept
+// clumping near + far and leaving the middle empty). Each cell holds one node
+// (slightly jittered so it doesn't look mechanical); neighbours are linked along
+// the grid (right, down, and both diagonals) → a continuous even web everywhere.
 function buildNetwork() {
   let s = 9911;
   const rng = () => (s = (s * 16807) % 2147483647) / 2147483647;
 
-  // ALL nodes are concentrated in the NEAR-FOREGROUND zone that maps to the
-  // selected lower region of the frame (close to the camera, lower on screen,
-  // biased centre→right). Nothing stretches back to the horizon any more, so the
-  // whole network + models sit inside that selected area.
-  //   Z: zNear (+12, closest) → -65 (mid-foreground)
-  //   X: centre-weighted, nudged slightly to the RIGHT to match the selection
-  const ZONE_ZNEAR = CITY.zNear;
-  const ZONE_ZFAR = -65;
-  const ZONE_XBIAS = 24;        // shift the cloud right
-  const ZONE_HALFW = CITY.spanX * 0.34;
+  const { cols, rows, spanX, zNear, zFar, floorY } = CITY;
+  const cellW = spanX / (cols - 1);
+  const cellD = (zNear - zFar) / (rows - 1);
 
+  // place one node per grid cell (with jitter). idx(r,c) → node index.
   const nodes = [];
-  // PERF: ~800 nodes total in the zone (down from ~1100) — fewer nodes makes the
-  // neighbour search and all the per-node rendering cheaper.
-  const total = Math.floor(CITY.nodeCount * 1.7);
-  for (let i = 0; i < total; i++) {
-    const z = THREE.MathUtils.lerp(ZONE_ZNEAR, ZONE_ZFAR, rng());
-    // triangular distribution → densest toward the centre of the zone
-    const x = ZONE_XBIAS + (rng() + rng() - 1) * ZONE_HALFW;
-    const y = CITY.floorY + rng() * 0.5;
-    nodes.push(new THREE.Vector3(x, y, z));
+  const idxOf = (r, c) => r * cols + c;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = -spanX / 2 + c * cellW + (rng() - 0.5) * cellW * 0.55;
+      const z = zNear - r * cellD + (rng() - 0.5) * cellD * 0.55;
+      const y = floorY + rng() * 0.4;
+      nodes.push(new THREE.Vector3(x, y, z));
+    }
   }
 
-  // PERF: spatial-grid nearest-neighbour search → O(n) instead of the old O(n²)
-  // double loop. We bucket nodes into a grid of CELL-sized cells and only test
-  // nodes in the 3×3 neighbouring cells, which is what eliminated the mount freeze.
-  const CELL = 30;
-  const REACH2 = 115 * 115;
-  const grid = new Map();
-  const key2 = (cx, cz) => cx * 100000 + cz;
-  for (let i = 0; i < nodes.length; i++) {
-    const cx = Math.floor(nodes[i].x / CELL);
-    const cz = Math.floor(nodes[i].z / CELL);
-    const k = key2(cx, cz);
-    let arr = grid.get(k);
-    if (!arr) { arr = []; grid.set(k, arr); }
-    arr.push(i);
-  }
-
+  // connect along the grid: each node links to its E, S, SE, SW neighbours, and
+  // some random extra diagonals are dropped so the web looks organic, not a mesh.
   const conns = [];
-  const seen = new Set();
-  const cand = [];
-  for (let i = 0; i < nodes.length; i++) {
-    const a = nodes[i];
-    const cx = Math.floor(a.x / CELL);
-    const cz = Math.floor(a.z / CELL);
-    cand.length = 0;
-    for (let gx = cx - 1; gx <= cx + 1; gx++) {
-      for (let gz = cz - 1; gz <= cz + 1; gz++) {
-        const arr = grid.get(key2(gx, gz));
-        if (!arr) continue;
-        for (const j of arr) {
-          if (j === i) continue;
-          const d = a.distanceToSquared(nodes[j]);
-          if (d <= REACH2) cand.push([d, j]);
-        }
-      }
+  const addLink = (ia, ib) => {
+    const a = nodes[ia], b = nodes[ib];
+    const mid = a.clone().add(b).multiplyScalar(0.5);
+    const dir = b.clone().sub(a);
+    const perp = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+    mid.addScaledVector(perp, (rng() - 0.5) * dir.length() * 0.25); // gentle bow
+    mid.y += 0.05 + rng() * 0.2;
+    conns.push({ a, b, mid });
+  };
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const i = idxOf(r, c);
+      if (c < cols - 1 && rng() > 0.28) addLink(i, idxOf(r, c + 1));            // east
+      if (r < rows - 1 && rng() > 0.28) addLink(i, idxOf(r + 1, c));            // south
+      if (r < rows - 1 && c < cols - 1 && rng() > 0.7) addLink(i, idxOf(r + 1, c + 1)); // SE (sparse)
+      if (r < rows - 1 && c > 0 && rng() > 0.7) addLink(i, idxOf(r + 1, c - 1)); // SW (sparse)
     }
-    cand.sort((p, q) => p[0] - q[0]);
-    const links = 3 + ((rng() * 4) | 0); // 3–6 links → a dense web
-    for (let k = 0; k < links && k < cand.length; k++) {
-      const j = cand[k][1];
-      const mk = i < j ? i * 100000 + j : j * 100000 + i;
-      if (seen.has(mk)) continue;
-      seen.add(mk);
-      const b = nodes[j];
-      const mid = a.clone().add(b).multiplyScalar(0.5);
-      const dir = b.clone().sub(a);
-      const perp = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
-      mid.addScaledVector(perp, (rng() - 0.5) * dir.length() * 0.22);
-      mid.y += 0.05 + rng() * 0.25;
-      conns.push({ a, b, mid });
-    }
-    if (conns.length >= 1800) break;
   }
   return { nodes, conns };
 }
@@ -473,10 +439,13 @@ function makeNetworkLines(conns) {
       varying float vBright;
       void main() {
         vColor = color;
-        // base dimness + travelling shimmer pulses along the link; far links dim
+        // base + travelling shimmer pulses along the link; far links dim.
+        // brightened so the connection web reads clearly (like the reference grid)
         float shimmer = 0.5 + 0.5 * sin(aDist * 12.0 - uTime * 2.0);
-        float depthFade = mix(1.0, 0.25, aDepth);
-        vBright = (0.28 + shimmer * 0.5) * depthFade;
+        // far links kept much brighter (0.55 floor instead of 0.3) so the mid +
+        // distant web stays clearly visible, not washed out by the dark terrain
+        float depthFade = mix(1.0, 0.55, aDepth);
+        vBright = (0.6 + shimmer * 0.6) * depthFade;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
@@ -685,7 +654,7 @@ function Nodes({ nodes }) {
 
 function NetworkParticles({ conns }) {
   const sprite = useMemo(() => getSparkSprite(), []);
-  const COUNT = 3500; // PERF: fewer particles → much less additive overdraw
+  const COUNT = 2000; // PERF: fewer particles → much less additive overdraw
 
   const { geometry, material, segTex, segCount } = useMemo(() => {
     // pack each connection's 3 control points into a texture (3 texels per conn)
@@ -844,92 +813,221 @@ function makePanelTextures() {
   return { colorMap, bumpMap };
 }
 
-// 16 landmark structures, all placed inside the SAME near-foreground zone as the
-// network (close to the camera, lower on screen, centre→right biased) so every
-// triangle sits inside the selected area.
+// Tiny glowing triangles scattered across the network ground (replaces the heavy
+// GLB hero model entirely). Placed across the FULL ground; nearer ones bigger.
+const TRI_COUNT = 120;
 const LANDMARKS = (() => {
   let s = 4242;
   const rng = () => (s = (s * 16807) % 2147483647) / 2147483647;
   const out = [];
-  for (let i = 0; i < 16; i++) {
-    const z = THREE.MathUtils.lerp(8, -62, rng());            // near foreground
-    const x = 24 + (rng() + rng() - 1) * CITY.spanX * 0.34;   // centre→right cloud
-    const near = THREE.MathUtils.clamp(1 - (-z) / 70, 0, 1);
-    const scale = THREE.MathUtils.lerp(1.2, 2.6, near) * (0.8 + rng() * 0.4);
-    const spin = (rng() - 0.5) * 0.3;
-    out.push({ pos: [x, 0.2, z], scale, spin });
+  for (let i = 0; i < TRI_COUNT; i++) {
+    const z = THREE.MathUtils.lerp(10, -160, Math.sqrt(rng()));
+    const f = (z - CITY.zNear) / (CITY.zFar - CITY.zNear);
+    const widthAtZ = THREE.MathUtils.lerp(0.45, 1.0, f);
+    const x = (rng() - 0.5) * CITY.spanX * widthAtZ;
+    const near = THREE.MathUtils.clamp(1 - (-z) / 90, 0, 1);
+    const scale = THREE.MathUtils.lerp(0.8, 2.4, near) * (0.7 + rng() * 0.7);
+    out.push({ pos: [x, 0.2, z], scale, spin: (rng() - 0.5) * 0.5, phase: rng() * Math.PI * 2 });
   }
   return out;
 })();
 
-// PERF: ONE shared paneled material + geometry for every landmark. Building 55
-// separate canvas textures + physical materials was the heaviest cost in the
-// scene; now we generate the texture once and reuse a single (cheaper) standard
-// material across all clones.
+// A single InstancedMesh of small upward-pointing glowing triangles. No GLB, no
+// textures, no merge → essentially free + no flicker (opaque, depth-tested).
 function HeroLandmarks() {
-  const { scene } = useGLTF("/HeroModul-opt.glb", "/draco/");
-  // one texture + one material shared by every landmark
-  const material = useMemo(() => {
-    const { colorMap, bumpMap } = makePanelTextures();
-    return new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0x3b82f6),
-      map: colorMap, bumpMap, bumpScale: 1.0,
-      emissive: new THREE.Color(0x42a7ff),
-      emissiveMap: colorMap,
-      emissiveIntensity: 2.6,
-      metalness: 0.0, roughness: 0.3,
-      transparent: true, opacity: 0.96,
-    });
+  // flat upward-pointing triangle (TRONEXA-logo silhouette)
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    const verts = new Float32Array([
+      0, 1.0, 0,      // top
+      -0.7, -0.5, 0,  // bottom-left
+      0.7, -0.5, 0,   // bottom-right
+    ]);
+    g.setAttribute("position", new THREE.BufferAttribute(verts, 3));
+    g.computeVertexNormals();
+    return g;
   }, []);
 
-  // build all clones once + remember their per-instance animation params
-  const items = useMemo(() => {
-    return LANDMARKS.map((l) => {
-      const obj = SkeletonUtils.clone(scene);
-      obj.traverse((c) => { if (c.isMesh) c.material = material; });
-      return { obj, ...l, phase: Math.random() * Math.PI * 2 };
-    });
-  }, [scene, material]);
+  const material = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: "#9be8ff",
+        transparent: true,
+        opacity: 0.7,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    []
+  );
 
-  const groupRef = useRef(null);
-  // PERF: ONE useFrame drives all 16 landmarks instead of 16 separate callbacks
+  const items = useMemo(() => LANDMARKS.map((l) => ({ ...l, rot: l.phase })), []);
+  const meshRef = useRef(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+
   useFrame((state, dt) => {
-    const g = groupRef.current;
-    if (!g) return;
+    const mesh = meshRef.current;
+    if (!mesh) return;
     const t = state.clock.elapsedTime;
-    for (let i = 0; i < g.children.length; i++) {
-      const child = g.children[i];
+    for (let i = 0; i < items.length; i++) {
       const it = items[i];
-      child.rotation.y += it.spin * dt;
-      child.position.y = it.pos[1] + it.scale * 1.2 + Math.sin(t * 0.5 + it.phase) * 0.25;
+      it.rot += it.spin * dt;
+      dummy.position.set(it.pos[0], it.pos[1] + it.scale * 0.6 + Math.sin(t * 0.5 + it.phase) * 0.2, it.pos[2]);
+      dummy.rotation.set(0, it.rot, 0);
+      dummy.scale.setScalar(it.scale);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
     }
+    mesh.instanceMatrix.needsUpdate = true;
   });
 
   return (
-    <group ref={groupRef}>
-      {items.map((it, i) => (
-        <group key={i} position={[it.pos[0], it.pos[1] + it.scale * 1.2, it.pos[2]]} scale={it.scale}>
-          <primitive object={it.obj} />
-        </group>
-      ))}
-    </group>
+    <instancedMesh ref={meshRef} args={[geometry, material, TRI_COUNT]} frustumCulled={false} renderOrder={5} />
   );
 }
 
-useGLTF.preload("/HeroModul-opt.glb", "/draco/");
 
 // ─── Network assembly ─────────────────────────────────────────────────────────
 
+// ─── Racing energy pulses: bright comet-trails shooting across the land ───────
+// Each "pulse" is a short trail of points that races along a connection
+// (bezier a→mid→b) from one node to another, loops, and respawns. Reuses the
+// existing connection data and is a single GPU draw call → cheap.
+
+const PULSE_COLORS = [
+  new THREE.Color('#FFFFFF'),
+  new THREE.Color('#BEEFFF'),
+  new THREE.Color('#79D8FF'),
+  new THREE.Color('#3BAFFF'),
+];
+
+function RacingPulses({ conns }) {
+  const sprite = useMemo(() => getSparkSprite(), []);
+  const PULSES = 90; // racing streaks across the ground (reduced for perf)
+  const TRAIL = 16;
+  const COUNT = PULSES * TRAIL;
+
+  const { geometry, material } = useMemo(() => {
+    // Pack EVERY connection (no 1300 cap) into a 2D float texture: each
+    // connection = 3 texels (a, mid, b), laid out left→right then wrapping to the
+    // next row. Using a 2D texture keeps the width under the GPU limit while
+    // covering all connections — so pulses race on the far/distant links too.
+    const m = conns.length;
+    const TEX_W = 1024;                       // texels per row (well under 4096)
+    const totalTexels = m * 3;
+    const TEX_H = Math.ceil(totalTexels / TEX_W);
+    const data = new Float32Array(TEX_W * TEX_H * 4);
+    for (let i = 0; i < m; i++) {
+      const c = conns[i];
+      const pts = [c.a, c.mid, c.b];
+      for (let k = 0; k < 3; k++) {
+        const texel = i * 3 + k;
+        const o = texel * 4;
+        data[o + 0] = pts[k].x; data[o + 1] = pts[k].y; data[o + 2] = pts[k].z; data[o + 3] = 1;
+      }
+    }
+    const tex = new THREE.DataTexture(data, TEX_W, TEX_H, THREE.RGBAFormat, THREE.FloatType);
+    tex.minFilter = tex.magFilter = THREE.NearestFilter;
+    tex.needsUpdate = true;
+
+    const aConn = new Float32Array(COUNT);
+    const aSeed = new Float32Array(COUNT);
+    const aSpeed = new Float32Array(COUNT);
+    const aTrail = new Float32Array(COUNT);
+    const aColor = new Float32Array(COUNT * 3);
+    const aSize = new Float32Array(COUNT);
+    for (let pi = 0; pi < PULSES; pi++) {
+      const conn = (Math.random() * m) | 0;       // any connection on the whole ground
+      const seed = Math.random();
+      const speed = 0.18 + Math.random() * 0.5;
+      const c = PULSE_COLORS[(Math.random() * PULSE_COLORS.length) | 0];
+      const baseSize = 0.06 + Math.random() * 0.07; // bigger → clearly visible
+      for (let ti = 0; ti < TRAIL; ti++) {
+        const idx = pi * TRAIL + ti;
+        aConn[idx] = conn; aSeed[idx] = seed; aSpeed[idx] = speed;
+        aTrail[idx] = ti / (TRAIL - 1);
+        aColor[idx * 3] = c.r; aColor[idx * 3 + 1] = c.g; aColor[idx * 3 + 2] = c.b;
+        aSize[idx] = baseSize;
+      }
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(COUNT * 3), 3));
+    geo.setAttribute('aConn', new THREE.BufferAttribute(aConn, 1));
+    geo.setAttribute('aSeed', new THREE.BufferAttribute(aSeed, 1));
+    geo.setAttribute('aSpeed', new THREE.BufferAttribute(aSpeed, 1));
+    geo.setAttribute('aTrail', new THREE.BufferAttribute(aTrail, 1));
+    geo.setAttribute('aColor', new THREE.BufferAttribute(aColor, 3));
+    geo.setAttribute('aSize', new THREE.BufferAttribute(aSize, 1));
+    geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, -60), 400);
+
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 }, uSeg: { value: tex },
+        uTexW: { value: TEX_W }, uTexH: { value: TEX_H }, uSprite: { value: sprite },
+      },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `
+        uniform float uTime; uniform sampler2D uSeg; uniform float uTexW; uniform float uTexH;
+        attribute float aConn; attribute float aSeed; attribute float aSpeed;
+        attribute float aTrail; attribute vec3 aColor; attribute float aSize;
+        varying vec3 vColor; varying float vBright;
+        vec3 fetch(float conn, float which){
+          float texel = conn * 3.0 + which;          // linear texel index
+          float u = mod(texel, uTexW);
+          float v = floor(texel / uTexW);
+          vec2 uv = vec2((u + 0.5) / uTexW, (v + 0.5) / uTexH);
+          return texture2D(uSeg, uv).xyz;
+        }
+        void main(){
+          float head = fract(aSeed + uTime * aSpeed);
+          float t = clamp(head - aTrail * 0.13, 0.0, 1.0);
+          vec3 p0 = fetch(aConn, 0.0);
+          vec3 p1 = fetch(aConn, 1.0);
+          vec3 p2 = fetch(aConn, 2.0);
+          float mt = 1.0 - t;
+          vec3 pos = mt*mt*p0 + 2.0*mt*t*p1 + t*t*p2;
+          pos.y += 0.35; // lift higher above the static lines so the trail stands out
+          float trailFade = 1.0 - aTrail;
+          float endFade = 1.0 - smoothstep(0.85, 1.0, head);
+          float startFade = smoothstep(0.0, 0.05, head);
+          vBright = trailFade * trailFade * endFade * startFade * 1.6; // brighter
+          vColor = aColor;
+          vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+          gl_PointSize = aSize * (0.5 + trailFade) * 1000.0 / max(-mv.z, 0.001);
+          gl_Position = projectionMatrix * mv;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D uSprite; varying vec3 vColor; varying float vBright;
+        void main(){
+          float a = texture2D(uSprite, gl_PointCoord).a;
+          gl_FragColor = vec4(vColor * vBright * a, a * vBright);
+        }
+      `,
+    });
+    return { geometry: geo, material: mat };
+  }, [conns, sprite]);
+
+  useFrame((s) => { material.uniforms.uTime.value = s.clock.elapsedTime; });
+  return <points geometry={geometry} material={material} frustumCulled={false} renderOrder={6} />;
+}
+
 function Network() {
-  // lines removed per request — keep only the node graph for the particles to
-  // ride along (the connections are still computed but not drawn), plus the
-  // glowing nodes. No connection web, no hero ray ribbons.
+  // matches the reference: the glowing node grid + the faint connection web
+  // between them, plus flowing particles and racing energy pulses on top.
   const { nodes, conns } = useMemo(() => buildNetwork(), []);
+  const lines = useMemo(() => makeNetworkLines(conns), [conns]);
+  useFrame((s) => { lines.material.uniforms.uTime.value = s.clock.elapsedTime; });
 
   return (
     <group>
+      <primitive object={lines} renderOrder={3} />
       <NetworkParticles conns={conns} />
+      <RacingPulses conns={conns} />
       <Nodes nodes={nodes} />
+      {/* tiny glowing triangles dotting the network (replaces the heavy GLB) */}
+      <HeroLandmarks />
     </group>
   );
 }
@@ -986,12 +1084,10 @@ function VolumetricFog() {
 function Lighting() {
   return (
     <>
-      <ambientLight intensity={0.03} color="#0a1730" />
-      {/* a few low blue point lights scattered through the city give the nearby
-          terrain a soft blue rim; short reach so most of the floor stays black */}
-      <pointLight position={[-30, 4, -10]} intensity={120} distance={70} decay={2} color="#3bafff" />
-      <pointLight position={[20, 4, -50]} intensity={120} distance={70} decay={2} color="#79d8ff" />
-      <pointLight position={[0, 4, -110]} intensity={90} distance={90} decay={2} color="#3bafff" />
+      {/* PERF: a single point light (was 3) — each light is a per-pixel cost on
+          the large ground/hill meshes. The network's own glow carries the look. */}
+      <ambientLight intensity={0.05} color="#0a1730" />
+      <pointLight position={[0, 5, -50]} intensity={150} distance={140} decay={2} color="#3bafff" />
       <hemisphereLight args={["#0c2545", "#01030a", 0.08]} />
     </>
   );
@@ -1026,11 +1122,21 @@ function AerialCamera({ scrollRef }) {
 
 // ─── Scene 5 ──────────────────────────────────────────────────────────────────
 
+// frees this scene's WebGL context immediately on unmount so contexts don't leak
+function ContextReleaser() {
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    return () => {
+      try { gl.forceContextLoss(); gl.dispose(); } catch { /* ignore */ }
+    };
+  }, [gl]);
+  return null;
+}
+
 export default function Scene5({ scrollRef }) {
   return (
     <Canvas
-      shadows
-      dpr={[1, 1]}
+      dpr={[0.85, 1]}
       camera={{ position: [-6, 10, 40], fov: 58, near: 0.1, far: 800 }}
       gl={{
         antialias: true,
@@ -1044,6 +1150,7 @@ export default function Scene5({ scrollRef }) {
       {/* three-layer volumetric depth handled by fog + the haze sprites below */}
       <fog attach="fog" args={["#0D2D55", 50, 240]} />
 
+      <ContextReleaser />
       <AerialCamera scrollRef={scrollRef} />
       <Lighting />
       <Sky />
@@ -1060,11 +1167,13 @@ export default function Scene5({ scrollRef }) {
 
       {/* PERF: lean post chain on the heaviest scene — only Bloom + Vignette.
           ChromaticAberration + Noise (extra fullscreen passes) dropped here. */}
+      {/* MSAA off (kept antialias:true on the GL context instead). Bloom smoothing
+          high so the emissive models don't pop in/out across the threshold. */}
       <EffectComposer multisampling={0}>
         <Bloom
-          luminanceThreshold={0.55}
-          luminanceSmoothing={0.75}
-          intensity={0.6}
+          luminanceThreshold={0.6}
+          luminanceSmoothing={0.95}
+          intensity={0.55}
           radius={0.5}
           mipmapBlur
         />
