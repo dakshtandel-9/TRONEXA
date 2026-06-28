@@ -175,7 +175,9 @@ function PositionCard({ pos }: { pos: typeof OPEN_POSITIONS[0] }) {
       </p>
 
       <a
-        href={`mailto:info@tronexa.com?subject=Application — ${pos.title}`}
+        href="https://forms.gle/Ycd5iUPwXPzJaVCX8"
+        target="_blank"
+        rel="noopener noreferrer"
         style={{
           display: 'inline-flex',
           alignItems: 'center',
