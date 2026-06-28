@@ -522,7 +522,7 @@ export default function ServicesContent() {
             </p>
           </div>
 
-          <div style={{
+          <div className="page-clients-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(6, 1fr)',
             gap: '1px',

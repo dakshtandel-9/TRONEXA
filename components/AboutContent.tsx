@@ -516,7 +516,7 @@ export default function AboutContent() {
               },
               {
                 country: 'India',
-                address: '808, 8th Floor, Skye Corporate Park\nAB Road, Indore 452010, India',
+                address: 'SP 365 Building, Janjeerwala Square\nopposite Hotel Apna Avenue\nIndore, 452001, MP',
               },
             ].map((loc, i) => (
               <div key={i} style={{
@@ -563,7 +563,7 @@ export default function AboutContent() {
             </p>
           </div>
 
-          <div style={{
+          <div className="page-clients-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(6, 1fr)',
             gap: '1px',

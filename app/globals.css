@@ -307,25 +307,39 @@ main {
     padding-top: 0 !important;
   }
 
-  /* Development page tabs — scroll horizontally instead of overflowing, and
-     tighten padding so all three tabs are reachable on small screens */
+  /* Development page tabs — stack vertically, one after another, so every tab
+     is fully visible on small screens instead of overflowing off-screen */
   .page-dev-tabs {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;          /* Firefox */
+    flex-direction: column !important;
+    border-bottom: none !important;
     margin-bottom: 40px !important;
   }
-  .page-dev-tabs::-webkit-scrollbar { display: none; } /* Chrome/Safari */
   .page-dev-tab {
-    padding: 14px 18px !important;
-    font-size: 10px !important;
-    flex: 0 0 auto;
+    width: 100% !important;
+    text-align: left !important;
+    padding: 16px 20px !important;
+    font-size: 11px !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    margin-bottom: 0 !important;
+  }
+  /* Active tab: switch the indicator from a bottom underline to a left bar */
+  .page-dev-tab[data-active='true'] {
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    border-left: 2px solid #cdd4eb !important;
   }
 
   /* About locations */
   .page-locations-3col {
     grid-template-columns: 1fr !important;
     gap: 16px !important;
+  }
+
+  /* Clients logo grid: 6 cols is far too dense on phones */
+  .page-clients-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .page-clients-grid > div {
+    padding: 24px 12px !important;
   }
 
   /* About what-we-do 4-col */
@@ -511,6 +525,11 @@ main {
 @media (max-width: 640px) {
   .hide-on-mobile {
     display: none !important;
+  }
+
+  /* Clients logo grid: drop to 2 cols on small phones for legible logos */
+  .page-clients-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 
   .mobile-gradient-overlay {

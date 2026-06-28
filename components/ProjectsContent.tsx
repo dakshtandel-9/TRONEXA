@@ -842,7 +842,7 @@ export default function ProjectsContent() {
             {[
               { country: 'USA', address: '8 The Green, Suite A\nDover, DE 19901, USA' },
               { country: 'UAE', address: 'Business Centre, 3rd Floor, Building A3\nBusiness Park, Dubai South\nDubai, United Arab Emirates' },
-              { country: 'India', address: '808, 8th Floor, Skye Corporate Park\nAB Road, Indore 452010, India' },
+              { country: 'India', address: 'SP 365 Building, Janjeerwala Square\nopposite Hotel Apna Avenue\nIndore, 452001, MP' },
             ].map((loc, i) => (
               <div key={i} style={{
                 padding: '44px 40px',

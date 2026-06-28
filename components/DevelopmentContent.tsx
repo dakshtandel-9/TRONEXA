@@ -200,6 +200,7 @@ export default function DevelopmentContent() {
               <button
                 key={s.id}
                 className="page-dev-tab"
+                data-active={activeTab === s.id}
                 onClick={() => setActiveTab(s.id)}
                 style={{
                   background: 'none',
