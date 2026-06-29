@@ -19,8 +19,19 @@ export default function MediaSessionSuppressor() {
   useEffect(() => {
     const enforceMuted = () => {
       document.querySelectorAll('video').forEach((v) => {
+        // Set the muted *property* (not just the attribute) before play — Safari
+        // blocks autoplay on a video it considers unmuted and then paints the
+        // big center play-button overlay. Forcing these guarantees inline autoplay.
         if (!v.muted) v.muted = true;
+        v.defaultMuted = true;
         v.setAttribute('disableRemotePlayback', '');
+        v.setAttribute('playsinline', '');
+        v.setAttribute('webkit-playsinline', '');
+        // Resume any video Safari paused (which is what surfaces the play button).
+        if (v.paused) {
+          const p = v.play();
+          if (p && typeof p.catch === 'function') p.catch(() => { /* autoplay blocked; retried on next tick */ });
+        }
       });
     };
 
@@ -50,9 +61,23 @@ export default function MediaSessionSuppressor() {
     const onPlay = () => { enforceMuted(); clearMediaSession(); };
     document.addEventListener('play', onPlay, true);
 
+    // Safari pauses background videos when it shows the play overlay or when the
+    // tab is backgrounded — re-assert autoplay on these events too.
+    const onPause = () => { enforceMuted(); };
+    document.addEventListener('pause', onPause, true);
+    const onVisible = () => { if (!document.hidden) enforceMuted(); };
+    document.addEventListener('visibilitychange', onVisible);
+
+    // First-load race: the muted property may not be set before Safari's initial
+    // autoplay decision, so re-enforce a few times right after mount.
+    const ticks = [100, 300, 800, 1500].map((ms) => window.setTimeout(enforceMuted, ms));
+
     return () => {
       observer.disconnect();
       document.removeEventListener('play', onPlay, true);
+      document.removeEventListener('pause', onPause, true);
+      document.removeEventListener('visibilitychange', onVisible);
+      ticks.forEach(window.clearTimeout);
     };
   }, []);
 
