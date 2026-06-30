@@ -13,6 +13,7 @@ import {
 import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
 import { useParallax, PARALLAX_X, PARALLAX_Y } from "./useParallax";
+import { useQuality } from "@/hooks/useQuality";
 
 // nudges Scene 4's otherwise-static camera with the opposite-direction parallax
 const _s4Base = new THREE.Vector3(0, 0, 22);
@@ -657,12 +658,14 @@ function ContextReleaser() {
 }
 
 export default function Scene4({ scrollRef }) {
+  // PERF tier: low-end devices render at DPR 1, no antialias, Bloom-only post.
+  const { dpr, antialias, lowEnd } = useQuality();
   return (
     <Canvas
-      dpr={[1, 1.25]}
+      dpr={dpr}
       camera={{ position: [0, 0, 22], fov: 50, near: 0.1, far: 200 }}
       gl={{
-        antialias: true,
+        antialias,
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 0.62, // reduced exposure — deep cinematic grade
@@ -699,18 +702,21 @@ export default function Scene4({ scrollRef }) {
           radius={0.55}
           mipmapBlur
         />
-        {/* very light chromatic aberration */}
-        <ChromaticAberration
-          blendFunction={BlendFunction.NORMAL}
-          offset={new THREE.Vector2(0.0005, 0.0005)}
-          radialModulation={false}
-          modulationOffset={0}
-        />
-        {/* very subtle vignette → focus + contrast */}
-        <Vignette eskil={false} offset={0.3} darkness={0.78} />
-        {/* tiny film grain */}
-        <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={0.035} />
-        <ToneMapping />
+        {/* PERF: aberration, vignette, grain, tonemap are extra full-screen
+            passes — dropped on low-end so only Bloom runs there. */}
+        {lowEnd ? null : (
+          <>
+            <ChromaticAberration
+              blendFunction={BlendFunction.NORMAL}
+              offset={new THREE.Vector2(0.0005, 0.0005)}
+              radialModulation={false}
+              modulationOffset={0}
+            />
+            <Vignette eskil={false} offset={0.3} darkness={0.78} />
+            <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={0.035} />
+            <ToneMapping />
+          </>
+        )}
       </EffectComposer>
     </Canvas>
   );

@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect } from "react";
 import { Points, PointMaterial } from "@react-three/drei";
 import {
   EffectComposer,
@@ -16,6 +15,7 @@ import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
 import EnergyRiver, { RIVER_CURVE } from "./EnergyRiver";
 import { useParallax, PARALLAX_X, PARALLAX_Y } from "./useParallax";
+import { useQuality } from "@/hooks/useQuality";
 
 // ─── Noise + fBm (identical to Scene 1) ──────────────────────────────────────
 
@@ -320,7 +320,28 @@ function Particles() {
 
 // ─── Lighting (identical to Scene 1) ─────────────────────────────────────────
 
+// true only on phone-width viewports — used to add a little extra light to the
+// dark canyon mountains on mobile (where the small, dim screen makes them read
+// as flat black shapes). Desktop is untouched.
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return isMobile;
+}
+
 function Lighting() {
+  // PERF: on low-end devices (phones / weak GPUs) drop real-time shadow casting —
+  // the canyon reads fine without crisp shadows and the shadow map is one of the
+  // most expensive per-frame costs.
+  // PHONE/LOW-END: also add a gentle cool fill so the near-black mountains catch
+  // a little light instead of disappearing on a small, dim screen.
+  const { lowEnd } = useQuality();
   return (
     <>
       {/* very faint cool ambient — shadows stay deep blue, never grey */}
@@ -328,12 +349,12 @@ function Lighting() {
       {/* dim, cool horizon glow far down the valley — gives atmospheric depth
           without reading as daylight */}
       <pointLight position={[0, 3, -110]} intensity={420} distance={240} decay={2} color="#2f5fa8" />
-      {/* soft cool MOONLIGHT key from high/behind (shadows kept for the canyon) */}
+      {/* soft cool MOONLIGHT key from high/behind — shadows only on high tier */}
       <directionalLight
         position={[0, 8, -120]}
         intensity={0.5}
         color="#7d9ccc"
-        castShadow
+        castShadow={!lowEnd}
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-60}
         shadow-camera-right={60}
@@ -345,6 +366,15 @@ function Lighting() {
       />
       {/* cool sky/ground bounce — deep blue above, near-black below */}
       <hemisphereLight args={["#0e2c58", "#01030a", 0.1]} />
+
+      {lowEnd && (
+        <>
+          {/* a touch more ambient so the rock faces lift off pure black */}
+          <ambientLight intensity={0.05} color="#16335f" />
+          {/* soft cool moonlight from above/front catching the near canyon walls */}
+          <directionalLight position={[0, 26, 40]} intensity={0.45} color="#8fb0dc" />
+        </>
+      )}
     </>
   );
 }
@@ -599,6 +629,10 @@ const LOOK_END    = new THREE.Vector3(0,  1, -120);
 
 function DroneCamera({ scrollRef }: { scrollRef?: React.MutableRefObject<number> }) {
   const par = useParallax();
+  // PHONE ONLY: raise the look-at target a little so the whole mountain/valley
+  // composition sits lower in the frame (the tall portrait viewport otherwise
+  // pushes the canyon up into the top third). Desktop framing is untouched.
+  const isMobile = useIsMobile();
   useFrame(({ camera }, dt) => {
     // drive the drone glide DIRECTLY from the page's already-smoothed scroll — the
     // only smoothing is the single camera.position.lerp below, so forward and
@@ -614,6 +648,8 @@ function DroneCamera({ scrollRef }: { scrollRef?: React.MutableRefObject<number>
     camera.position.lerp(_camPos, k);
 
     _camTarget.lerpVectors(LOOK_START, LOOK_END, p);
+    // lift the aim point on phone → terrain shifts down in the viewport
+    if (isMobile) _camTarget.y += 6;
     camera.lookAt(_camTarget);
   });
 
@@ -634,13 +670,16 @@ function ContextReleaser() {
 }
 
 export default function Scene2({ scrollRef }: { scrollRef?: React.MutableRefObject<number> }) {
+  // PERF tier: low-end devices render at DPR 1, no antialias, no shadows, and a
+  // Bloom-only postprocessing stack (see below). High tier keeps the full grade.
+  const { dpr, antialias, shadows, lowEnd } = useQuality();
   return (
     <Canvas
-      shadows
-      dpr={[1, 1.25]}
+      shadows={shadows}
+      dpr={dpr}
       camera={{ position: [0, 38, 52], fov: 50, near: 0.1, far: 800 }}
       gl={{
-        antialias: true,
+        antialias,
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
         // exposure cut ~40% — deep, dark, cinematic grade
@@ -674,29 +713,38 @@ export default function Scene2({ scrollRef }: { scrollRef?: React.MutableRefObje
       {/* glowing procedural energy river — grows forward with scroll progress */}
       <EnergyRiver scrollRef={scrollRef} />
 
-      <EffectComposer multisampling={0}>
-        {/* cinematic bloom tuned so only the bright additive energy river +
-            particles + ribbons bloom; the near-black mountains stay dark */}
-        <Bloom
-          luminanceThreshold={0.2}
-          luminanceSmoothing={0.85}
-          intensity={1.5}
-          radius={0.75}
-          mipmapBlur
-        />
-        {/* subtle chromatic aberration at the edges */}
-        <ChromaticAberration
-          blendFunction={BlendFunction.NORMAL}
-          offset={new THREE.Vector2(0.0006, 0.0006)}
-          radialModulation={false}
-          modulationOffset={0}
-        />
-        {/* slight vignette → focus + contrast */}
-        <Vignette eskil={false} offset={0.3} darkness={0.78} />
-        {/* tiny film grain */}
-        <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={0.035} />
-        <ToneMapping />
-      </EffectComposer>
+      {/* cinematic bloom on both tiers; aberration, vignette, grain + tonemap are
+          extra full-screen passes the low tier drops (Bloom-only there). */}
+      {lowEnd ? (
+        <EffectComposer multisampling={0}>
+          <Bloom
+            luminanceThreshold={0.2}
+            luminanceSmoothing={0.85}
+            intensity={1.5}
+            radius={0.75}
+            mipmapBlur
+          />
+        </EffectComposer>
+      ) : (
+        <EffectComposer multisampling={0}>
+          <Bloom
+            luminanceThreshold={0.2}
+            luminanceSmoothing={0.85}
+            intensity={1.5}
+            radius={0.75}
+            mipmapBlur
+          />
+          <ChromaticAberration
+            blendFunction={BlendFunction.NORMAL}
+            offset={new THREE.Vector2(0.0006, 0.0006)}
+            radialModulation={false}
+            modulationOffset={0}
+          />
+          <Vignette eskil={false} offset={0.3} darkness={0.78} />
+          <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={0.035} />
+          <ToneMapping />
+        </EffectComposer>
+      )}
     </Canvas>
   );
 }

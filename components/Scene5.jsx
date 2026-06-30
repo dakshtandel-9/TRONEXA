@@ -5,6 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { useParallax, PARALLAX_X, PARALLAX_Y } from "./useParallax";
+import { useQuality } from "@/hooks/useQuality";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Scene 5 — a futuristic intelligent city viewed from a mountain valley at night.
@@ -1134,12 +1135,15 @@ function ContextReleaser() {
 }
 
 export default function Scene5({ scrollRef }) {
+  // PERF tier: this is the heaviest scene. Low-end drops antialias + DPR to 1 and
+  // runs Bloom-only post (Vignette dropped below).
+  const { antialias, lowEnd } = useQuality();
   return (
     <Canvas
       dpr={[0.85, 1]}
       camera={{ position: [-6, 10, 40], fov: 58, near: 0.1, far: 800 }}
       gl={{
-        antialias: true,
+        antialias,
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 0.62, // reduced exposure — deep cinematic grade
@@ -1177,7 +1181,8 @@ export default function Scene5({ scrollRef }) {
           radius={0.5}
           mipmapBlur
         />
-        <Vignette eskil={false} offset={0.3} darkness={0.78} />
+        {/* PERF: drop the extra vignette pass on low-end → Bloom only. */}
+        {!lowEnd && <Vignette eskil={false} offset={0.3} darkness={0.78} />}
       </EffectComposer>
     </Canvas>
   );

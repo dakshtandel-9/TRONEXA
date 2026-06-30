@@ -6,6 +6,7 @@ import { Points, PointMaterial } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { useParallax, PARALLAX_X, PARALLAX_Y } from "./useParallax";
+import { useQuality } from "@/hooks/useQuality";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Scene 3 is a direct continuation of Scene 2's canyon shot. Same dark-blue
@@ -794,6 +795,8 @@ function Stars() {
 }
 
 function Lighting() {
+  // PERF: skip real-time shadows on low-end devices (phones / weak GPUs).
+  const { lowEnd } = useQuality();
   return (
     <>
       <ambientLight intensity={0.025} color="#0a1730" />
@@ -804,7 +807,7 @@ function Lighting() {
         position={[0, 30, 10]}
         intensity={0.45}
         color="#7d9ccc"
-        castShadow
+        castShadow={!lowEnd}
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-80}
         shadow-camera-right={80}
@@ -878,13 +881,15 @@ function ContextReleaser() {
 }
 
 export default function Scene3({ scrollRef }) {
+  // PERF tier: low-end devices render at DPR 1, no antialias, no shadows.
+  const { dpr, antialias, shadows } = useQuality();
   return (
     <Canvas
-      shadows
-      dpr={[1, 1.25]}
+      shadows={shadows}
+      dpr={dpr}
       camera={{ position: [0, 16, 60], fov: 50, near: 0.1, far: 800 }}
       gl={{
-        antialias: true,
+        antialias,
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 0.6, // exposure cut ~40% — deep cinematic grade

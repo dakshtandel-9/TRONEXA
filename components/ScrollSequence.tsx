@@ -92,6 +92,8 @@ export default function ScrollSequence() {
   // loader state: `sceneReady` flips true only once the 3D scene has truly
   // downloaded + painted; `overlayMounted` keeps the loader up until it fades.
   const [sceneReady, setSceneReady] = useState(false);
+  const modelLoadedRef = useRef(false);
+  const resolveModelRef = useRef<(() => void) | null>(null);
   const [overlayMounted, setOverlayMounted] = useState(true);
   const [currentSection, setCurrentSection] = useState(0);
   const { setIsLoaded } = useLoadingContext();
@@ -337,9 +339,10 @@ export default function ScrollSequence() {
       });
 
     const waitForModel = () =>
-      // warm the hero GLB into the browser cache; ignore failures (the scene
-      // also preloads it, this just makes the readiness gate honest)
-      fetch('/HeroModul-opt.glb').then(() => undefined).catch(() => undefined);
+      new Promise<void>((resolve) => {
+        if (modelLoadedRef.current) return resolve();
+        resolveModelRef.current = resolve;
+      });
 
     async function detectReady() {
       await Promise.all([waitForWindowLoad(), waitForModel(), waitForCanvasPaint()]);
@@ -420,7 +423,16 @@ export default function ScrollSequence() {
         </div>
         {/* SCENE 1 — hero model; on top, fades out during the zoom */}
         <div ref={scene1Ref} style={{ ...layerBase, background: '#010715', overflow: 'hidden', zIndex: 4 }}>
-          {visible[0] && <Scene scrollRef={sceneRef} />}
+          {visible[0] && (
+            <Scene
+              scrollRef={sceneRef}
+              onModelLoaded={() => {
+                modelLoadedRef.current = true;
+                resolveModelRef.current?.();
+                resolveModelRef.current = null;
+              }}
+            />
+          )}
         </div>
       </div>
 

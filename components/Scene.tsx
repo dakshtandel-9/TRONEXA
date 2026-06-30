@@ -17,6 +17,7 @@ import {
 import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
 import { useParallax, PARALLAX_X, PARALLAX_Y } from "./useParallax";
+import { useQuality } from "@/hooks/useQuality";
 
 // ────────────────────────────────────────────────────────────────────────────
 const DEBUG = false;      // true = disable postprocessing, verify raw composition
@@ -697,11 +698,12 @@ function makePanelTextures() {
 
 const MODEL_POS = new THREE.Vector3(0, 4.2, -28);
 
-function HeroModel({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) {
+function HeroModel({ scrollRef, onLoaded }: { scrollRef: React.MutableRefObject<number>; onLoaded?: () => void }) {
   const { scene } = useGLTF("/HeroModul-opt.glb", "/draco/");
   const groupRef = useRef<THREE.Group>(null);
   const lastScroll = useRef(0);
   const spin = useRef(0);
+  const calledOnLoaded = useRef(false);
 
   // glassy translucent blue with paneled box texture + seam lines, now glowing
   // brighter so it blooms strongly and reads as the scene's primary light source
@@ -731,6 +733,10 @@ function HeroModel({ scrollRef }: { scrollRef: React.MutableRefObject<number> })
 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
+    if (!calledOnLoaded.current) {
+      calledOnLoaded.current = true;
+      onLoaded?.();
+    }
     const g = groupRef.current;
     const t = state.clock.elapsedTime;
 
@@ -854,16 +860,19 @@ function ContextReleaser() {
   return null;
 }
 
-export default function Scene({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) {
+export default function Scene({ scrollRef, onModelLoaded }: { scrollRef: React.MutableRefObject<number>; onModelLoaded?: () => void }) {
+  // PERF tier: low-end devices drop DPR to 1, disable antialias, and run a
+  // Bloom-only postprocessing stack (shadows are already off in this scene).
+  const { dpr, antialias, lowEnd } = useQuality();
   return (
     <Canvas
       // PERF: shadows removed (invisible in this dark scene, cost a full extra
-      // render pass/frame); dpr capped at 1.25 so the fullscreen post passes
-      // don't render at up to 1.5× on Retina
-      dpr={[1, 1.25]}
+      // render pass/frame); dpr capped per quality tier so the fullscreen post
+      // passes don't render at up to 1.25× on high-DPI / low-end devices
+      dpr={dpr}
       camera={{ position: [0, 1.05, 47], fov: 32, near: 0.1, far: 800 }}
       gl={{
-        antialias: true,
+        antialias,
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 0.85, // darker, richer cinematic grade
@@ -891,13 +900,13 @@ export default function Scene({ scrollRef }: { scrollRef: React.MutableRefObject
       {/* glowing model + its travelling glow lights */}
       <ModelGlow />
       <Suspense fallback={null}>
-        <HeroModel scrollRef={scrollRef} />
+        <HeroModel scrollRef={scrollRef} onLoaded={onModelLoaded} />
       </Suspense>
 
-      {!DEBUG && (
+      {/* RESTRAINED bloom on both tiers; the heavier passes (aberration, vignette,
+          grain, tonemap, FXAA) are extra full-screen passes the low tier drops. */}
+      {!DEBUG && lowEnd && (
         <EffectComposer multisampling={0}>
-          {/* RESTRAINED bloom: high threshold so only the model's true highlights
-              bloom (not the water) — small radius, no scene-wide wash */}
           <Bloom
             luminanceThreshold={0.85}
             luminanceSmoothing={0.6}
@@ -905,16 +914,24 @@ export default function Scene({ scrollRef }: { scrollRef: React.MutableRefObject
             radius={0.5}
             mipmapBlur
           />
-          {/* subtle chromatic aberration at the edges */}
+        </EffectComposer>
+      )}
+      {!DEBUG && !lowEnd && (
+        <EffectComposer multisampling={0}>
+          <Bloom
+            luminanceThreshold={0.85}
+            luminanceSmoothing={0.6}
+            intensity={0.45}
+            radius={0.5}
+            mipmapBlur
+          />
           <ChromaticAberration
             blendFunction={BlendFunction.NORMAL}
             offset={new THREE.Vector2(0.0005, 0.0005)}
             radialModulation={false}
             modulationOffset={0}
           />
-          {/* very light vignette */}
           <Vignette eskil={false} offset={0.32} darkness={0.7} />
-          {/* tiny amount of film grain */}
           <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={0.03} />
           <ToneMapping />
           <FXAA />
