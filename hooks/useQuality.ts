@@ -43,6 +43,10 @@ function gpuIsIntegrated(): boolean {
       /intel|iris|uhd graphics|hd graphics|mesa|swiftshader|microsoft basic|llvmpipe|adreno|mali|powervr/.test(
         r
       );
+    // CRITICAL: release the probe context immediately. Browsers cap live WebGL
+    // contexts (as few as 4–8 on Android); a lingering probe can starve the real
+    // scene's context → it gets null → the scene crashes → loader stuck at 0%.
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
     return _gpuIsIntegrated;
   } catch {
     _gpuIsIntegrated = false;

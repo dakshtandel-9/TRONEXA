@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useLoadingContext } from '@/contexts/LoadingContext';
 import LazyLoader from '@/components/LazyLoader';
+import SceneErrorBoundary from '@/components/SceneErrorBoundary';
 
 // ── divaya Three.js scenes (replace the old video background) ─────────────────
 const Scene = dynamic(() => import('@/components/Scene'), { ssr: false });
@@ -356,6 +357,13 @@ export default function ScrollSequence() {
       new Promise<void>((resolve) => {
         if (modelLoadedRef.current) return resolve();
         resolveModelRef.current = resolve;
+        // SAFETY: the model callback fires from HeroModel's first useFrame tick.
+        // On some devices (Android WebGL context loss, GLB decode failure, a weak
+        // GPU that never paints) it may never fire — so we MUST NOT wait on it
+        // forever or the loader hangs at 0%. Resolve after 8s regardless.
+        setTimeout(() => {
+          if (!cancelled) resolve();
+        }, 8000);
       });
 
     async function detectReady() {
@@ -367,6 +375,13 @@ export default function ScrollSequence() {
     }
     detectReady();
 
+    // ABSOLUTE SAFETY NET: no matter what happens with the scene/WebGL/model, the
+    // loader must always finish. If nothing has set sceneReady after 12s, force it
+    // so the user is never trapped on the loading screen (e.g. WebGL unavailable).
+    const hardFallback = setTimeout(() => {
+      if (!cancelled) setSceneReady(true);
+    }, 12000);
+
     parallaxRafRef.current = requestAnimationFrame(renderFrame);
     window.addEventListener('mousemove', onMouseMove, { passive: true });
     window.addEventListener('wheel', onWheel, { passive: true });
@@ -374,6 +389,7 @@ export default function ScrollSequence() {
 
     return () => {
       cancelled = true;
+      clearTimeout(hardFallback);
       if (parallaxRafRef.current !== null) cancelAnimationFrame(parallaxRafRef.current);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('wheel', onWheel);
@@ -421,31 +437,58 @@ export default function ScrollSequence() {
             visible, so just 1–2 WebGL contexts + Bloom passes run at once. */}
         {/* SCENE 5 — top-down aerial; fades in at the very end (above scene 4) */}
         <div ref={scene5Ref} style={{ ...layerBase, background: '#02040C', opacity: 0, zIndex: 5 }}>
-          {visible[4] && <Scene5 scrollRef={scene5ScrollRef} />}
+          {visible[4] && (
+            <SceneErrorBoundary>
+              <Scene5 scrollRef={scene5ScrollRef} />
+            </SceneErrorBoundary>
+          )}
         </div>
         {/* SCENE 4 — climbing rays; bottom layer */}
         <div ref={scene4Ref} style={{ ...layerBase, background: '#02040D', opacity: 0, zIndex: 1 }}>
-          {visible[3] && <Scene4 scrollRef={scene4ScrollRef} />}
+          {visible[3] && (
+            <SceneErrorBoundary>
+              <Scene4 scrollRef={scene4ScrollRef} />
+            </SceneErrorBoundary>
+          )}
         </div>
         {/* SCENE 3 — terrain + energy rivers */}
         <div ref={scene3Ref} style={{ ...layerBase, background: '#020814', opacity: 0, zIndex: 2 }}>
-          {visible[2] && <Scene3 scrollRef={scene3ScrollRef} />}
+          {visible[2] && (
+            <SceneErrorBoundary>
+              <Scene3 scrollRef={scene3ScrollRef} />
+            </SceneErrorBoundary>
+          )}
         </div>
         {/* SCENE 2 — canyon drone */}
         <div ref={scene2Ref} style={{ ...layerBase, background: '#020814', opacity: 0, zIndex: 3 }}>
-          {visible[1] && <Scene2 scrollRef={scene2ScrollRef} />}
+          {visible[1] && (
+            <SceneErrorBoundary>
+              <Scene2 scrollRef={scene2ScrollRef} />
+            </SceneErrorBoundary>
+          )}
         </div>
         {/* SCENE 1 — hero model; on top, fades out during the zoom */}
         <div ref={scene1Ref} style={{ ...layerBase, background: '#010715', overflow: 'hidden', zIndex: 4 }}>
           {visible[0] && (
-            <Scene
-              scrollRef={sceneRef}
-              onModelLoaded={() => {
+            // If Scene 1 crashes (WebGL unavailable on this device), unblock the
+            // loader immediately so the user isn't trapped on 0%.
+            <SceneErrorBoundary
+              onError={() => {
                 modelLoadedRef.current = true;
                 resolveModelRef.current?.();
                 resolveModelRef.current = null;
+                setSceneReady(true);
               }}
-            />
+            >
+              <Scene
+                scrollRef={sceneRef}
+                onModelLoaded={() => {
+                  modelLoadedRef.current = true;
+                  resolveModelRef.current?.();
+                  resolveModelRef.current = null;
+                }}
+              />
+            </SceneErrorBoundary>
           )}
         </div>
       </div>
