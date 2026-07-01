@@ -55,7 +55,21 @@ function fbm(noise: (x: number, y: number) => number, x: number, y: number) {
 // ─── Rock textures (exact copy from Scene 1) ─────────────────────────────────
 
 let _rockTex: { colorMap: THREE.Texture; bumpMap: THREE.Texture } | null = null;
-function getRockTextures() {
+let _rockTexLow: { colorMap: THREE.Texture; bumpMap: THREE.Texture } | null = null;
+function getRockTextures(lowEnd = false) {
+  if (lowEnd) {
+    if (_rockTexLow) return _rockTexLow;
+    // mobile: tiny 64px solid colour texture — no fbm loop, no OOM risk
+    const c = document.createElement("canvas");
+    c.width = c.height = 4;
+    const ctx = c.getContext("2d")!;
+    ctx.fillStyle = "#03060C";
+    ctx.fillRect(0, 0, 4, 4);
+    const colorMap = new THREE.CanvasTexture(c);
+    const bumpMap = colorMap;
+    _rockTexLow = { colorMap, bumpMap };
+    return _rockTexLow;
+  }
   if (_rockTex) return _rockTex;
   const size = 1024;
   const colorCanvas = document.createElement("canvas");
@@ -159,11 +173,14 @@ function Sky() {
 
 // ─── Mountains (identical shape/material to Scene 1) ─────────────────────────
 
-function Mountain({ position, side }: { position: [number, number, number]; side: "left" | "right" }) {
-  const { colorMap, bumpMap } = useMemo(() => getRockTextures(), []);
+function Mountain({ position, side, lowEnd }: { position: [number, number, number]; side: "left" | "right"; lowEnd?: boolean }) {
+  const { colorMap, bumpMap } = useMemo(() => getRockTextures(lowEnd), [lowEnd]);
   const geo = useMemo(() => {
     const noise = makeNoise();
-    const g = new THREE.PlaneGeometry(200, 200, 160, 160);
+    // PERF: half the segments on weak GPUs (80×80 vs 160×160 → ¼ the verts). The
+    // bump map + darkness hide the lower silhouette detail.
+    const seg = lowEnd ? 80 : 160;
+    const g = new THREE.PlaneGeometry(200, 200, seg, seg);
     g.rotateX(-Math.PI / 2);
     const pos = g.attributes.position;
     for (let i = 0; i < pos.count; i++) {
@@ -186,7 +203,7 @@ function Mountain({ position, side }: { position: [number, number, number]; side
     }
     g.computeVertexNormals();
     return g;
-  }, [position, side]);
+  }, [position, side, lowEnd]);
 
   return (
     <mesh geometry={geo} position={position} castShadow receiveShadow>
@@ -505,8 +522,8 @@ function VolumetricFog() {
 // Sits at positive Z so the drone looks down onto it at scroll=0.
 // Uses the same rock texture + shape logic as the side mountains.
 
-function FrontMountain() {
-  const { colorMap, bumpMap } = useMemo(() => getRockTextures(), []);
+function FrontMountain({ lowEnd }: { lowEnd?: boolean }) {
+  const { colorMap, bumpMap } = useMemo(() => getRockTextures(lowEnd), [lowEnd]);
   const geo = useMemo(() => {
     const noise = makeNoise(4471);
     const g = new THREE.PlaneGeometry(200, 200, 160, 160);
@@ -551,8 +568,8 @@ function FrontMountain() {
 // like the foreground terrain. Silhouette: large rounded left peak, shallow
 // centre dip, slightly taller rounded right peak — plus fBm erosion on top.
 
-function DistantRange() {
-  const { colorMap, bumpMap } = useMemo(() => getRockTextures(), []);
+function DistantRange({ lowEnd }: { lowEnd?: boolean }) {
+  const { colorMap, bumpMap } = useMemo(() => getRockTextures(lowEnd), [lowEnd]);
   const geo = useMemo(() => {
     const noise = makeNoise(2099);
     const WIDTH = 240;   // X span — wide enough to reach both canyon walls
@@ -672,7 +689,7 @@ function ContextReleaser() {
 export default function Scene2({ scrollRef }: { scrollRef?: React.MutableRefObject<number> }) {
   // PERF tier: low-end devices render at DPR 1, no antialias, no shadows, and a
   // Bloom-only postprocessing stack (see below). High tier keeps the full grade.
-  const { dpr, antialias, shadows, lowEnd } = useQuality();
+  const { dpr, antialias, shadows, lowEnd, powerPreference, particleScale } = useQuality();
   return (
     <Canvas
       shadows={shadows}
@@ -684,7 +701,7 @@ export default function Scene2({ scrollRef }: { scrollRef?: React.MutableRefObje
         toneMapping: THREE.ACESFilmicToneMapping,
         // exposure cut ~40% — deep, dark, cinematic grade
         toneMappingExposure: 0.6,
-        powerPreference: "high-performance",
+        powerPreference,
       }}
       style={{ width: "100%", height: "100%", background: "#02050E" }}
     >
@@ -700,10 +717,10 @@ export default function Scene2({ scrollRef }: { scrollRef?: React.MutableRefObje
       <Stars />
       <VolumetricFog />
 
-      <Mountain position={[-26, 0, -38]} side="left" />
-      <Mountain position={[26, 0, -38]} side="right" />
-      <FrontMountain />
-      <DistantRange />
+      <Mountain position={[-26, 0, -38]} side="left" lowEnd={lowEnd} />
+      <Mountain position={[26, 0, -38]} side="right" lowEnd={lowEnd} />
+      <FrontMountain lowEnd={lowEnd} />
+      <DistantRange lowEnd={lowEnd} />
       <Water />
       <Particles />
 
@@ -711,7 +728,7 @@ export default function Scene2({ scrollRef }: { scrollRef?: React.MutableRefObje
       <RiverGroundLight />
 
       {/* glowing procedural energy river — grows forward with scroll progress */}
-      <EnergyRiver scrollRef={scrollRef} />
+      <EnergyRiver scrollRef={scrollRef} particleScale={particleScale} />
 
       {/* cinematic bloom on both tiers; aberration, vignette, grain + tonemap are
           extra full-screen passes the low tier drops (Bloom-only there). */}
@@ -723,6 +740,7 @@ export default function Scene2({ scrollRef }: { scrollRef?: React.MutableRefObje
             intensity={1.5}
             radius={0.75}
             mipmapBlur
+            resolutionScale={0.5}
           />
         </EffectComposer>
       ) : (
@@ -733,6 +751,7 @@ export default function Scene2({ scrollRef }: { scrollRef?: React.MutableRefObje
             intensity={1.5}
             radius={0.75}
             mipmapBlur
+            resolutionScale={0.5}
           />
           <ChromaticAberration
             blendFunction={BlendFunction.NORMAL}

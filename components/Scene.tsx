@@ -559,11 +559,11 @@ const GLOW_LAYERS: GlowLayerConfig[] = [
   },
 ];
 
-function GlowParticles() {
+function GlowParticles({ particleScale }: { particleScale: number }) {
   return (
     <>
       {GLOW_LAYERS.map((cfg, i) => (
-        <GlowLayer key={i} cfg={cfg} />
+        <GlowLayer key={i} cfg={{ ...cfg, count: Math.max(1, Math.floor(cfg.count * particleScale)) }} />
       ))}
     </>
   );
@@ -863,7 +863,7 @@ function ContextReleaser() {
 export default function Scene({ scrollRef, onModelLoaded }: { scrollRef: React.MutableRefObject<number>; onModelLoaded?: () => void }) {
   // PERF tier: low-end devices drop DPR to 1, disable antialias, and run a
   // Bloom-only postprocessing stack (shadows are already off in this scene).
-  const { dpr, antialias, lowEnd } = useQuality();
+  const { dpr, antialias, lowEnd, powerPreference, particleScale } = useQuality();
   return (
     <Canvas
       // PERF: shadows removed (invisible in this dark scene, cost a full extra
@@ -876,7 +876,7 @@ export default function Scene({ scrollRef, onModelLoaded }: { scrollRef: React.M
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 0.85, // darker, richer cinematic grade
-        powerPreference: "high-performance",
+        powerPreference,
       }}
       style={{ width: "100%", height: "100%", background: "#040812" }}
     >
@@ -895,7 +895,7 @@ export default function Scene({ scrollRef, onModelLoaded }: { scrollRef: React.M
       <Mountain position={[-22, 0, -38]} side="left" />
       <Mountain position={[22, 0, -38]} side="right" />
       <Water />
-      <GlowParticles />
+      <GlowParticles particleScale={particleScale} />
 
       {/* glowing model + its travelling glow lights */}
       <ModelGlow />
@@ -913,6 +913,7 @@ export default function Scene({ scrollRef, onModelLoaded }: { scrollRef: React.M
             intensity={0.45}
             radius={0.5}
             mipmapBlur
+            resolutionScale={0.5}
           />
         </EffectComposer>
       )}
@@ -924,6 +925,7 @@ export default function Scene({ scrollRef, onModelLoaded }: { scrollRef: React.M
             intensity={0.45}
             radius={0.5}
             mipmapBlur
+            resolutionScale={0.5}
           />
           <ChromaticAberration
             blendFunction={BlendFunction.NORMAL}

@@ -109,6 +109,9 @@ export default function ScrollSequence() {
   // smoothRef  = the eased current timeline point fed to every scene
   const targetRef = useRef(0);
   const smoothRef = useRef(0);
+  // last timeline point we actually applied to the DOM — used to skip redundant
+  // opacity writes / section-sync when the timeline is settled (see renderFrame).
+  const lastPRef = useRef(-1);
 
   // per-scene progress refs handed to each Scene component (0..1 within the scene)
   const sceneRef = useRef(0);
@@ -226,6 +229,17 @@ export default function ScrollSequence() {
       const move = Math.min(dist, speed * dt);
       smoothRef.current += Math.sign(diff) * move;
       const p = smoothRef.current;
+
+      // PERF: when the timeline is settled (not scrubbing) the opacities and
+      // per-scene progress refs don't change — skip all the DOM opacity writes,
+      // sceneOpacities() math and section-sync work so an idle page doesn't churn
+      // style recalcs every frame. The R3F scenes keep animating on their own.
+      const moved = Math.abs(p - lastPRef.current) > 1e-5;
+      if (!moved) {
+        parallaxRafRef.current = requestAnimationFrame(renderFrame);
+        return;
+      }
+      lastPRef.current = p;
 
       // keep the active-section state in sync with the scrub position so the
       // progress bar and side-nav highlight follow the wheel. We pick the

@@ -90,7 +90,19 @@ function getSparkSprite() {
 // ─── Rock textures (almost black — terrain hides in darkness) ────────────────
 
 let _rockTex = null;
-function getRockTextures() {
+let _rockTexLow = null;
+function getRockTextures(lowEnd = false) {
+  if (lowEnd) {
+    if (_rockTexLow) return _rockTexLow;
+    const c = document.createElement("canvas");
+    c.width = c.height = 4;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#04070F";
+    ctx.fillRect(0, 0, 4, 4);
+    const colorMap = new THREE.CanvasTexture(c);
+    _rockTexLow = { colorMap, bumpMap: colorMap };
+    return _rockTexLow;
+  }
   if (_rockTex) return _rockTex;
   const size = 1024;
   const colorCanvas = document.createElement("canvas");
@@ -143,8 +155,8 @@ function getRockTextures() {
 
 // ─── Flat basin floor (preserved layout; only darkened to near-black) ────────
 
-function Ground() {
-  const { colorMap, bumpMap } = useMemo(() => getRockTextures(), []);
+function Ground({ lowEnd } = {}) {
+  const { colorMap, bumpMap } = useMemo(() => getRockTextures(lowEnd), [lowEnd]);
   const geo = useMemo(() => {
     const noise = makeNoise(2024);
     // FLAT SURFACE: a near-flat plane with only the faintest undulation so the
@@ -183,8 +195,8 @@ function Ground() {
 // Mostly black; only catch the network's blue rim light. They partially hide the
 // lower network on each side so the city reads as nestled in a valley.
 
-function ForegroundHill({ side, seed }) {
-  const { colorMap, bumpMap } = useMemo(() => getRockTextures(), []);
+function ForegroundHill({ side, seed, lowEnd }) {
+  const { colorMap, bumpMap } = useMemo(() => getRockTextures(lowEnd), [lowEnd]);
   const geo = useMemo(() => {
     const noise = makeNoise(seed);
     const g = new THREE.PlaneGeometry(180, 200, 90, 90);
@@ -653,9 +665,9 @@ function Nodes({ nodes }) {
 // Each particle rides a randomly-assigned connection (quadratic bezier), looping;
 // some detach near the end and drift before fading. ~12,000 total motes.
 
-function NetworkParticles({ conns }) {
+function NetworkParticles({ conns, particleScale = 1 }) {
   const sprite = useMemo(() => getSparkSprite(), []);
-  const COUNT = 2000; // PERF: fewer particles → much less additive overdraw
+  const COUNT = Math.max(50, Math.floor(2000 * particleScale));
 
   const { geometry, material, segTex, segCount } = useMemo(() => {
     // pack each connection's 3 control points into a texture (3 texels per conn)
@@ -902,9 +914,9 @@ const PULSE_COLORS = [
   new THREE.Color('#3BAFFF'),
 ];
 
-function RacingPulses({ conns }) {
+function RacingPulses({ conns, particleScale = 1 }) {
   const sprite = useMemo(() => getSparkSprite(), []);
-  const PULSES = 90; // racing streaks across the ground (reduced for perf)
+  const PULSES = Math.max(10, Math.floor(90 * particleScale));
   const TRAIL = 16;
   const COUNT = PULSES * TRAIL;
 
@@ -1014,7 +1026,7 @@ function RacingPulses({ conns }) {
   return <points geometry={geometry} material={material} frustumCulled={false} renderOrder={6} />;
 }
 
-function Network() {
+function Network({ particleScale = 1 } = {}) {
   // matches the reference: the glowing node grid + the faint connection web
   // between them, plus flowing particles and racing energy pulses on top.
   const { nodes, conns } = useMemo(() => buildNetwork(), []);
@@ -1024,8 +1036,8 @@ function Network() {
   return (
     <group>
       <primitive object={lines} renderOrder={3} />
-      <NetworkParticles conns={conns} />
-      <RacingPulses conns={conns} />
+      <NetworkParticles conns={conns} particleScale={particleScale} />
+      <RacingPulses conns={conns} particleScale={particleScale} />
       <Nodes nodes={nodes} />
       {/* tiny glowing triangles dotting the network (replaces the heavy GLB) */}
       <HeroLandmarks />
@@ -1137,7 +1149,7 @@ function ContextReleaser() {
 export default function Scene5({ scrollRef }) {
   // PERF tier: this is the heaviest scene. Low-end drops antialias + DPR to 1 and
   // runs Bloom-only post (Vignette dropped below).
-  const { antialias, lowEnd } = useQuality();
+  const { antialias, lowEnd, powerPreference, particleScale } = useQuality();
   return (
     <Canvas
       dpr={[0.85, 1]}
@@ -1147,7 +1159,7 @@ export default function Scene5({ scrollRef }) {
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 0.62, // reduced exposure — deep cinematic grade
-        powerPreference: "high-performance",
+        powerPreference,
       }}
       style={{ width: "100%", height: "100%", background: "#02040C" }}
     >
@@ -1161,13 +1173,13 @@ export default function Scene5({ scrollRef }) {
       <Stars />
       <VolumetricFog />
 
-      <Ground />
-      <ForegroundHill side="left" seed={3311} />
-      <ForegroundHill side="right" seed={7753} />
+      <Ground lowEnd={lowEnd} />
+      <ForegroundHill side="left" seed={3311} lowEnd={lowEnd} />
+      <ForegroundHill side="right" seed={7753} lowEnd={lowEnd} />
 
       {/* glowing nodes + flowing particles only — connection lines and the hero
           models were removed per request */}
-      <Network />
+      <Network particleScale={particleScale} />
 
       {/* PERF: lean post chain on the heaviest scene — only Bloom + Vignette.
           ChromaticAberration + Noise (extra fullscreen passes) dropped here. */}
@@ -1180,6 +1192,7 @@ export default function Scene5({ scrollRef }) {
           intensity={0.55}
           radius={0.5}
           mipmapBlur
+          resolutionScale={0.5}
         />
         {/* PERF: drop the extra vignette pass on low-end → Bloom only. */}
         {!lowEnd && <Vignette eskil={false} offset={0.3} darkness={0.78} />}

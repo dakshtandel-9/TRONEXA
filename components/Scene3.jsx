@@ -56,7 +56,19 @@ function fbm(noise, x, y) {
 // matching bump map. Generated once and shared by every mountain mesh.
 
 let _rockTex = null;
-function getRockTextures() {
+let _rockTexLow = null;
+function getRockTextures(lowEnd = false) {
+  if (lowEnd) {
+    if (_rockTexLow) return _rockTexLow;
+    const c = document.createElement("canvas");
+    c.width = c.height = 4;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#03060C";
+    ctx.fillRect(0, 0, 4, 4);
+    const colorMap = new THREE.CanvasTexture(c);
+    _rockTexLow = { colorMap, bumpMap: colorMap };
+    return _rockTexLow;
+  }
   if (_rockTex) return _rockTex;
   const size = 1024;
   const colorCanvas = document.createElement("canvas");
@@ -135,8 +147,8 @@ function mountainHeight(wx, wz) {
   return h;
 }
 
-function FrontMountain() {
-  const { colorMap, bumpMap } = useMemo(() => getRockTextures(), []);
+function FrontMountain({ lowEnd } = {}) {
+  const { colorMap, bumpMap } = useMemo(() => getRockTextures(lowEnd), [lowEnd]);
   const geo = useMemo(() => {
     const g = new THREE.PlaneGeometry(200, 200, 160, 160);
     g.rotateX(-Math.PI / 2);
@@ -173,8 +185,8 @@ function FrontMountain() {
 
 // ─── Side mountains flanking the climbing channel ─────────────────────────────
 
-function SideMountain({ position, side, seed }) {
-  const { colorMap, bumpMap } = useMemo(() => getRockTextures(), []);
+function SideMountain({ position, side, seed, lowEnd }) {
+  const { colorMap, bumpMap } = useMemo(() => getRockTextures(lowEnd), [lowEnd]);
   const geo = useMemo(() => {
     const noise = makeNoise(seed);
     const g = new THREE.PlaneGeometry(200, 200, 160, 160);
@@ -660,7 +672,7 @@ function revealFromScroll(s) {
   return THREE.MathUtils.lerp(stops[i], stops[i + 1], f);
 }
 
-function ClimbingRay({ scrollRef }) {
+function ClimbingRay({ scrollRef, particleScale = 1 }) {
   const frames = useMemo(() => sampleRayFrames(), []);
   const revealRef = useRef(0.1); // match revealFromScroll's 10% start
 
@@ -722,7 +734,7 @@ function ClimbingRay({ scrollRef }) {
         <primitive object={coreMat} attach="material" />
       </mesh>
       {RAY_PARTICLE_LAYERS.map((cfg, i) => (
-        <ParticleField key={i} frames={frames} revealRef={revealRef} cfg={cfg} />
+        <ParticleField key={i} frames={frames} revealRef={revealRef} cfg={{ ...cfg, count: Math.max(1, Math.floor(cfg.count * particleScale)) }} />
       ))}
       <EdgeSparkles frames={frames} revealRef={revealRef} />
     </group>
@@ -882,7 +894,7 @@ function ContextReleaser() {
 
 export default function Scene3({ scrollRef }) {
   // PERF tier: low-end devices render at DPR 1, no antialias, no shadows.
-  const { dpr, antialias, shadows } = useQuality();
+  const { dpr, antialias, shadows, lowEnd, powerPreference, particleScale } = useQuality();
   return (
     <Canvas
       shadows={shadows}
@@ -893,7 +905,7 @@ export default function Scene3({ scrollRef }) {
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 0.6, // exposure cut ~40% — deep cinematic grade
-        powerPreference: "high-performance",
+        powerPreference,
       }}
       style={{ width: "100%", height: "100%", background: "#02050E" }}
     >
@@ -905,11 +917,11 @@ export default function Scene3({ scrollRef }) {
       <Sky />
       <Stars />
 
-      <SideMountain position={[-28, 0, -10]} side="left" seed={3311} />
-      <SideMountain position={[28, 0, -10]} side="right" seed={7753} />
-      <FrontMountain />
+      <SideMountain position={[-28, 0, -10]} side="left" seed={3311} lowEnd={lowEnd} />
+      <SideMountain position={[28, 0, -10]} side="right" seed={7753} lowEnd={lowEnd} />
+      <FrontMountain lowEnd={lowEnd} />
 
-      <ClimbingRay scrollRef={scrollRef} />
+      <ClimbingRay scrollRef={scrollRef} particleScale={particleScale} />
 
       <EffectComposer multisampling={0}>
         {/* bloom tuned so only the bright additive ray blooms; near-black
@@ -920,6 +932,7 @@ export default function Scene3({ scrollRef }) {
           intensity={1.5}
           radius={0.75}
           mipmapBlur
+          resolutionScale={0.5}
         />
       </EffectComposer>
     </Canvas>

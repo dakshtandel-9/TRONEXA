@@ -620,7 +620,7 @@ function EdgeSparkles({ frames, revealRef }: { frames: Frame[]; revealRef: React
 
 // ─── Composed energy river ────────────────────────────────────────────────────
 
-export default function EnergyRiver({ scrollRef }: { scrollRef?: React.MutableRefObject<number> }) {
+export default function EnergyRiver({ scrollRef, particleScale = 1 }: { scrollRef?: React.MutableRefObject<number>; particleScale?: number }) {
   const frames = useMemo(() => sampleFrames(), []);
   // reveal fraction shared with every sub-component via a ref. Driven DIRECTLY
   // from the page's already-smoothed scroll (single smoothing stage) so forward
@@ -636,7 +636,7 @@ export default function EnergyRiver({ scrollRef }: { scrollRef?: React.MutableRe
       <EnergyRibbons frames={frames} revealRef={revealRef} />
       <EnergyCore frames={frames} revealRef={revealRef} />
       {PARTICLE_LAYERS.map((cfg, i) => (
-        <ParticleField key={i} frames={frames} revealRef={revealRef} cfg={cfg} />
+        <ParticleField key={i} frames={frames} revealRef={revealRef} cfg={{ ...cfg, count: Math.max(1, Math.floor(cfg.count * particleScale)) }} />
       ))}
       <EdgeSparkles frames={frames} revealRef={revealRef} />
     </group>

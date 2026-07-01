@@ -87,7 +87,19 @@ function fbm(noise, x, y) {
 // ─── Rock textures (identical to Scene 1 / Scene 3's getRockTextures) ─────────
 
 let _rockTex = null;
-function getRockTextures() {
+let _rockTexLow = null;
+function getRockTextures(lowEnd = false) {
+  if (lowEnd) {
+    if (_rockTexLow) return _rockTexLow;
+    const c = document.createElement("canvas");
+    c.width = c.height = 4;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#04070F";
+    ctx.fillRect(0, 0, 4, 4);
+    const colorMap = new THREE.CanvasTexture(c);
+    _rockTexLow = { colorMap, bumpMap: colorMap };
+    return _rockTexLow;
+  }
   if (_rockTex) return _rockTex;
   const size = 1024;
   const colorCanvas = document.createElement("canvas");
@@ -149,8 +161,8 @@ function getRockTextures() {
 const BG_COLOR = "#02040D"; // near-black sky per spec — rays are the focus
 const TERRAIN_COLOR = "#04070F"; // near-black terrain backdrop
 
-function RockBackdrop() {
-  const { bumpMap } = useMemo(() => getRockTextures(), []);
+function RockBackdrop({ lowEnd } = {}) {
+  const { bumpMap } = useMemo(() => getRockTextures(lowEnd), [lowEnd]);
   // dedicated tiling of the bump map for the backdrop relief
   const bgBump = useMemo(() => {
     const t = bumpMap.clone();
@@ -511,7 +523,7 @@ const RAY_PARTICLE_LAYERS = [
 
 // ─── A single ray: thin white core + 15–30 weaving fiber strands + particles ──
 
-function ZigZagRay({ curve, revealRef, seedOffset = 0 }) {
+function ZigZagRay({ curve, revealRef, seedOffset = 0, particleScale = 1 }) {
   const frames = useMemo(() => sampleFrames(curve), [curve]);
 
   // VERY THIN white-hot core — a fine fiber, never a thick tube
@@ -521,10 +533,12 @@ function ZigZagRay({ curve, revealRef, seedOffset = 0 }) {
     [seedOffset]
   );
 
-  // 22 ultra-thin fiber strands that weave / separate / merge / split / cross,
+  // ultra-thin fiber strands that weave / separate / merge / split / cross,
   // colour-graded inner → middle → outer → fade. Tiny random offsets per strand.
+  // PERF: 14 strands (was 22) — with 5 rays that's 40 fewer ribbon draw calls per
+  // frame; the weave still reads as a dense braided fiber bundle.
   const ribbons = useMemo(() => {
-    const N = 22; // within the 15–30 spec range
+    const N = 14;
     const out = [];
     for (let i = 0; i < N; i++) {
       const pair = Math.floor(i / 2) + 1;
@@ -577,7 +591,7 @@ function ZigZagRay({ curve, revealRef, seedOffset = 0 }) {
         <primitive object={coreMat} attach="material" />
       </mesh>
       {RAY_PARTICLE_LAYERS.map((cfg, i) => (
-        <ParticleField key={i} frames={frames} revealRef={revealRef} cfg={cfg} seed={seedOffset + i} />
+        <ParticleField key={i} frames={frames} revealRef={revealRef} cfg={{ ...cfg, count: Math.max(1, Math.floor(cfg.count * particleScale)) }} seed={seedOffset + i} />
       ))}
     </group>
   );
@@ -585,7 +599,7 @@ function ZigZagRay({ curve, revealRef, seedOffset = 0 }) {
 
 // ─── Three rays, revealed bottom → top by scroll ──────────────────────────────
 
-function Rays({ scrollRef }) {
+function Rays({ scrollRef, particleScale = 1 }) {
   // three snaking splines. The side rays start near the centre-bottom and drift
   // out to the top corners; the middle ray snakes straight up the centre.
   //   left  → top-LEFT corner   (xEnd negative)
@@ -634,7 +648,7 @@ function Rays({ scrollRef }) {
   return (
     <group>
       {curves.map((c, i) => (
-        <ZigZagRay key={i} curve={c} revealRef={revealRefs[i]} seedOffset={i * 13} />
+        <ZigZagRay key={i} curve={c} revealRef={revealRefs[i]} seedOffset={i * 13} particleScale={particleScale} />
       ))}
     </group>
   );
@@ -659,7 +673,7 @@ function ContextReleaser() {
 
 export default function Scene4({ scrollRef }) {
   // PERF tier: low-end devices render at DPR 1, no antialias, Bloom-only post.
-  const { dpr, antialias, lowEnd } = useQuality();
+  const { dpr, antialias, lowEnd, powerPreference, particleScale } = useQuality();
   return (
     <Canvas
       dpr={dpr}
@@ -669,7 +683,7 @@ export default function Scene4({ scrollRef }) {
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 0.62, // reduced exposure — deep cinematic grade
-        powerPreference: "high-performance",
+        powerPreference,
       }}
       style={{ width: "100%", height: "100%", background: BG_COLOR }}
     >
@@ -689,8 +703,8 @@ export default function Scene4({ scrollRef }) {
       {/* very subtle blue volumetric fog around the rays — depth only */}
       <fog attach="fog" args={["#0a1d3a", 24, 70]} />
 
-      <RockBackdrop />
-      <Rays scrollRef={scrollRef} />
+      <RockBackdrop lowEnd={lowEnd} />
+      <Rays scrollRef={scrollRef} particleScale={particleScale} />
 
       <EffectComposer multisampling={0}>
         {/* bloom reduced ~70%: only the brightest white core blooms; edges stay
@@ -701,6 +715,7 @@ export default function Scene4({ scrollRef }) {
           intensity={0.55}
           radius={0.55}
           mipmapBlur
+          resolutionScale={0.5}
         />
         {/* PERF: aberration, vignette, grain, tonemap are extra full-screen
             passes — dropped on low-end so only Bloom runs there. */}
