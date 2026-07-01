@@ -34,6 +34,8 @@ export default function MediaSessionSuppressor() {
         // background videos are decorative → never expose native controls
         v.removeAttribute('controls');
         v.controls = false;
+        // non-interactive → Safari won't paint its tappable center play overlay
+        v.style.pointerEvents = 'none';
       });
     };
 
