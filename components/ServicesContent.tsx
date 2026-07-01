@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import { useLoadingContext } from '@/contexts/LoadingContext';
+import BackgroundVideo from '@/components/BackgroundVideo';
 
 const CLIENT_LOGOS = [
   { name: 'AT&T', file: 'AT&T.png' },
@@ -116,11 +117,8 @@ export default function ServicesContent() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
+        <BackgroundVideo
+          src="/allPagebg.mp4"
           style={{
             position: 'absolute',
             inset: 0,
@@ -129,9 +127,7 @@ export default function ServicesContent() {
             objectFit: 'cover',
             zIndex: 0,
           }}
-        >
-          <source src="/allPagebg.mp4" type="video/mp4" />
-        </video>
+        />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '900px', textAlign: 'center' }}>
           <SectionLabel text="What We Offer" />
           <h1 style={{
@@ -543,9 +539,10 @@ export default function ServicesContent() {
                 <Image
                   src={`/ClientsLogo/${client.file}`}
                   alt={client.name}
-                  width={120}
-                  height={48}
-                  style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.6, maxWidth: '100%', height: '40px', width: 'auto' }}
+                  width={160}
+                  height={64}
+                  className="page-client-logo"
+                  style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.6, width: '100%', maxWidth: '140px', height: '40px' }}
                 />
               </div>
             ))}

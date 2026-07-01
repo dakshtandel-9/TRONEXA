@@ -17,22 +17,45 @@ import { useEffect } from 'react';
  */
 export default function MediaSessionSuppressor() {
   useEffect(() => {
-    const enforceMuted = () => {
+    // Force every background video to be muted + inline + non-remote. This is the
+    // attribute setup that stops Safari/iOS from treating it as "real" playable
+    // media that deserves transport controls / a center play button.
+    const enforceAttrs = () => {
       document.querySelectorAll('video').forEach((v) => {
-        // Set the muted *property* (not just the attribute) before play — Safari
-        // blocks autoplay on a video it considers unmuted and then paints the
-        // big center play-button overlay. Forcing these guarantees inline autoplay.
+        // Set the muted *property* (not just the attribute) — Safari blocks
+        // autoplay on a video it considers unmuted and then paints the big center
+        // play-button overlay. Forcing these guarantees inline autoplay.
         if (!v.muted) v.muted = true;
         v.defaultMuted = true;
         v.setAttribute('disableRemotePlayback', '');
+        v.setAttribute('disablePictureInPicture', '');
         v.setAttribute('playsinline', '');
         v.setAttribute('webkit-playsinline', '');
-        // Resume any video Safari paused (which is what surfaces the play button).
+        // background videos are decorative → never expose native controls
+        v.removeAttribute('controls');
+        v.controls = false;
+      });
+    };
+
+    // Resume ONLY videos that the browser auto-paused (tab backgrounded, Safari's
+    // power-saver, media-session steal). We must NOT force-replay here on every
+    // pause event — when the user manually taps Safari's play/pause overlay, an
+    // immediate .play() fights that gesture and Safari re-shows the overlay in a
+    // loop. So resuming is gated behind explicit triggers (visibility/mount), and
+    // never runs from the generic 'pause' listener.
+    const resumeIfPaused = () => {
+      document.querySelectorAll('video').forEach((v) => {
         if (v.paused) {
           const p = v.play();
           if (p && typeof p.catch === 'function') p.catch(() => { /* autoplay blocked; retried on next tick */ });
         }
       });
+    };
+
+    // convenience: enforce attrs then (safely) resume — used on mount/visibility
+    const enforceMuted = () => {
+      enforceAttrs();
+      resumeIfPaused();
     };
 
     const clearMediaSession = () => {
@@ -61,10 +84,12 @@ export default function MediaSessionSuppressor() {
     const onPlay = () => { enforceMuted(); clearMediaSession(); };
     document.addEventListener('play', onPlay, true);
 
-    // Safari pauses background videos when it shows the play overlay or when the
-    // tab is backgrounded — re-assert autoplay on these events too.
-    const onPause = () => { enforceMuted(); };
+    // On pause, only re-assert the muted/inline attributes — do NOT call play()
+    // here. Force-replaying on every pause fights a user's manual pause tap and
+    // makes Safari re-paint the center play overlay repeatedly.
+    const onPause = () => { enforceAttrs(); };
     document.addEventListener('pause', onPause, true);
+    // When the tab becomes visible again it's safe to resume auto-paused videos.
     const onVisible = () => { if (!document.hidden) enforceMuted(); };
     document.addEventListener('visibilitychange', onVisible);
 

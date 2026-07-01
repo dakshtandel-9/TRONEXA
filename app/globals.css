@@ -353,7 +353,14 @@ video::-webkit-media-controls-panel {
     grid-template-columns: repeat(3, 1fr) !important;
   }
   .page-clients-grid > div {
-    padding: 24px 12px !important;
+    padding: 22px 10px !important;
+    min-height: 84px !important;
+  }
+  /* Normalize logo footprint so every logo scales into the same box */
+  .page-client-logo {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 34px !important;
   }
 
   /* About what-we-do 4-col */
@@ -544,6 +551,12 @@ video::-webkit-media-controls-panel {
   /* Clients logo grid: drop to 2 cols on small phones for legible logos */
   .page-clients-grid {
     grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .page-clients-grid > div {
+    min-height: 96px !important;
+  }
+  .page-client-logo {
+    height: 38px !important;
   }
 
   .mobile-gradient-overlay {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLoadingContext } from '@/contexts/LoadingContext';
+import BackgroundVideo from '@/components/BackgroundVideo';
 
 const CLIP = 'polygon(0% 0%, calc(100% - 14px) 0%, 100% 14px, 100% 100%, 0% 100%)';
 const CLIP_LG = 'polygon(0% 0%, calc(100% - 20px) 0%, 100% 20px, 100% 100%, 0% 100%)';
@@ -121,11 +122,8 @@ export default function DevelopmentContent() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
+        <BackgroundVideo
+          src="/allPagebg.mp4"
           style={{
             position: 'absolute',
             inset: 0,
@@ -134,9 +132,7 @@ export default function DevelopmentContent() {
             objectFit: 'cover',
             zIndex: 0,
           }}
-        >
-          <source src="/allPagebg.mp4" type="video/mp4" />
-        </video>
+        />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '900px', textAlign: 'center' }}>
           <SectionLabel text="Development" />
           <h1 style={{

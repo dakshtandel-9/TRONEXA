@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useLoadingContext } from '@/contexts/LoadingContext';
+import BackgroundVideo from '@/components/BackgroundVideo';
 
 const CLIP = 'polygon(0% 0%, calc(100% - 14px) 0%, 100% 14px, 100% 100%, 0% 100%)';
 
@@ -93,11 +94,7 @@ export default function SmallPackagesContent() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        <video autoPlay loop muted playsInline style={{
-          position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0,
-        }}>
-          <source src="/allPagebg.mp4" type="video/mp4" />
-        </video>
+        <BackgroundVideo src="/allPagebg.mp4" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0, }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '900px', textAlign: 'center' }}>
           <a href="/projects" style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px',
