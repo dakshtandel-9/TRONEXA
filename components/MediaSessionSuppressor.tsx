@@ -95,6 +95,21 @@ export default function MediaSessionSuppressor() {
     const onVisible = () => { if (!document.hidden) enforceMuted(); };
     document.addEventListener('visibilitychange', onVisible);
 
+    // Safari blocks autoplay until the first user gesture. Once the user touches
+    // or clicks anywhere, retry all paused videos — this is the fix for Safari
+    // showing a blank/paused video until the user interacts with the page.
+    let gestureUnlocked = false;
+    const onGesture = () => {
+      if (gestureUnlocked) return;
+      gestureUnlocked = true;
+      enforceMuted();
+      // Remove after first gesture — no need to fire on every click/tap
+      document.removeEventListener('touchstart', onGesture, true);
+      document.removeEventListener('click', onGesture, true);
+    };
+    document.addEventListener('touchstart', onGesture, { capture: true, passive: true });
+    document.addEventListener('click', onGesture, { capture: true, passive: true });
+
     // First-load race: the muted property may not be set before Safari's initial
     // autoplay decision, so re-enforce a few times right after mount.
     const ticks = [100, 300, 800, 1500].map((ms) => window.setTimeout(enforceMuted, ms));
@@ -104,6 +119,8 @@ export default function MediaSessionSuppressor() {
       document.removeEventListener('play', onPlay, true);
       document.removeEventListener('pause', onPause, true);
       document.removeEventListener('visibilitychange', onVisible);
+      document.removeEventListener('touchstart', onGesture, true);
+      document.removeEventListener('click', onGesture, true);
       ticks.forEach(window.clearTimeout);
     };
   }, []);

@@ -353,14 +353,18 @@ video::-webkit-media-controls-panel {
     grid-template-columns: repeat(3, 1fr) !important;
   }
   .page-clients-grid > div {
-    padding: 22px 10px !important;
-    min-height: 84px !important;
+    padding: 20px 12px !important;
+    min-height: 92px !important;
   }
-  /* Normalize logo footprint so every logo scales into the same box */
+  /* Normalize logo footprint: cap BOTH width and height so logos of any aspect
+     ratio render at a consistent visual size (object-fit: contain scales each
+     to whichever cap it hits first, instead of stretching to a forced box). */
   .page-client-logo {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 34px !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 82% !important;
+    max-height: 30px !important;
+    margin: 0 auto !important;
   }
 
   /* About what-we-do 4-col */
@@ -553,10 +557,13 @@ video::-webkit-media-controls-panel {
     grid-template-columns: repeat(2, 1fr) !important;
   }
   .page-clients-grid > div {
-    min-height: 96px !important;
+    min-height: 104px !important;
+    padding: 24px 16px !important;
   }
+  /* 2-col has more room per cell → slightly larger cap, still uniform */
   .page-client-logo {
-    height: 38px !important;
+    max-width: 72% !important;
+    max-height: 34px !important;
   }
 
   .mobile-gradient-overlay {

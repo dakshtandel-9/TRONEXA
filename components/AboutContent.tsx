@@ -583,7 +583,7 @@ export default function AboutContent() {
                   width={160}
                   height={64}
                   className="page-client-logo"
-                  style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.6, width: '100%', maxWidth: '140px', height: '40px' }}
+                  style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.6, width: 'auto', height: 'auto', maxWidth: '110px', maxHeight: '38px' }}
                 />
               </div>
             ))}
