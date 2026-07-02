@@ -353,8 +353,8 @@ video::-webkit-media-controls-panel {
     grid-template-columns: repeat(3, 1fr) !important;
   }
   .page-clients-grid > div {
-    padding: 20px 12px !important;
-    min-height: 92px !important;
+    padding: 26px 12px !important;
+    min-height: 132px !important;
   }
   /* Normalize logo footprint: cap BOTH width and height so logos of any aspect
      ratio render at a consistent visual size (object-fit: contain scales each
@@ -362,8 +362,8 @@ video::-webkit-media-controls-panel {
   .page-client-logo {
     width: auto !important;
     height: auto !important;
-    max-width: 82% !important;
-    max-height: 30px !important;
+    max-width: 95% !important;
+    max-height: 63px !important;
     margin: 0 auto !important;
   }
 
@@ -557,13 +557,13 @@ video::-webkit-media-controls-panel {
     grid-template-columns: repeat(2, 1fr) !important;
   }
   .page-clients-grid > div {
-    min-height: 104px !important;
-    padding: 24px 16px !important;
+    min-height: 150px !important;
+    padding: 32px 18px !important;
   }
-  /* 2-col has more room per cell → slightly larger cap, still uniform */
+  /* 2-col has more room per cell → larger cap, still uniform */
   .page-client-logo {
-    max-width: 72% !important;
-    max-height: 34px !important;
+    max-width: 88% !important;
+    max-height: 72px !important;
   }
 
   .mobile-gradient-overlay {
