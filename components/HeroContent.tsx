@@ -33,13 +33,13 @@ export default function HeroContent() {
 
       <p
         style={{
-          color: 'rgba(190,205,230,0.72)',
-          fontSize: '9.45px',
+          color: 'rgba(225,235,250,0.92)',
+          fontSize: 'clamp(0.72rem, 0.9vw, 0.84rem)',
           fontWeight: 400,
           lineHeight: 1.75,
-          maxWidth: '500px',
+          maxWidth: '560px',
           margin: '0 auto 30px',
-          textShadow: '0 2px 14px rgba(0,0,0,0.8)',
+          textShadow: '0 2px 6px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,0.95), 0 0 28px rgba(0,0,0,0.9)',
         }}
       >
         For modern businesses seeking growth, TRONEXA delivers intelligent digital solutions across Web, Applications, AI, Cloud, CRM, ServiceNow, IoT, and enterprise IT services. From concept to execution, we help organizations transform operations, scale efficiently, and stay ahead in a technology-driven world.
