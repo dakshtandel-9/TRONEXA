@@ -70,6 +70,20 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "TRONEXA",
+  url: BASE_URL,
+  logo: `${BASE_URL}/icon.png`,
+  description:
+    "TRONEXA delivers intelligent digital solutions across Web, AI, Cloud, CRM, ServiceNow, IoT, and enterprise IT services.",
+  sameAs: [
+    "https://www.instagram.com/tronexatechnologies",
+    "https://www.linkedin.com/company/tronexa/",
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -81,6 +95,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
       <body suppressHydrationWarning>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <MediaSessionSuppressor />
         {children}
       </body>
